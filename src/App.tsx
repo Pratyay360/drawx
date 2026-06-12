@@ -70,7 +70,11 @@ function Dashboard() {
     }
   }
 
-  async function startEditing(id: string, currentTitle: string, e: React.MouseEvent) {
+  async function startEditing(
+    id: string,
+    currentTitle: string,
+    e: React.MouseEvent,
+  ) {
     e.stopPropagation();
     setEditingId(id);
     setEditTitle(currentTitle);
@@ -104,7 +108,7 @@ function Dashboard() {
         {/* Header Hero Section */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-black tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent text-left">
+            <h1 className="text-3xl font-black tracking-tight bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent text-left">
               Drawx Workspace
             </h1>
             <p className="text-sm text-base-content/60 mt-1">
@@ -185,7 +189,7 @@ function Dashboard() {
                   onClick={() => navigate(`/canvas/${canvas.id}`)}
                   className="card bg-base-200 border border-base-content/5 hover:border-primary/20 hover:bg-base-300/40 cursor-pointer transition-all duration-200 hover:-translate-y-1 group rounded-2xl shadow-sm hover:shadow-md"
                 >
-                  <div className="card-body p-6 flex flex-col justify-between min-h-[160px]">
+                  <div className="card-body p-6 flex flex-col justify-between min-h-40">
                     <div>
                       <div className="flex items-center justify-between mb-3">
                         <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-content transition-all duration-200">
@@ -193,18 +197,26 @@ function Dashboard() {
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
-                            onClick={(e) => startEditing(canvas.id, canvas.title, e)}
+                            onClick={(e) =>
+                              startEditing(canvas.id, canvas.title, e)
+                            }
                             className="btn btn-ghost btn-xs btn-square hover:bg-base-100 rounded-lg text-base-content/70 hover:text-base-content"
                             title="Rename"
                           >
-                            <Icon icon="lucide:pencil" className="w-3.5 h-3.5" />
+                            <Icon
+                              icon="lucide:pencil"
+                              className="w-3.5 h-3.5"
+                            />
                           </button>
                           <button
                             onClick={(e) => handleDeleteCanvas(canvas.id, e)}
                             className="btn btn-ghost btn-xs btn-square hover:bg-error/15 hover:text-error rounded-lg"
                             title="Delete"
                           >
-                            <Icon icon="lucide:trash-2" className="w-3.5 h-3.5" />
+                            <Icon
+                              icon="lucide:trash-2"
+                              className="w-3.5 h-3.5"
+                            />
                           </button>
                         </div>
                       </div>
@@ -248,12 +260,15 @@ function Dashboard() {
                     <div className="flex items-center justify-between text-xs text-base-content/50 mt-4 pt-3 border-t border-base-content/5">
                       <span className="flex items-center gap-1">
                         <Icon icon="lucide:clock" className="w-3.5 h-3.5" />
-                        {new Date(canvas.updatedAt).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {new Date(canvas.updatedAt).toLocaleDateString(
+                          undefined,
+                          {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          },
+                        )}
                       </span>
                       <span className="flex items-center gap-0.5 font-medium group-hover:text-primary transition-colors">
                         Open
@@ -286,7 +301,10 @@ function Dashboard() {
                     >
                       <td className="py-4">
                         <div className="flex items-center gap-3">
-                          <Icon icon="lucide:palette" className="w-4 h-4 text-primary shrink-0" />
+                          <Icon
+                            icon="lucide:palette"
+                            className="w-4 h-4 text-primary shrink-0"
+                          />
                           {editingId === canvas.id ? (
                             <div
                               className="flex items-center gap-1.5"
@@ -297,7 +315,8 @@ function Dashboard() {
                                 value={editTitle}
                                 onChange={(e) => setEditTitle(e.target.value)}
                                 onKeyDown={(e) => {
-                                  if (e.key === "Enter") handleRename(canvas.id);
+                                  if (e.key === "Enter")
+                                    handleRename(canvas.id);
                                   if (e.key === "Escape") handleCancelEdit();
                                 }}
                                 className="input input-xs input-bordered rounded-lg w-48"
@@ -307,7 +326,10 @@ function Dashboard() {
                                 onClick={() => handleRename(canvas.id)}
                                 className="btn btn-success btn-xs btn-square rounded-lg"
                               >
-                                <Icon icon="lucide:check" className="w-3.5 h-3.5" />
+                                <Icon
+                                  icon="lucide:check"
+                                  className="w-3.5 h-3.5"
+                                />
                               </button>
                               <button
                                 onClick={handleCancelEdit}
@@ -324,28 +346,42 @@ function Dashboard() {
                         </div>
                       </td>
                       <td className="text-sm text-base-content/60 py-4">
-                        {new Date(canvas.updatedAt).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {new Date(canvas.updatedAt).toLocaleDateString(
+                          undefined,
+                          {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          },
+                        )}
                       </td>
-                      <td className="py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <td
+                        className="py-4 text-right"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <div className="flex items-center justify-end gap-1">
                           <button
-                            onClick={(e) => startEditing(canvas.id, canvas.title, e)}
+                            onClick={(e) =>
+                              startEditing(canvas.id, canvas.title, e)
+                            }
                             className="btn btn-ghost btn-xs btn-square hover:bg-base-300 rounded-lg text-base-content/70 hover:text-base-content"
                             title="Rename"
                           >
-                            <Icon icon="lucide:pencil" className="w-3.5 h-3.5" />
+                            <Icon
+                              icon="lucide:pencil"
+                              className="w-3.5 h-3.5"
+                            />
                           </button>
                           <button
                             onClick={(e) => handleDeleteCanvas(canvas.id, e)}
                             className="btn btn-ghost btn-xs btn-square hover:bg-error/15 hover:text-error rounded-lg"
                             title="Delete"
                           >
-                            <Icon icon="lucide:trash-2" className="w-3.5 h-3.5" />
+                            <Icon
+                              icon="lucide:trash-2"
+                              className="w-3.5 h-3.5"
+                            />
                           </button>
                         </div>
                       </td>
