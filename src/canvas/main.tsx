@@ -499,7 +499,7 @@ export function Canvas() {
               ) : (
                 <>
                   <Icon icon="lucide:save" className="w-4 h-4" />
-                  <span className="hidden xs:inline">Save</span>
+                  <span className="hidden sm:inline">Save</span>
                 </>
               )}
             </button>

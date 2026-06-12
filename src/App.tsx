@@ -104,9 +104,10 @@ function Dashboard() {
   return (
     <div className="flex h-screen bg-base-100 text-base-content font-sans">
       <Sidebar />
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="flex-1 overflow-auto px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-8">
         {/* Header Hero Section */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black tracking-tight bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent text-left">
               Drawx Workspace
@@ -138,7 +139,7 @@ function Dashboard() {
         </div>
 
         {/* Toolbar & Create section */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row gap-4">
           <form onSubmit={handleCreateCanvas} className="flex flex-1 gap-2">
             <input
               type="text"
@@ -284,6 +285,7 @@ function Dashboard() {
             </div>
           ) : (
             <div className="bg-base-200 rounded-2xl border border-base-content/5 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
               <table className="table w-full">
                 <thead>
                   <tr className="border-b border-base-content/5 text-base-content/50">
@@ -389,6 +391,7 @@ function Dashboard() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )
         ) : (
@@ -414,6 +417,7 @@ function Dashboard() {
             )}
           </div>
         )}
+        </div>
       </main>
     </div>
   );
