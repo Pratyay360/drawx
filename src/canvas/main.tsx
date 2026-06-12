@@ -1,9 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Excalidraw, exportToBlob, exportToSvg, MainMenu, WelcomeScreen } from "@excalidraw/excalidraw";
+import {
+  Excalidraw,
+  exportToBlob,
+  exportToSvg,
+  MainMenu,
+  WelcomeScreen,
+} from "@excalidraw/excalidraw";
 import { Icon } from "@iconify/react";
-import "@excalidraw/excalidraw/index.css";
 import { Sidebar } from "../components/sidebar.tsx";
+import "@excalidraw/excalidraw/index.css";
+
 import {
   Canvas as CanvasData,
   loadCanvas,
@@ -94,53 +101,59 @@ export function Canvas() {
   }, [theme]);
 
   // Load canvas data
-  const fetchCanvas = useCallback(async (canvasId: string, isInitialMount: boolean) => {
-    if (isInitialMount) {
-      setLoading(true);
-    } else {
-      setIsChangingCanvas(true);
-    }
+  const fetchCanvas = useCallback(
+    async (canvasId: string, isInitialMount: boolean) => {
+      if (isInitialMount) {
+        setLoading(true);
+      } else {
+        setIsChangingCanvas(true);
+      }
 
-    try {
-      const data = await loadCanvas(canvasId);
-      if (data) {
-        const sanitizedAppState = sanitizeExcalidrawAppState(data.appState);
-        const resolvedElements = data.elements || [];
+      try {
+        const data = await loadCanvas(canvasId);
+        if (data) {
+          const sanitizedAppState = sanitizeExcalidrawAppState(data.appState);
+          const resolvedElements = data.elements || [];
 
-        setCanvasData({ ...data, appState: sanitizedAppState });
-        setElements(resolvedElements);
-        setAppState(sanitizedAppState);
-        setTitleInput(data.title);
+          setCanvasData({ ...data, appState: sanitizedAppState });
+          setElements(resolvedElements);
+          setAppState(sanitizedAppState);
+          setTitleInput(data.title);
 
-        // Update comparison references
-        lastSavedData.current = {
-          elements: resolvedElements.map((e: any) => ({ id: e.id, version: e.version })),
-          appState: getPersistentAppState(sanitizedAppState),
-        };
+          // Update comparison references
+          lastSavedData.current = {
+            elements: resolvedElements.map((e: any) => ({
+              id: e.id,
+              version: e.version,
+            })),
+            appState: getPersistentAppState(sanitizedAppState),
+          };
 
-        // If Excalidraw is already mounted, update the scene smoothly
-        if (excalidrawAPI) {
-          excalidrawAPI.updateScene({
-            elements: resolvedElements,
-            appState: {
-              ...sanitizedAppState,
-              viewBackgroundColor:
-                sanitizedAppState.viewBackgroundColor ||
-                (theme === "dark" ? "#1e1e1e" : "#ffffff"),
-            },
-          });
+          // If Excalidraw is already mounted, update the scene smoothly
+          if (excalidrawAPI) {
+            excalidrawAPI.updateScene({
+              elements: resolvedElements,
+              appState: {
+                ...sanitizedAppState,
+                viewBackgroundColor:
+                  sanitizedAppState.viewBackgroundColor ||
+                  (theme === "dark" ? "#1e1e1e" : "#ffffff"),
+              },
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load canvas:", error);
+      } finally {
+        if (isInitialMount) {
+          setLoading(false);
+        } else {
+          setIsChangingCanvas(false);
         }
       }
-    } catch (error) {
-      console.error("Failed to load canvas:", error);
-    } finally {
-      if (isInitialMount) {
-        setLoading(false);
-      } else {
-        setIsChangingCanvas(false);
-      }
-    }
-  }, [excalidrawAPI, theme]);
+    },
+    [excalidrawAPI, theme],
+  );
 
   // Load canvas data on mount/id change
   useEffect(() => {
@@ -207,8 +220,14 @@ export function Canvas() {
       const savedElementsSig = lastSavedData.current?.elements || [];
       const savedPersistentState = lastSavedData.current?.appState || {};
 
-      const elementsChanged = !areElementsEqual(currentElementsSig, savedElementsSig);
-      const appStateChanged = !areAppStatesEqual(currentPersistentState, savedPersistentState);
+      const elementsChanged = !areElementsEqual(
+        currentElementsSig,
+        savedElementsSig,
+      );
+      const appStateChanged = !areAppStatesEqual(
+        currentPersistentState,
+        savedPersistentState,
+      );
 
       if (elementsChanged || appStateChanged) {
         setElements([...excalidrawElements]);
@@ -298,12 +317,16 @@ export function Canvas() {
           const imported = JSON.parse(event.target?.result as string);
           if (imported && Array.isArray(imported.elements)) {
             if (excalidrawAPI) {
-              const importedAppState = getPersistentAppState(imported.appState || {});
+              const importedAppState = getPersistentAppState(
+                imported.appState || {},
+              );
               excalidrawAPI.updateScene({
                 elements: imported.elements,
                 appState: {
                   ...importedAppState,
-                  viewBackgroundColor: importedAppState.viewBackgroundColor || (theme === "dark" ? "#1e1e1e" : "#ffffff"),
+                  viewBackgroundColor:
+                    importedAppState.viewBackgroundColor ||
+                    (theme === "dark" ? "#1e1e1e" : "#ffffff"),
                 },
               });
 
@@ -357,7 +380,9 @@ export function Canvas() {
         elements: currentElements,
         appState: currentAppState,
         exportPadding: 15,
-        viewBackgroundColor: currentAppState.viewBackgroundColor || (theme === "dark" ? "#1e1e1e" : "#ffffff"),
+        viewBackgroundColor:
+          currentAppState.viewBackgroundColor ||
+          (theme === "dark" ? "#1e1e1e" : "#ffffff"),
       });
       const svgString = new XMLSerializer().serializeToString(svg);
       const blob = new Blob([svgString], { type: "image/svg+xml" });
@@ -379,7 +404,9 @@ export function Canvas() {
         <main className="flex-1 flex items-center justify-center bg-base-200">
           <div className="flex flex-col items-center gap-4">
             <span className="loading loading-spinner loading-lg text-primary animate-spin"></span>
-            <span className="text-sm font-semibold tracking-wide text-base-content/60">Loading canvas board...</span>
+            <span className="text-sm font-semibold tracking-wide text-base-content/60">
+              Loading canvas board...
+            </span>
           </div>
         </main>
       </div>
@@ -556,7 +583,8 @@ export function Canvas() {
                 </WelcomeScreen.Center.Heading>
                 <WelcomeScreen.Center.MenuItemHelp />
                 <div className="text-sm text-base-content/60 max-w-sm mx-auto mt-2 leading-relaxed">
-                  Start sketching, adding shapes, text, or templates. Your drawing is automatically saved!
+                  Start sketching, adding shapes, text, or templates. Your
+                  drawing is automatically saved!
                 </div>
               </WelcomeScreen.Center>
             </WelcomeScreen>
@@ -565,7 +593,9 @@ export function Canvas() {
           {isChangingCanvas && (
             <div className="absolute inset-0 bg-base-100/60 backdrop-blur-[1.5px] z-50 flex flex-col items-center justify-center gap-3 transition-all duration-200">
               <span className="loading loading-spinner loading-lg text-primary"></span>
-              <span className="text-sm font-semibold tracking-wide text-base-content/70">Loading Canvas...</span>
+              <span className="text-sm font-semibold tracking-wide text-base-content/70">
+                Loading Canvas...
+              </span>
             </div>
           )}
         </div>

@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "@excalidraw/excalidraw/index.css";
 .logo.vite:hover {
     filter: drop-shadow(0 0 2em #747bff);
 }
@@ -62,7 +61,6 @@ h1 {
     text-align: center;
 }
 
-
 @media (prefers-color-scheme: dark) {
     :root {
         color: #f6f6f6;
@@ -73,4 +71,3 @@ h1 {
         color: #24c8db;
     }
 }
-
