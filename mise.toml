@@ -1,0 +1,9 @@
+[tools]
+deno = "latest"
+rust = "latest"
+cargo-make = "latest"
+
+[tasks]
+install = { run = "deno install" }
+update = { run = "deno update" }
+build = { run = "deno run tauri build" }
