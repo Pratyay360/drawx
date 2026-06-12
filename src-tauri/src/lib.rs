@@ -151,10 +151,10 @@ fn list_canvases(app: tauri::AppHandle) -> Vec<Canvas> {
 }
 
 #[tauri::command]
-fn create_canvas(app: tauri::AppHandle, title: String) {
+fn create_canvas(app: tauri::AppHandle, title: String) -> Canvas {
     let mut data = load_data(&app);
     let now = now_iso();
-    data.canvases.push(Canvas {
+    let new_canvas = Canvas {
         id: generate_canvas_id(),
         title,
         description: None,
@@ -162,9 +162,12 @@ fn create_canvas(app: tauri::AppHandle, title: String) {
         updated_at: now,
         elements: Vec::new(),
         app_state: serde_json::json!({}),
-    });
+    };
+    data.canvases.push(new_canvas.clone());
     save_data(&app, &data);
+    new_canvas
 }
+
 
 #[tauri::command]
 fn delete_canvas(app: tauri::AppHandle, id: String) {
@@ -194,6 +197,16 @@ fn save_canvas(
     save_data(&app, &data);
 }
 
+#[tauri::command]
+fn update_canvas_title(app: tauri::AppHandle, id: String, title: String) {
+    let mut data = load_data(&app);
+    if let Some(canvas) = data.canvases.iter_mut().find(|c| c.id == id) {
+        canvas.title = title;
+        canvas.updated_at = now_iso();
+    }
+    save_data(&app, &data);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -208,7 +221,9 @@ pub fn run() {
             delete_canvas,
             load_canvas,
             save_canvas,
+            update_canvas_title,
         ])
+
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

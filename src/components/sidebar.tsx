@@ -1,17 +1,17 @@
 import { Icon } from "@iconify/react";
 import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import {
+  Canvas,
+  listCanvases,
+  createCanvas,
+  deleteCanvas,
+} from "../services/tauri.ts";
 
-interface Canvas {
-  id: string;
-  title: string;
-  description?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-function groupCanvasesByDate(canvases: Canvas[]): { Today: Canvas[]; Older: Canvas[] } {
+function groupCanvasesByDate(canvases: Canvas[]): {
+  Today: Canvas[];
+  Older: Canvas[];
+} {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -38,14 +38,21 @@ export function Sidebar() {
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { id: currentCanvasId } = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadCanvases();
+
+    // Listen for canvas updates to sync across components
+    window.addEventListener("canvas-updated", loadCanvases);
+    return () => {
+      window.removeEventListener("canvas-updated", loadCanvases);
+    };
   }, []);
 
   async function loadCanvases() {
     try {
-      const result = await invoke<Canvas[]>("list_canvases");
+      const result = await listCanvases();
       setCanvases(result);
     } catch (error) {
       console.error("Failed to load canvases:", error);
@@ -55,8 +62,9 @@ export function Sidebar() {
   async function handleCreateCanvas() {
     setIsCreating(true);
     try {
-      await invoke("create_canvas", { title: "Untitled Canvas" });
-      await loadCanvases();
+      const newCanvas = await createCanvas("Untitled Canvas");
+      window.dispatchEvent(new Event("canvas-updated"));
+      navigate(`/canvas/${newCanvas.id}`);
     } catch (error) {
       console.error("Failed to create canvas:", error);
     } finally {
@@ -70,8 +78,13 @@ export function Sidebar() {
 
     setDeletingId(canvasId);
     try {
-      await invoke("delete_canvas", { id: canvasId });
-      await loadCanvases();
+      await deleteCanvas(canvasId);
+      window.dispatchEvent(new Event("canvas-updated"));
+
+      // If we deleted the canvas we are currently viewing, navigate to dashboard
+      if (canvasId === currentCanvasId) {
+        navigate("/");
+      }
     } catch (error) {
       console.error("Failed to delete canvas:", error);
     } finally {
@@ -201,9 +214,15 @@ export function Sidebar() {
 
           {canvases.length === 0 && (
             <div className="text-center py-8 px-4 text-xs text-base-content/50 space-y-2">
-              <Icon icon="lucide:file-question" className="w-8 h-8 mx-auto opacity-40" />
+              <Icon
+                icon="lucide:file-question"
+                className="w-8 h-8 mx-auto opacity-40"
+              />
               <p>No drawings saved yet.</p>
-              <button onClick={handleCreateCanvas} className="btn btn-xs btn-primary rounded-lg">
+              <button
+                onClick={handleCreateCanvas}
+                className="btn btn-xs btn-primary rounded-lg"
+              >
                 Create One
               </button>
             </div>
