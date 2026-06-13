@@ -37,12 +37,8 @@ export function Sidebar() {
 
   useEffect(() => {
     loadCanvases();
-
-    // Listen for canvas updates to sync across components
     window.addEventListener("canvas-updated", loadCanvases);
-    return () => {
-      window.removeEventListener("canvas-updated", loadCanvases);
-    };
+    return () => window.removeEventListener("canvas-updated", loadCanvases);
   }, []);
 
   async function loadCanvases() {
@@ -82,8 +78,6 @@ export function Sidebar() {
     try {
       await deleteCanvas(canvasId);
       window.dispatchEvent(new Event("canvas-updated"));
-
-      // If we deleted the canvas we are currently viewing, navigate to dashboard
       if (canvasId === currentCanvasId) {
         navigate("/");
       }
@@ -99,69 +93,96 @@ export function Sidebar() {
   return (
     <>
       <aside
-        className="flex flex-col h-full bg-base-300 border-r border-base-content/10 transition-all duration-300 relative z-30 shrink-0 text-base-content select-none overflow-hidden"
-        style={{ width: sidebarOpen ? "256px" : "0" }}
+        className="flex flex-col h-full transition-all duration-200 relative z-30 shrink-0 select-none overflow-hidden"
+        style={{
+          width: sidebarOpen ? "240px" : "0",
+          background: "var(--sidebar-bg)",
+          borderRight: "1px solid var(--sidebar-border)",
+          color: "var(--color-text-primary)",
+        }}
       >
-        <div className="p-4 flex items-center justify-between border-b border-base-content/10 bg-base-300/40">
+        <div
+          className="p-3 flex items-center justify-between"
+          style={{ borderBottom: "1px solid var(--sidebar-border)" }}
+        >
           <Link
             to="/"
-            className="flex items-center gap-2 font-black tracking-tight text-lg text-primary hover:opacity-90"
+            className="flex items-center gap-2 text-sm font-semibold"
+            style={{ color: "var(--color-text-primary)" }}
           >
-            <div className="grid h-8 w-8 place-items-center rounded-xl bg-primary text-primary-content shadow-md shadow-primary/20">
-              <Icon icon="lucide:palette" className="h-4 w-4" />
-            </div>
+            <Icon
+              icon="lucide:pen-tool"
+              className="w-4 h-4"
+              style={{ color: "var(--color-primary)" }}
+            />
             <span>Drawx</span>
           </Link>
           <button
             onClick={handleCreateCanvas}
             disabled={isCreating}
-            className="btn btn-ghost btn-sm btn-square hover:bg-base-200/50 rounded-lg text-base-content/80 hover:text-base-content"
-            title="Create new canvas"
+            className="p-1 rounded"
+            style={{ color: "var(--color-text-muted)" }}
+            title="New canvas"
             aria-label="New canvas"
           >
             {isCreating ? (
               <span className="loading loading-spinner loading-xs"></span>
             ) : (
-              <Icon icon="lucide:square-pen" className="w-5 h-5" />
+              <Icon icon="lucide:plus" className="w-4 h-4" />
             )}
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-4">
+        <div className="flex-1 overflow-y-auto py-2">
           {grouped.Today.length > 0 && (
-            <div>
-              <h3 className="px-3 text-xs font-bold uppercase tracking-wider text-base-content/40 mb-1.5">
+            <div className="mb-2">
+              <h3
+                className="px-4 py-1 text-[10px] font-medium uppercase tracking-wider"
+                style={{ color: "var(--color-text-disabled)" }}
+              >
                 Today
               </h3>
-              <ul className="space-y-0.5">
+              <ul>
                 {grouped.Today.map((canvas) => (
                   <li key={canvas.id}>
                     <Link
                       to={`/canvas/${canvas.id}`}
-                      className={`group flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all hover:bg-base-200/60 ${
-                        canvas.id === currentCanvasId
-                          ? "bg-primary/10 text-primary hover:bg-primary/15"
-                          : "text-base-content/75 hover:text-base-content"
-                      }`}
+                      className="group flex items-center justify-between px-4 py-1.5 text-sm"
+                      style={{
+                        background:
+                          canvas.id === currentCanvasId
+                            ? "var(--sidebar-item-active)"
+                            : "transparent",
+                        color:
+                          canvas.id === currentCanvasId
+                            ? "var(--color-text-primary)"
+                            : "var(--color-text-secondary)",
+                        fontWeight: canvas.id === currentCanvasId ? 500 : 400,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (canvas.id !== currentCanvasId) {
+                          e.currentTarget.style.background = "var(--sidebar-item-hover)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (canvas.id !== currentCanvasId) {
+                          e.currentTarget.style.background = "transparent";
+                        }
+                      }}
                     >
-                      <div className="flex items-center gap-2.5 truncate">
-                        <Icon
-                          icon="lucide:file-text"
-                          className="w-4 h-4 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
-                        />
-                        <span className="truncate">{canvas.title}</span>
-                      </div>
+                      <span className="truncate">{canvas.title}</span>
                       <button
                         onClick={(e) => handleDeleteCanvas(canvas.id, e)}
                         disabled={deletingId === canvas.id}
-                        className="opacity-0 group-hover:opacity-100 btn btn-ghost btn-xs btn-square hover:bg-error/15 hover:text-error rounded-lg transition-all"
-                        title="Delete canvas"
+                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded transition-opacity"
+                        style={{ color: "var(--color-danger)" }}
+                        title="Delete"
                         aria-label="Delete canvas"
                       >
                         {deletingId === canvas.id ? (
                           <span className="loading loading-spinner loading-xs"></span>
                         ) : (
-                          <Icon icon="lucide:trash-2" className="w-3.5 h-3.5" />
+                          <Icon icon="lucide:trash-2" className="w-3 h-3" />
                         )}
                       </button>
                     </Link>
@@ -172,39 +193,54 @@ export function Sidebar() {
           )}
 
           {grouped.Older.length > 0 && (
-            <div>
-              <h3 className="px-3 text-xs font-bold uppercase tracking-wider text-base-content/40 mb-1.5">
+            <div className="mb-2">
+              <h3
+                className="px-4 py-1 text-[10px] font-medium uppercase tracking-wider"
+                style={{ color: "var(--color-text-disabled)" }}
+              >
                 Older
               </h3>
-              <ul className="space-y-0.5">
+              <ul>
                 {grouped.Older.map((canvas) => (
                   <li key={canvas.id}>
                     <Link
                       to={`/canvas/${canvas.id}`}
-                      className={`group flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all hover:bg-base-200/60 ${
-                        canvas.id === currentCanvasId
-                          ? "bg-primary/10 text-primary hover:bg-primary/15"
-                          : "text-base-content/75 hover:text-base-content"
-                      }`}
+                      className="group flex items-center justify-between px-4 py-1.5 text-sm"
+                      style={{
+                        background:
+                          canvas.id === currentCanvasId
+                            ? "var(--sidebar-item-active)"
+                            : "transparent",
+                        color:
+                          canvas.id === currentCanvasId
+                            ? "var(--color-text-primary)"
+                            : "var(--color-text-secondary)",
+                        fontWeight: canvas.id === currentCanvasId ? 500 : 400,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (canvas.id !== currentCanvasId) {
+                          e.currentTarget.style.background = "var(--sidebar-item-hover)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (canvas.id !== currentCanvasId) {
+                          e.currentTarget.style.background = "transparent";
+                        }
+                      }}
                     >
-                      <div className="flex items-center gap-2.5 truncate">
-                        <Icon
-                          icon="lucide:file-text"
-                          className="w-4 h-4 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
-                        />
-                        <span className="truncate">{canvas.title}</span>
-                      </div>
+                      <span className="truncate">{canvas.title}</span>
                       <button
                         onClick={(e) => handleDeleteCanvas(canvas.id, e)}
                         disabled={deletingId === canvas.id}
-                        className="opacity-0 group-hover:opacity-100 btn btn-ghost btn-xs btn-square hover:bg-error/15 hover:text-error rounded-lg transition-all"
-                        title="Delete canvas"
+                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded transition-opacity"
+                        style={{ color: "var(--color-danger)" }}
+                        title="Delete"
                         aria-label="Delete canvas"
                       >
                         {deletingId === canvas.id ? (
                           <span className="loading loading-spinner loading-xs"></span>
                         ) : (
-                          <Icon icon="lucide:trash-2" className="w-3.5 h-3.5" />
+                          <Icon icon="lucide:trash-2" className="w-3 h-3" />
                         )}
                       </button>
                     </Link>
@@ -215,24 +251,31 @@ export function Sidebar() {
           )}
 
           {canvases.length === 0 && (
-            <div className="text-center py-8 px-4 text-xs text-base-content/50 space-y-2">
-              <Icon icon="lucide:file-question" className="w-8 h-8 mx-auto opacity-40" />
-              <p>No drawings saved yet.</p>
-              <button onClick={handleCreateCanvas} className="btn btn-xs btn-primary rounded-lg">
-                Create One
+            <div
+              className="text-center py-10 px-4 text-xs"
+              style={{ color: "var(--color-text-disabled)" }}
+            >
+              <p className="mb-2">No drawings yet</p>
+              <button
+                onClick={handleCreateCanvas}
+                className="hover:underline"
+                style={{ color: "var(--color-primary)" }}
+              >
+                Create one
               </button>
             </div>
           )}
         </div>
 
-        <div className="p-3 border-t border-base-content/10">
+        <div className="p-2" style={{ borderTop: "1px solid var(--sidebar-border)" }}>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="btn btn-ghost btn-xs btn-square hover:bg-base-200/50 rounded-lg text-base-content/60 w-full"
+            className="w-full p-1 rounded"
+            style={{ color: "var(--color-text-disabled)" }}
             title="Close sidebar"
             aria-label="Close sidebar"
           >
-            <Icon icon="lucide:chevron-left" className="w-4 h-4" />
+            <Icon icon="lucide:panel-left-close" className="w-4 h-4 mx-auto" />
           </button>
         </div>
       </aside>
@@ -240,11 +283,18 @@ export function Sidebar() {
       {!sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(true)}
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-30 btn btn-ghost btn-sm btn-square rounded-r-xl rounded-l-none bg-base-300 border-r border-t border-b border-base-content/10 shadow-md hover:bg-base-200 text-base-content/60 hover:text-base-content"
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-30 p-1.5 rounded-r shadow-sm"
+          style={{
+            background: "var(--sidebar-bg)",
+            borderRight: "1px solid var(--sidebar-border)",
+            borderTop: "1px solid var(--sidebar-border)",
+            borderBottom: "1px solid var(--sidebar-border)",
+            color: "var(--color-text-muted)",
+          }}
           title="Open sidebar"
           aria-label="Open sidebar"
         >
-          <Icon icon="lucide:chevron-right" className="w-4 h-4" />
+          <Icon icon="lucide:panel-left-open" className="w-4 h-4" />
         </button>
       )}
     </>

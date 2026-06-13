@@ -2,6 +2,7 @@
 deno = "latest"
 rust = "latest"
 cargo-make = "latest"
+rust-analyzer = "latest"
 
 [tasks]
 install = { run = "deno install" }

@@ -366,13 +366,22 @@ export function Canvas() {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-base-100 text-base-content font-sans">
+      <div
+        className="flex h-screen font-sans"
+        style={{ background: "var(--color-surface-low)", color: "var(--color-text-primary)" }}
+      >
         <Sidebar />
-        <main className="flex-1 flex items-center justify-center bg-base-200">
-          <div className="flex flex-col items-center gap-4">
-            <span className="loading loading-spinner loading-lg text-primary animate-spin"></span>
-            <span className="text-sm font-semibold tracking-wide text-base-content/60">
-              Loading canvas board...
+        <main
+          className="flex-1 flex items-center justify-center"
+          style={{ background: "var(--color-surface-mid)" }}
+        >
+          <div className="flex flex-col items-center gap-3">
+            <span
+              className="loading loading-spinner loading-md"
+              style={{ color: "var(--color-text-muted)" }}
+            ></span>
+            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              Loading...
             </span>
           </div>
         </main>
@@ -381,98 +390,95 @@ export function Canvas() {
   }
 
   return (
-    <div className="flex h-screen bg-base-100 text-base-content font-sans overflow-hidden">
+    <div
+      className="flex h-screen font-sans overflow-hidden"
+      style={{ background: "var(--color-surface-low)", color: "var(--color-text-primary)" }}
+    >
       <Sidebar />
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        {/* Header toolbar */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-base-content/10 bg-base-200 z-20 shadow-sm shrink-0">
-          <div className="flex items-center gap-3 max-w-[60%]">
+        <div
+          className="flex items-center justify-between px-3 py-1.5 z-20 shrink-0"
+          style={{
+            borderBottom: "1px solid var(--color-border-subtle)",
+            background: "var(--color-surface-mid)",
+          }}
+        >
+          <div className="flex items-center gap-2 max-w-[60%]">
             <Link
               to="/"
-              className="btn btn-ghost btn-sm rounded-lg hover:bg-base-300 gap-1.5 shrink-0"
-              title="Go to Dashboard"
+              className="p-1 rounded"
+              style={{ color: "var(--color-text-muted)" }}
+              title="Back to workspace"
             >
               <Icon icon="lucide:arrow-left" className="w-4 h-4" />
-              <span>Workspace</span>
             </Link>
 
-            <div className="h-4 w-px bg-base-content/10 shrink-0" />
+            <div
+              className="w-px h-4 shrink-0"
+              style={{ background: "var(--color-border-subtle)" }}
+            />
 
-            {/* Editable title */}
             {isEditingTitle ? (
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="text"
-                  value={titleInput}
-                  onChange={(e) => setTitleInput(e.target.value)}
-                  onKeyDown={handleTitleKeyDown}
-                  onBlur={handleTitleSave}
-                  className="input input-sm input-bordered rounded-lg w-48 font-bold focus:outline-none focus:border-primary"
-                  autoFocus
-                />
-              </div>
+              <input
+                type="text"
+                value={titleInput}
+                onChange={(e) => setTitleInput(e.target.value)}
+                onKeyDown={handleTitleKeyDown}
+                onBlur={handleTitleSave}
+                className="px-1.5 py-0.5 text-sm font-medium rounded border outline-none"
+                style={{
+                  background: "var(--input-bg)",
+                  borderColor: "var(--input-border-focus)",
+                  color: "var(--input-text)",
+                }}
+                autoFocus
+              />
             ) : (
-              <div
+              <button
                 onClick={() => setIsEditingTitle(true)}
-                className="flex items-center gap-2 cursor-pointer group hover:bg-base-300/60 px-2 py-1 rounded-lg transition-colors truncate"
+                className="flex items-center gap-1.5 px-1.5 py-0.5 rounded text-sm font-medium truncate group"
+                style={{ color: "var(--color-text-primary)" }}
                 title="Click to rename"
               >
-                <h2 className="text-sm font-bold text-base-content truncate">
-                  {canvasData?.title || "Untitled"}
-                </h2>
+                <span className="truncate">{canvasData?.title || "Untitled"}</span>
                 <Icon
                   icon="lucide:pencil"
-                  className="w-3.5 h-3.5 text-base-content/40 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  style={{ color: "var(--color-text-disabled)" }}
                 />
-              </div>
+              </button>
             )}
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Save Status Badge */}
-            <div className="mr-2 hidden sm:block">
-              {saveStatus === "saving" && (
-                <div className="flex items-center gap-1.5 text-xs text-info font-medium bg-info/10 px-2.5 py-1 rounded-full">
-                  <span className="loading loading-spinner loading-xs scale-75"></span>
-                  <span>Saving...</span>
-                </div>
-              )}
-              {saveStatus === "saved" && (
-                <div className="flex items-center gap-1 text-xs text-success font-medium bg-success/10 px-2.5 py-1 rounded-full">
-                  <Icon icon="lucide:cloud-lightning" className="w-3.5 h-3.5" />
-                  <span>Saved</span>
-                </div>
-              )}
-              {saveStatus === "unsaved" && (
-                <div className="flex items-center gap-1 text-xs text-warning font-medium bg-warning/10 px-2.5 py-1 rounded-full">
-                  <Icon icon="lucide:cloud-off" className="w-3.5 h-3.5 animate-pulse" />
-                  <span>Unsaved changes</span>
-                </div>
-              )}
-            </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span
+              className="text-xs mr-1 hidden sm:inline"
+              style={{ color: "var(--color-text-disabled)" }}
+            >
+              {saveStatus === "saving" && "Saving..."}
+              {saveStatus === "saved" && "Saved"}
+              {saveStatus === "unsaved" && "Unsaved"}
+            </span>
 
-            {/* Save Button */}
             <button
               onClick={handleManualSave}
               disabled={saveStatus === "saving" || saveStatus === "saved"}
-              className={`btn btn-sm rounded-lg ${saveStatus === "unsaved" ? "btn-warning" : "btn-outline"} px-3`}
-              title="Force Save to Backend"
+              className="p-1.5 rounded disabled:opacity-30"
+              style={{ color: "var(--color-text-muted)" }}
+              title="Save"
             >
               {saveStatus === "saving" ? (
                 <span className="loading loading-spinner loading-xs"></span>
               ) : (
-                <>
-                  <Icon icon="lucide:save" className="w-4 h-4" />
-                  <span className="hidden sm:inline">Save</span>
-                </>
+                <Icon icon="lucide:save" className="w-4 h-4" />
               )}
             </button>
 
-            {/* Theme Toggle Button */}
             <button
               onClick={handleToggleTheme}
-              className="btn btn-sm btn-ghost btn-square rounded-lg hover:bg-base-300 text-base-content/75 hover:text-base-content"
-              title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+              className="p-1.5 rounded"
+              style={{ color: "var(--color-text-muted)" }}
+              title={theme === "light" ? "Dark mode" : "Light mode"}
             >
               <Icon icon={theme === "light" ? "lucide:moon" : "lucide:sun"} className="w-4 h-4" />
             </button>
@@ -530,26 +536,29 @@ export function Canvas() {
             <WelcomeScreen>
               <WelcomeScreen.Center>
                 <WelcomeScreen.Center.Logo>
-                  <div className="grid h-16 w-16 place-items-center rounded-2xl bg-primary text-primary-content shadow-md shadow-primary/20 mx-auto mb-2">
-                    <Icon icon="lucide:palette" className="h-8 w-8" />
-                  </div>
+                  <Icon icon="lucide:pen-tool" className="w-8 h-8 text-primary mx-auto mb-1" />
                 </WelcomeScreen.Center.Logo>
-                <WelcomeScreen.Center.Heading>Welcome to Drawx!</WelcomeScreen.Center.Heading>
+                <WelcomeScreen.Center.Heading>Drawx</WelcomeScreen.Center.Heading>
                 <WelcomeScreen.Center.MenuItemHelp />
-                <div className="text-sm text-base-content/60 max-w-sm mx-auto mt-2 leading-relaxed">
-                  Start sketching, adding shapes, text, or templates. Your drawing is automatically
-                  saved!
+                <div
+                  className="text-xs max-w-xs mx-auto mt-2"
+                  style={{ color: "var(--color-text-muted)" }}
+                >
+                  Sketch, add shapes, or use templates. Changes save automatically.
                 </div>
               </WelcomeScreen.Center>
             </WelcomeScreen>
           </Excalidraw>
 
           {isChangingCanvas && (
-            <div className="absolute inset-0 bg-base-100/60 backdrop-blur-[1.5px] z-50 flex flex-col items-center justify-center gap-3 transition-all duration-200">
-              <span className="loading loading-spinner loading-lg text-primary"></span>
-              <span className="text-sm font-semibold tracking-wide text-base-content/70">
-                Loading Canvas...
-              </span>
+            <div
+              className="absolute inset-0 z-50 flex items-center justify-center"
+              style={{ background: "var(--color-surface-low)", opacity: 0.8 }}
+            >
+              <span
+                className="loading loading-spinner loading-md"
+                style={{ color: "var(--color-text-muted)" }}
+              ></span>
             </div>
           )}
         </div>

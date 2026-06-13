@@ -1,9 +1,10 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 
 type Theme = "light" | "dark";
 
 interface ThemeContextValue {
   theme: Theme;
+  setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
 }
 
@@ -15,24 +16,48 @@ function getInitialTheme(): Theme {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
+function applyTheme(theme: Theme) {
+  const root = document.documentElement;
+  root.classList.add("theme-transitioning");
+
+  if (theme === "dark") {
+    root.classList.add("theme-dark");
+    root.style.colorScheme = "dark";
+  } else {
+    root.classList.remove("theme-dark");
+    root.style.colorScheme = "light";
+  }
+
+  localStorage.setItem("drawx_theme", theme);
+
+  // Remove transition class after animation completes
+  setTimeout(() => {
+    root.classList.remove("theme-transitioning");
+  }, 250);
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
 
+  // Apply theme on mount
   useEffect(() => {
-    localStorage.setItem("drawx_theme", theme);
-    document.documentElement.setAttribute("data-theme", theme);
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [theme]);
+    applyTheme(theme);
+  }, []);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
-  };
+  const setTheme = useCallback((newTheme: Theme) => {
+    setThemeState(newTheme);
+    applyTheme(newTheme);
+  }, []);
 
-  return <ThemeContext value={{ theme, toggleTheme }}>{children}</ThemeContext>;
+  const toggleTheme = useCallback(() => {
+    setThemeState((prev) => {
+      const next = prev === "light" ? "dark" : "light";
+      applyTheme(next);
+      return next;
+    });
+  }, []);
+
+  return <ThemeContext value={{ theme, setTheme, toggleTheme }}>{children}</ThemeContext>;
 }
 
 export function useTheme() {
