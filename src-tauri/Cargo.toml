@@ -24,5 +24,4 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rusqlite = { version = "0.31", features = ["bundled"] }
 yew = { git = "https://github.com/yewstack/yew/", features = ["csr"] }
-tauri-plugin-theme = "1.0.0"
 
