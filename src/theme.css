@@ -1,0 +1,179 @@
+/*
+ * Drawx Theme System
+ * Modeled after Excalidraw's CSS custom properties approach.
+ * Light theme is default; dark theme overrides via .theme-dark class.
+ */
+
+:root {
+  /* Surfaces */
+  --color-surface-lowest: #ffffff;
+  --color-surface-low: #f5f5f5;
+  --color-surface-mid: #eeeeee;
+  --color-surface-high: #e0e0e0;
+  --color-on-surface: #1b1b1f;
+
+  /* Brand */
+  --color-primary: #6965db;
+  --color-primary-hover: #5753d0;
+  --color-primary-active: #4440bf;
+  --color-primary-container: #e0dfff;
+  --color-on-primary-container: #030064;
+
+  /* Text */
+  --color-text-primary: #1b1b1f;
+  --color-text-secondary: #49454f;
+  --color-text-muted: #79747e;
+  --color-text-disabled: #cac4d0;
+
+  /* Borders */
+  --color-border: #c5c5d0;
+  --color-border-subtle: #e0e0e0;
+  --color-outline: #767680;
+  --color-outline-variant: #c5c5d0;
+
+  /* Interactive */
+  --color-hover: rgba(0, 0, 0, 0.04);
+  --color-active: rgba(0, 0, 0, 0.08);
+  --color-focus-ring: #6965db;
+
+  /* Semantic: Success */
+  --color-success: #cafccc;
+  --color-success-text: #268029;
+  --color-success-contrast: #65bb6a;
+
+  /* Semantic: Warning */
+  --color-warning: #fde68a;
+  --color-warning-text: #92400e;
+
+  /* Semantic: Danger */
+  --color-danger: #db6965;
+  --color-danger-text: #700000;
+  --color-danger-container: #ffdad6;
+
+  /* Semantic: Info */
+  --color-info: #d4e4ff;
+  --color-info-text: #1e3a5f;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-modal:
+    0 100px 80px rgba(0, 0, 0, 0.07), 0 41.7776px 33.4221px rgba(0, 0, 0, 0.0503198),
+    0 22.3363px 17.869px rgba(0, 0, 0, 0.0417275), 0 12.5216px 10.0172px rgba(0, 0, 0, 0.035),
+    0 6.6501px 5.32008px rgba(0, 0, 0, 0.0282725), 0 2.76726px 2.21381px rgba(0, 0, 0, 0.0196802);
+
+  /* Sidebar */
+  --sidebar-bg: var(--color-surface-low);
+  --sidebar-border: var(--color-border-subtle);
+  --sidebar-item-hover: var(--color-hover);
+  --sidebar-item-active: var(--color-active);
+
+  /* Input */
+  --input-bg: var(--color-surface-lowest);
+  --input-border: var(--color-border);
+  --input-border-focus: var(--color-primary);
+  --input-text: var(--color-text-primary);
+  --input-placeholder: var(--color-text-muted);
+
+  /* Button */
+  --btn-bg: var(--color-surface-mid);
+  --btn-bg-hover: var(--color-surface-high);
+  --btn-text: var(--color-text-primary);
+  --btn-border: var(--color-border);
+
+  /* Excalidraw theme integration */
+  --excalidraw-theme-filter: none;
+}
+
+html {
+  color-scheme: light;
+}
+
+html.theme-dark {
+  color-scheme: dark;
+}
+
+html.theme-dark {
+  /* Surfaces */
+  --color-surface-lowest: #121212;
+  --color-surface-low: #1e1e1e;
+  --color-surface-mid: #252525;
+  --color-surface-high: #2e2d39;
+  --color-on-surface: #e3e3e8;
+
+  /* Brand */
+  --color-primary: #a8a5ff;
+  --color-primary-hover: #bbb8ff;
+  --color-primary-active: #d0ccff;
+  --color-primary-container: #403e6a;
+  --color-on-primary-container: #e0dfff;
+
+  /* Text */
+  --color-text-primary: #e3e3e8;
+  --color-text-secondary: #cac4d0;
+  --color-text-muted: #938f99;
+  --color-text-disabled: #49454f;
+
+  /* Borders */
+  --color-border: #46464f;
+  --color-border-subtle: #2e2e35;
+  --color-outline: #8e8d9c;
+  --color-outline-variant: #46464f;
+
+  /* Interactive */
+  --color-hover: rgba(255, 255, 255, 0.06);
+  --color-active: rgba(255, 255, 255, 0.1);
+  --color-focus-ring: #a8a5ff;
+
+  /* Semantic: Success */
+  --color-success: #2d5a2d;
+  --color-success-text: #b2f0b5;
+  --color-success-contrast: #6edf74;
+
+  /* Semantic: Warning */
+  --color-warning: #3d2e00;
+  --color-warning-text: #fde68a;
+
+  /* Semantic: Danger */
+  --color-danger: #ffa8a5;
+  --color-danger-text: #fbcbcc;
+  --color-danger-container: #672120;
+
+  /* Semantic: Info */
+  --color-info: #1e3a5f;
+  --color-info-text: #d4e4ff;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  --shadow-modal:
+    0 100px 80px rgba(0, 0, 0, 0.3), 0 41.7776px 33.4221px rgba(0, 0, 0, 0.25),
+    0 22.3363px 17.869px rgba(0, 0, 0, 0.2), 0 12.5216px 10.0172px rgba(0, 0, 0, 0.18),
+    0 6.6501px 5.32008px rgba(0, 0, 0, 0.15), 0 2.76726px 2.21381px rgba(0, 0, 0, 0.1);
+
+  /* Sidebar */
+  --sidebar-bg: var(--color-surface-low);
+  --sidebar-border: var(--color-border-subtle);
+  --sidebar-item-hover: var(--color-hover);
+  --sidebar-item-active: var(--color-active);
+
+  /* Input */
+  --input-bg: var(--color-surface-lowest);
+  --input-border: var(--color-border);
+  --input-border-focus: var(--color-primary);
+  --input-text: var(--color-text-primary);
+  --input-placeholder: var(--color-text-muted);
+
+  /* Button */
+  --btn-bg: var(--color-surface-mid);
+  --btn-bg-hover: var(--color-surface-high);
+  --btn-text: var(--color-text-primary);
+  --btn-border: var(--color-border);
+
+  /* Excalidraw theme integration */
+  --excalidraw-theme-filter: invert(93%) hue-rotate(180deg);
+}
