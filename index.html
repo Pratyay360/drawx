@@ -12,6 +12,14 @@
   </head>
 
   <body>
+    <script>
+      (function () {
+        var t = localStorage.getItem("drawx_theme");
+        if (!t) t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", t);
+        if (t === "dark") document.documentElement.classList.add("dark");
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -1,12 +1,7 @@
 import { Icon } from "@iconify/react";
 import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import {
-  Canvas,
-  listCanvases,
-  createCanvas,
-  deleteCanvas,
-} from "../services/tauri.ts";
+import { Canvas, listCanvases, createCanvas, deleteCanvas } from "../services/tauri.ts";
 
 function groupCanvasesByDate(canvases: Canvas[]): {
   Today: Canvas[];
@@ -62,7 +57,14 @@ export function Sidebar() {
   async function handleCreateCanvas() {
     setIsCreating(true);
     try {
-      const newCanvas = await createCanvas("Untitled Canvas");
+      const now = new Date();
+      const title = now.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const newCanvas = await createCanvas(title);
       window.dispatchEvent(new Event("canvas-updated"));
       navigate(`/canvas/${newCanvas.id}`);
     } catch (error) {
@@ -214,15 +216,9 @@ export function Sidebar() {
 
           {canvases.length === 0 && (
             <div className="text-center py-8 px-4 text-xs text-base-content/50 space-y-2">
-              <Icon
-                icon="lucide:file-question"
-                className="w-8 h-8 mx-auto opacity-40"
-              />
+              <Icon icon="lucide:file-question" className="w-8 h-8 mx-auto opacity-40" />
               <p>No drawings saved yet.</p>
-              <button
-                onClick={handleCreateCanvas}
-                className="btn btn-xs btn-primary rounded-lg"
-              >
+              <button onClick={handleCreateCanvas} className="btn btn-xs btn-primary rounded-lg">
                 Create One
               </button>
             </div>

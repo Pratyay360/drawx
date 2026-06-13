@@ -9,6 +9,7 @@ import {
 } from "@excalidraw/excalidraw";
 import { Icon } from "@iconify/react";
 import { Sidebar } from "../components/sidebar.tsx";
+import { useTheme } from "../theme-context.tsx";
 import "@excalidraw/excalidraw/index.css";
 
 import {
@@ -60,24 +61,14 @@ export function Canvas() {
   const [elements, setElements] = useState<any[]>([]);
   const [appState, setAppState] = useState<any>({});
   const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
+  const { theme, toggleTheme } = useTheme();
 
   // Save status: "saved" | "unsaved" | "saving"
-  const [saveStatus, setSaveStatus] = useState<"saved" | "unsaved" | "saving">(
-    "saved",
-  );
+  const [saveStatus, setSaveStatus] = useState<"saved" | "unsaved" | "saving">("saved");
 
   // Title editing state
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState("");
-
-  // Theme state
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    const saved = localStorage.getItem("drawx_theme");
-    if (saved === "light" || saved === "dark") return saved;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
-  });
 
   const lastSavedData = useRef<{
     elements: { id: string; version: number }[];
@@ -88,17 +79,6 @@ export function Canvas() {
   });
 
   const isSavingRef = useRef(false);
-
-  // Sync theme to document element
-  useEffect(() => {
-    localStorage.setItem("drawx_theme", theme);
-    document.documentElement.setAttribute("data-theme", theme);
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [theme]);
 
   // Load canvas data
   const fetchCanvas = useCallback(
@@ -203,11 +183,7 @@ export function Canvas() {
 
   // Handle Excalidraw changes
   const handleExcalidrawChange = useCallback(
-    (
-      excalidrawElements: readonly any[],
-      excalidrawAppState: any,
-      _files: any,
-    ) => {
+    (excalidrawElements: readonly any[], excalidrawAppState: any, _files: any) => {
       // Avoid triggering changes if loading, changing canvas, or elements/state aren't initialized
       if (loading || isChangingCanvas) return;
 
@@ -220,14 +196,8 @@ export function Canvas() {
       const savedElementsSig = lastSavedData.current?.elements || [];
       const savedPersistentState = lastSavedData.current?.appState || {};
 
-      const elementsChanged = !areElementsEqual(
-        currentElementsSig,
-        savedElementsSig,
-      );
-      const appStateChanged = !areAppStatesEqual(
-        currentPersistentState,
-        savedPersistentState,
-      );
+      const elementsChanged = !areElementsEqual(currentElementsSig, savedElementsSig);
+      const appStateChanged = !areAppStatesEqual(currentPersistentState, savedPersistentState);
 
       if (elementsChanged || appStateChanged) {
         setElements([...excalidrawElements]);
@@ -268,10 +238,10 @@ export function Canvas() {
     }
   }
 
-  // Toggle theme helper
-  const toggleTheme = () => {
+  // Toggle theme and sync to Excalidraw
+  const handleToggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
+    toggleTheme();
     if (excalidrawAPI) {
       excalidrawAPI.updateScene({
         appState: {
@@ -317,9 +287,7 @@ export function Canvas() {
           const imported = JSON.parse(event.target?.result as string);
           if (imported && Array.isArray(imported.elements)) {
             if (excalidrawAPI) {
-              const importedAppState = getPersistentAppState(
-                imported.appState || {},
-              );
+              const importedAppState = getPersistentAppState(imported.appState || {});
               excalidrawAPI.updateScene({
                 elements: imported.elements,
                 appState: {
@@ -381,8 +349,7 @@ export function Canvas() {
         appState: currentAppState,
         exportPadding: 15,
         viewBackgroundColor:
-          currentAppState.viewBackgroundColor ||
-          (theme === "dark" ? "#1e1e1e" : "#ffffff"),
+          currentAppState.viewBackgroundColor || (theme === "dark" ? "#1e1e1e" : "#ffffff"),
       });
       const svgString = new XMLSerializer().serializeToString(svg);
       const blob = new Blob([svgString], { type: "image/svg+xml" });
@@ -451,7 +418,7 @@ export function Canvas() {
                 title="Click to rename"
               >
                 <h2 className="text-sm font-bold text-base-content truncate">
-                  {canvasData?.title || "Untitled Canvas"}
+                  {canvasData?.title || "Untitled"}
                 </h2>
                 <Icon
                   icon="lucide:pencil"
@@ -478,10 +445,7 @@ export function Canvas() {
               )}
               {saveStatus === "unsaved" && (
                 <div className="flex items-center gap-1 text-xs text-warning font-medium bg-warning/10 px-2.5 py-1 rounded-full">
-                  <Icon
-                    icon="lucide:cloud-off"
-                    className="w-3.5 h-3.5 animate-pulse"
-                  />
+                  <Icon icon="lucide:cloud-off" className="w-3.5 h-3.5 animate-pulse" />
                   <span>Unsaved changes</span>
                 </div>
               )}
@@ -506,18 +470,11 @@ export function Canvas() {
 
             {/* Theme Toggle Button */}
             <button
-              onClick={toggleTheme}
+              onClick={handleToggleTheme}
               className="btn btn-sm btn-ghost btn-square rounded-lg hover:bg-base-300 text-base-content/75 hover:text-base-content"
-              title={
-                theme === "light"
-                  ? "Switch to Dark Mode"
-                  : "Switch to Light Mode"
-              }
+              title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
             >
-              <Icon
-                icon={theme === "light" ? "lucide:moon" : "lucide:sun"}
-                className="w-4 h-4"
-              />
+              <Icon icon={theme === "light" ? "lucide:moon" : "lucide:sun"} className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -533,8 +490,7 @@ export function Canvas() {
                 ...appState,
                 // Make background adapt to theme if not already set
                 viewBackgroundColor:
-                  appState.viewBackgroundColor ||
-                  (theme === "dark" ? "#1e1e1e" : "#ffffff"),
+                  appState.viewBackgroundColor || (theme === "dark" ? "#1e1e1e" : "#ffffff"),
               },
             }}
             onChange={handleExcalidrawChange}
@@ -578,13 +534,11 @@ export function Canvas() {
                     <Icon icon="lucide:palette" className="h-8 w-8" />
                   </div>
                 </WelcomeScreen.Center.Logo>
-                <WelcomeScreen.Center.Heading>
-                  Welcome to Drawx!
-                </WelcomeScreen.Center.Heading>
+                <WelcomeScreen.Center.Heading>Welcome to Drawx!</WelcomeScreen.Center.Heading>
                 <WelcomeScreen.Center.MenuItemHelp />
                 <div className="text-sm text-base-content/60 max-w-sm mx-auto mt-2 leading-relaxed">
-                  Start sketching, adding shapes, text, or templates. Your
-                  drawing is automatically saved!
+                  Start sketching, adding shapes, text, or templates. Your drawing is automatically
+                  saved!
                 </div>
               </WelcomeScreen.Center>
             </WelcomeScreen>
