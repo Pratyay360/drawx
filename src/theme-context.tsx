@@ -20,6 +20,9 @@ function applyTheme(theme: Theme) {
   const root = document.documentElement;
   root.classList.add("theme-transitioning");
 
+  // Set data-theme for daisyUI 5.x compatibility
+  root.setAttribute("data-theme", theme);
+
   if (theme === "dark") {
     root.classList.add("theme-dark");
     root.style.colorScheme = "dark";
