@@ -4,35 +4,11 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/tauri.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Drawx is a lightweight Tauri workspace for visual brainstorming and sketching."
-    />
-    <style>
-      html,
-      body {
-        min-height: 100%;
-        margin: 0;
-      }
-      body {
-        background: #ffffff;
-      }
-      [data-theme="dark"] body {
-        background: #1e1e1e;
-      }
-    </style>
+    <link rel="stylesheet" href="output.css">
     <title>Drawx</title>
   </head>
 
   <body>
-    <script>
-      (function () {
-        var t = localStorage.getItem("drawx_theme");
-        if (!t) t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-        document.documentElement.setAttribute("data-theme", t);
-        if (t === "dark") document.documentElement.classList.add("dark");
-      })();
-    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
