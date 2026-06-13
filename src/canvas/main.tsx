@@ -11,6 +11,8 @@ import { Icon } from "@iconify/react";
 import { Sidebar } from "../components/sidebar.tsx";
 import { useTheme } from "../theme-context.tsx";
 import "@excalidraw/excalidraw/index.css";
+import "../styles/theme.css";
+import "../styles/variables.module.css";
 
 import {
   Canvas as CanvasData,
