@@ -35,7 +35,12 @@ fn now_iso() -> String {
 
     format!(
         "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}.{:03}Z",
-        year, month, day, h, m, s,
+        year,
+        month,
+        day,
+        h,
+        m,
+        s,
         nanos / 1_000_000
     )
 }
@@ -129,10 +134,7 @@ fn list_canvases(state: tauri::State<'_, DbState>) -> Result<Vec<Canvas>, String
 }
 
 #[tauri::command]
-fn create_canvas(
-    state: tauri::State<'_, DbState>,
-    title: String,
-) -> Result<Canvas, String> {
+fn create_canvas(state: tauri::State<'_, DbState>, title: String) -> Result<Canvas, String> {
     let conn = state.conn.lock().map_err(|e| e.to_string())?;
     let now = now_iso();
     let id = generate_canvas_id();
@@ -163,10 +165,7 @@ fn delete_canvas(state: tauri::State<'_, DbState>, id: String) -> Result<(), Str
 }
 
 #[tauri::command]
-fn load_canvas(
-    state: tauri::State<'_, DbState>,
-    id: String,
-) -> Result<Option<Canvas>, String> {
+fn load_canvas(state: tauri::State<'_, DbState>, id: String) -> Result<Option<Canvas>, String> {
     let conn = state.conn.lock().map_err(|e| e.to_string())?;
     let result = conn.query_row(
         "SELECT id, title, description, elements, app_state, created_at, updated_at FROM canvases WHERE id = ?1",

@@ -8,11 +8,16 @@ import {
   WelcomeScreen,
 } from "@excalidraw/excalidraw";
 import { Icon } from "@iconify/react";
+import { Loader2 } from "lucide-react";
 import { Sidebar } from "../components/sidebar.tsx";
-import { useTheme } from "../theme-context.tsx";
-import "@excalidraw/excalidraw/index.css";
-import "../styles/theme.css";
-import "../styles/variables.module.css";
+import { Button } from "../components/ui/button.tsx";
+import { Input } from "../components/ui/input.tsx";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../components/ui/tooltip.tsx";
 
 import {
   Canvas as CanvasData,
@@ -34,8 +39,6 @@ function areElementsEqual(a: any[], b: any[]): boolean {
 
 function areAppStatesEqual(a: any, b: any): boolean {
   return (
-    a.theme === b.theme &&
-    a.viewBackgroundColor === b.viewBackgroundColor &&
     a.gridSize === b.gridSize &&
     a.zenModeEnabled === b.zenModeEnabled &&
     a.gridModeEnabled === b.gridModeEnabled &&
@@ -46,7 +49,6 @@ function areAppStatesEqual(a: any, b: any): boolean {
 function getPersistentAppState(appState: any): any {
   if (!appState || typeof appState !== "object") return {};
   return {
-    theme: appState.theme,
     viewBackgroundColor: appState.viewBackgroundColor,
     gridSize: appState.gridSize,
     zenModeEnabled: appState.zenModeEnabled,
@@ -63,12 +65,9 @@ export function Canvas() {
   const [elements, setElements] = useState<any[]>([]);
   const [appState, setAppState] = useState<any>({});
   const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
-  const { theme, toggleTheme } = useTheme();
 
-  // Save status: "saved" | "unsaved" | "saving"
   const [saveStatus, setSaveStatus] = useState<"saved" | "unsaved" | "saving">("saved");
 
-  // Title editing state
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState("");
 
@@ -82,7 +81,6 @@ export function Canvas() {
 
   const isSavingRef = useRef(false);
 
-  // Load canvas data
   const fetchCanvas = useCallback(
     async (canvasId: string, isInitialMount: boolean) => {
       if (isInitialMount) {
@@ -102,7 +100,6 @@ export function Canvas() {
           setAppState(sanitizedAppState);
           setTitleInput(data.title);
 
-          // Update comparison references
           lastSavedData.current = {
             elements: resolvedElements.map((e: any) => ({
               id: e.id,
@@ -111,15 +108,11 @@ export function Canvas() {
             appState: getPersistentAppState(sanitizedAppState),
           };
 
-          // If Excalidraw is already mounted, update the scene smoothly
           if (excalidrawAPI) {
             excalidrawAPI.updateScene({
               elements: resolvedElements,
               appState: {
                 ...sanitizedAppState,
-                viewBackgroundColor:
-                  sanitizedAppState.viewBackgroundColor ||
-                  (theme === "dark" ? "#1e1e1e" : "#ffffff"),
               },
             });
           }
@@ -134,10 +127,9 @@ export function Canvas() {
         }
       }
     },
-    [excalidrawAPI, theme],
+    [excalidrawAPI],
   );
 
-  // Load canvas data on mount/id change
   useEffect(() => {
     if (!id) return;
     setSaveStatus("saved");
@@ -145,7 +137,6 @@ export function Canvas() {
     fetchCanvas(id, isInitialMount);
   }, [id, fetchCanvas]);
 
-  // Debounced auto-save effect
   useEffect(() => {
     if (loading || isChangingCanvas || !id || saveStatus !== "unsaved") return;
 
@@ -161,12 +152,11 @@ export function Canvas() {
       } finally {
         isSavingRef.current = false;
       }
-    }, 1500); // 1.5 second debounce
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, [elements, appState, id, loading, isChangingCanvas, saveStatus]);
 
-  // Handle manual save
   const handleManualSave = useCallback(async () => {
     if (!id || isSavingRef.current || saveStatus !== "unsaved") return;
 
@@ -183,10 +173,8 @@ export function Canvas() {
     }
   }, [id, elements, appState, saveStatus]);
 
-  // Handle Excalidraw changes
   const handleExcalidrawChange = useCallback(
     (excalidrawElements: readonly any[], excalidrawAppState: any, _files: any) => {
-      // Avoid triggering changes if loading, changing canvas, or elements/state aren't initialized
       if (loading || isChangingCanvas) return;
 
       const currentElementsSig = excalidrawElements.map((e) => ({
@@ -206,7 +194,6 @@ export function Canvas() {
         setAppState(currentPersistentState);
         setSaveStatus("unsaved");
 
-        // Keep comparison reference matching current state
         lastSavedData.current = {
           elements: currentElementsSig,
           appState: currentPersistentState,
@@ -216,7 +203,6 @@ export function Canvas() {
     [loading, isChangingCanvas],
   );
 
-  // Rename Title
   async function handleTitleSave() {
     if (!id || !titleInput.trim()) return;
     try {
@@ -240,27 +226,20 @@ export function Canvas() {
     }
   }
 
-  // Toggle theme and sync to Excalidraw
-  const handleToggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    toggleTheme();
-    if (excalidrawAPI) {
-      excalidrawAPI.updateScene({
-        appState: {
-          theme: newTheme,
-          viewBackgroundColor: newTheme === "dark" ? "#1e1e1e" : "#ffffff",
-        },
-      });
-    }
-  };
+  useEffect(() => {
+    if (!excalidrawAPI) return;
 
-  // Export to local Excalidraw JSON file
+    excalidrawAPI.updateScene({
+      elements: elements,
+      appState: appState,
+    });
+  }, [excalidrawAPI, elements, appState]);
+
   const handleExportToJSON = useCallback(() => {
     if (!canvasData) return;
     const exportData = {
       type: "excalidraw",
       version: 2,
-      source: "https://drawx.tauri.app",
       elements: elements,
       appState: appState,
     };
@@ -274,7 +253,6 @@ export function Canvas() {
     URL.revokeObjectURL(url);
   }, [canvasData, elements, appState]);
 
-  // Import from local Excalidraw JSON file
   const handleImportFromJSON = useCallback(() => {
     const input = document.createElement("input");
     input.type = "file";
@@ -294,9 +272,6 @@ export function Canvas() {
                 elements: imported.elements,
                 appState: {
                   ...importedAppState,
-                  viewBackgroundColor:
-                    importedAppState.viewBackgroundColor ||
-                    (theme === "dark" ? "#1e1e1e" : "#ffffff"),
                 },
               });
 
@@ -315,9 +290,8 @@ export function Canvas() {
       reader.readAsText(file);
     };
     input.click();
-  }, [excalidrawAPI, theme]);
+  }, [excalidrawAPI]);
 
-  // Export to PNG
   const handleExportToPNG = useCallback(async () => {
     if (!excalidrawAPI || !canvasData) return;
     try {
@@ -340,7 +314,6 @@ export function Canvas() {
     }
   }, [excalidrawAPI, canvasData]);
 
-  // Export to SVG
   const handleExportToSVG = useCallback(async () => {
     if (!excalidrawAPI || !canvasData) return;
     try {
@@ -350,8 +323,6 @@ export function Canvas() {
         elements: currentElements,
         appState: currentAppState,
         exportPadding: 15,
-        viewBackgroundColor:
-          currentAppState.viewBackgroundColor || (theme === "dark" ? "#1e1e1e" : "#ffffff"),
       });
       const svgString = new XMLSerializer().serializeToString(svg);
       const blob = new Blob([svgString], { type: "image/svg+xml" });
@@ -364,27 +335,16 @@ export function Canvas() {
     } catch (error) {
       console.error("Failed to export SVG:", error);
     }
-  }, [excalidrawAPI, canvasData, theme]);
+  }, [excalidrawAPI, canvasData]);
 
   if (loading) {
     return (
-      <div
-        className="flex h-screen font-sans"
-        style={{ background: "var(--color-surface-low)", color: "var(--color-text-primary)" }}
-      >
+      <div className="flex h-screen font-sans bg-background text-foreground">
         <Sidebar />
-        <main
-          className="flex-1 flex items-center justify-center"
-          style={{ background: "var(--color-surface-mid)" }}
-        >
+        <main className="flex-1 flex items-center justify-center bg-card">
           <div className="flex flex-col items-center gap-3">
-            <span
-              className="loading loading-spinner loading-md"
-              style={{ color: "var(--color-text-muted)" }}
-            ></span>
-            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-              Loading...
-            </span>
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Loading...</span>
           </div>
         </main>
       </div>
@@ -392,114 +352,92 @@ export function Canvas() {
   }
 
   return (
-    <div
-      className="flex h-screen font-sans overflow-hidden"
-      style={{ background: "var(--color-surface-low)", color: "var(--color-text-primary)" }}
-    >
+    <div className="flex h-screen font-sans overflow-hidden bg-background text-foreground">
       <Sidebar />
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        <div
-          className="flex items-center justify-between px-3 py-1.5 z-20 shrink-0"
-          style={{
-            borderBottom: "1px solid var(--color-border-subtle)",
-            background: "var(--color-surface-mid)",
-          }}
-        >
+        <div className="flex items-center justify-between px-3 py-1.5 z-20 shrink-0 border-b bg-card">
           <div className="flex items-center gap-2 max-w-[60%]">
-            <Link
-              to="/"
-              className="p-1 rounded"
-              style={{ color: "var(--color-text-muted)" }}
-              title="Back to workspace"
-            >
-              <Icon icon="lucide:arrow-left" className="w-4 h-4" />
-            </Link>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    to="/"
+                    className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Icon icon="lucide:arrow-left" className="w-4 h-4" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>Back to workspace</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
-            <div
-              className="w-px h-4 shrink-0"
-              style={{ background: "var(--color-border-subtle)" }}
-            />
+            <div className="w-px h-4 shrink-0 bg-border" />
 
             {isEditingTitle ? (
-              <input
+              <Input
                 type="text"
                 value={titleInput}
                 onChange={(e) => setTitleInput(e.target.value)}
                 onKeyDown={handleTitleKeyDown}
                 onBlur={handleTitleSave}
-                className="px-1.5 py-0.5 text-sm font-medium rounded border outline-none"
-                style={{
-                  background: "var(--input-bg)",
-                  borderColor: "var(--input-border-focus)",
-                  color: "var(--input-text)",
-                }}
+                className="h-7 text-sm font-medium px-1.5 max-w-[250px]"
                 autoFocus
               />
             ) : (
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setIsEditingTitle(true)}
-                className="flex items-center gap-1.5 px-1.5 py-0.5 rounded text-sm font-medium truncate group"
-                style={{ color: "var(--color-text-primary)" }}
+                className="flex items-center gap-1.5 px-1.5 py-0.5 rounded text-sm font-medium truncate group h-auto"
                 title="Click to rename"
               >
                 <span className="truncate">{canvasData?.title || "Untitled"}</span>
                 <Icon
                   icon="lucide:pencil"
-                  className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                  style={{ color: "var(--color-text-disabled)" }}
+                  className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 text-muted-foreground"
                 />
-              </button>
+              </Button>
             )}
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            <span
-              className="text-xs mr-1 hidden sm:inline"
-              style={{ color: "var(--color-text-disabled)" }}
-            >
+            <span className="text-xs mr-1 hidden sm:inline text-muted-foreground">
               {saveStatus === "saving" && "Saving..."}
               {saveStatus === "saved" && "Saved"}
               {saveStatus === "unsaved" && "Unsaved"}
             </span>
 
-            <button
-              onClick={handleManualSave}
-              disabled={saveStatus === "saving" || saveStatus === "saved"}
-              className="p-1.5 rounded disabled:opacity-30"
-              style={{ color: "var(--color-text-muted)" }}
-              title="Save"
-            >
-              {saveStatus === "saving" ? (
-                <span className="loading loading-spinner loading-xs"></span>
-              ) : (
-                <Icon icon="lucide:save" className="w-4 h-4" />
-              )}
-            </button>
-
-            <button
-              onClick={handleToggleTheme}
-              className="p-1.5 rounded"
-              style={{ color: "var(--color-text-muted)" }}
-              title={theme === "light" ? "Dark mode" : "Light mode"}
-            >
-              <Icon icon={theme === "light" ? "lucide:moon" : "lucide:sun"} className="w-4 h-4" />
-            </button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={handleManualSave}
+                    disabled={saveStatus === "saving" || saveStatus === "saved"}
+                  >
+                    {saveStatus === "saving" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Icon icon="lucide:save" className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Save</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 
         {/* Excalidraw Board */}
         <div className="flex-1 w-full h-full min-h-0 relative z-10">
           <Excalidraw
-            theme={theme}
             excalidrawAPI={(api) => setExcalidrawAPI(api)}
+            theme="dark"
             initialData={{
               elements: elements,
-              appState: {
-                ...appState,
-                // Make background adapt to theme if not already set
-                viewBackgroundColor:
-                  appState.viewBackgroundColor || (theme === "dark" ? "#1e1e1e" : "#ffffff"),
-              },
+              appState: appState,
             }}
             onChange={handleExcalidrawChange}
           >
@@ -532,7 +470,6 @@ export function Canvas() {
                 Export as SVG
               </MainMenu.Item>
               <MainMenu.Separator />
-              <MainMenu.DefaultItems.ToggleTheme />
               <MainMenu.DefaultItems.Help />
             </MainMenu>
             <WelcomeScreen>
@@ -542,10 +479,7 @@ export function Canvas() {
                 </WelcomeScreen.Center.Logo>
                 <WelcomeScreen.Center.Heading>Drawx</WelcomeScreen.Center.Heading>
                 <WelcomeScreen.Center.MenuItemHelp />
-                <div
-                  className="text-xs max-w-xs mx-auto mt-2"
-                  style={{ color: "var(--color-text-muted)" }}
-                >
+                <div className="text-xs max-w-xs mx-auto mt-2 text-muted-foreground">
                   Sketch, add shapes, or use templates. Changes save automatically.
                 </div>
               </WelcomeScreen.Center>
@@ -553,14 +487,8 @@ export function Canvas() {
           </Excalidraw>
 
           {isChangingCanvas && (
-            <div
-              className="absolute inset-0 z-50 flex items-center justify-center"
-              style={{ background: "var(--color-surface-low)", opacity: 0.8 }}
-            >
-              <span
-                className="loading loading-spinner loading-md"
-                style={{ color: "var(--color-text-muted)" }}
-              ></span>
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           )}
         </div>
