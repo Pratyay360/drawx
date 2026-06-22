@@ -26,6 +26,7 @@ import {
   saveCanvas,
   updateCanvasTitle,
 } from "../services/tauri.ts";
+import { loadAllLibraryItems } from "../services/libraries.ts";
 
 function areElementsEqual(a: any[], b: any[]): boolean {
   if (a.length !== b.length) return false;
@@ -65,6 +66,7 @@ export function Canvas() {
   const [elements, setElements] = useState<any[]>([]);
   const [appState, setAppState] = useState<any>({});
   const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
+  const [libraryItems, setLibraryItems] = useState<any[]>([]);
 
   const [saveStatus, setSaveStatus] = useState<"saved" | "unsaved" | "saving">("saved");
 
@@ -80,6 +82,10 @@ export function Canvas() {
   });
 
   const isSavingRef = useRef(false);
+
+  useEffect(() => {
+    loadAllLibraryItems().then(setLibraryItems);
+  }, []);
 
   const fetchCanvas = useCallback(
     async (canvasId: string, isInitialMount: boolean) => {
@@ -234,6 +240,13 @@ export function Canvas() {
       appState: appState,
     });
   }, [excalidrawAPI, elements, appState]);
+
+  useEffect(() => {
+    if (!excalidrawAPI || libraryItems.length === 0) return;
+    excalidrawAPI.updateScene({
+      appState: { libraryItems },
+    });
+  }, [excalidrawAPI, libraryItems]);
 
   const handleExportToJSON = useCallback(() => {
     if (!canvasData) return;

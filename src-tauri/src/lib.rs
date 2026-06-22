@@ -5,6 +5,14 @@ use tauri::Manager;
 
 struct DbState {
     conn: Mutex<Connection>,
+    db_path: Mutex<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct DbConfig {
+    db_type: String, // "local" or "remote"
+    local_path: Option<String>,
+    remote_url: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -67,15 +75,19 @@ fn generate_canvas_id() -> String {
     format!("c_{:x}", nanos)
 }
 
-fn init_db(app: &tauri::AppHandle) -> Connection {
-    let app_dir = app
-        .path()
-        .app_data_dir()
-        .expect("failed to resolve app data dir");
-    std::fs::create_dir_all(&app_dir).expect("failed to create app data dir");
+fn init_db(app: &tauri::AppHandle, custom_path: Option<&str>) -> Connection {
+    let db_path = if let Some(path) = custom_path {
+        std::path::PathBuf::from(path)
+    } else {
+        let app_dir = app
+            .path()
+            .app_data_dir()
+            .expect("failed to resolve app data dir");
+        std::fs::create_dir_all(&app_dir).expect("failed to create app data dir");
+        app_dir.join("drawx.db")
+    };
 
-    let db_path = app_dir.join("drawx.db");
-    let conn = Connection::open(db_path).expect("failed to open database");
+    let conn = Connection::open(&db_path).expect("failed to open database");
 
     conn.execute_batch(
         "PRAGMA journal_mode=WAL;
@@ -242,14 +254,94 @@ fn update_canvas_title(
     Ok(())
 }
 
+#[tauri::command]
+fn get_db_config(app: tauri::AppHandle) -> Result<DbConfig, String> {
+    let config_path = app
+        .path()
+        .app_config_dir()
+        .expect("failed to resolve app config dir")
+        .join("db_config.json");
+
+    if config_path.exists() {
+        let content = std::fs::read_to_string(&config_path).map_err(|e| e.to_string())?;
+        let config: DbConfig = serde_json::from_str(&content).map_err(|e| e.to_string())?;
+        Ok(config)
+    } else {
+        Ok(DbConfig {
+            db_type: "local".to_string(),
+            local_path: None,
+            remote_url: None,
+        })
+    }
+}
+
+#[tauri::command]
+fn set_db_config(app: tauri::AppHandle, config: DbConfig) -> Result<(), String> {
+    let config_dir = app
+        .path()
+        .app_config_dir()
+        .expect("failed to resolve app config dir");
+    std::fs::create_dir_all(&config_dir).map_err(|e| e.to_string())?;
+
+    let config_path = config_dir.join("db_config.json");
+    let content = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
+    std::fs::write(&config_path, content).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+fn select_local_db_path(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    use std::path::PathBuf;
+
+    // For now, return a default path. In a real app, you'd use a file dialog
+    let app_dir = app
+        .path()
+        .app_data_dir()
+        .expect("failed to resolve app data dir");
+    
+    let default_path = app_dir.join("custom_drawx.db");
+    Ok(Some(default_path.to_string_lossy().to_string()))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            let conn = init_db(app.handle());
+            let config_path = app
+                .handle()
+                .path()
+                .app_config_dir()
+                .expect("failed to resolve app config dir")
+                .join("db_config.json");
+
+            let custom_path = if config_path.exists() {
+                let content = std::fs::read_to_string(&config_path).unwrap_or_default();
+                let config: DbConfig = serde_json::from_str(&content).unwrap_or(DbConfig {
+                    db_type: "local".to_string(),
+                    local_path: None,
+                    remote_url: None,
+                });
+                config.local_path
+            } else {
+                None
+            };
+
+            let conn = init_db(app.handle(), custom_path.as_deref());
             app.manage(DbState {
                 conn: Mutex::new(conn),
+                db_path: Mutex::new(
+                    custom_path.unwrap_or_else(|| {
+                        app.handle()
+                            .path()
+                            .app_data_dir()
+                            .expect("failed to resolve app data dir")
+                            .join("drawx.db")
+                            .to_string_lossy()
+                            .to_string()
+                    }),
+                ),
             });
             Ok(())
         })
@@ -260,6 +352,9 @@ pub fn run() {
             load_canvas,
             save_canvas,
             update_canvas_title,
+            get_db_config,
+            set_db_config,
+            select_local_db_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

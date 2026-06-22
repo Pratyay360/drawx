@@ -2,6 +2,8 @@ import { Icon } from "@iconify/react";
 import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { Canvas, listCanvases, createCanvas, deleteCanvas } from "../services/tauri.ts";
+import { DatabaseSettings } from "./database-settings.tsx";
+import { LibraryBrowser } from "./library-browser.tsx";
 
 function groupCanvasesByDate(canvases: Canvas[]): {
   Today: Canvas[];
@@ -32,6 +34,8 @@ export function Sidebar() {
   const [canvases, setCanvases] = useState<Canvas[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showLibraries, setShowLibraries] = useState(false);
   const { id: currentCanvasId } = useParams();
   const navigate = useNavigate();
 
@@ -268,6 +272,26 @@ export function Sidebar() {
         </div>
 
         <div className="p-2" style={{ borderTop: "1px solid var(--sidebar-border)" }}>
+          <div className="flex gap-1 mb-1">
+            <button
+              onClick={() => setShowSettings(true)}
+              className="flex-1 p-1 rounded"
+              style={{ color: "var(--color-text-disabled)" }}
+              title="Database Settings"
+              aria-label="Database Settings"
+            >
+              <Icon icon="lucide:database" className="w-4 h-4 mx-auto" />
+            </button>
+            <button
+              onClick={() => setShowLibraries(true)}
+              className="flex-1 p-1 rounded"
+              style={{ color: "var(--color-text-disabled)" }}
+              title="Libraries"
+              aria-label="Libraries"
+            >
+              <Icon icon="lucide:library" className="w-4 h-4 mx-auto" />
+            </button>
+          </div>
           <button
             onClick={() => setSidebarOpen(false)}
             className="w-full p-1 rounded"
@@ -296,6 +320,31 @@ export function Sidebar() {
         >
           <Icon icon="lucide:panel-left-open" className="w-4 h-4" />
         </button>
+      )}
+
+      {showSettings && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background rounded-lg shadow-lg p-4">
+            <DatabaseSettings onClose={() => setShowSettings(false)} />
+          </div>
+        </div>
+      )}
+
+      {showLibraries && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background rounded-lg shadow-lg p-4 max-w-3xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">Libraries</h2>
+              <button
+                onClick={() => setShowLibraries(false)}
+                className="p-1 rounded hover:bg-accent"
+              >
+                <Icon icon="lucide:x" className="w-5 h-5" />
+              </button>
+            </div>
+            <LibraryBrowser />
+          </div>
+        </div>
       )}
     </>
   );
