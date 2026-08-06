@@ -1,4 +1,0 @@
-minimumReleaseAgeExclude:
-  - nanoid@3.3.8 || 5.0.9
-  - lodash-es@4.17.23 || 4.17.24
-  - react-router@8.3.0
