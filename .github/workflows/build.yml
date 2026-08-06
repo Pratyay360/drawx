@@ -31,19 +31,14 @@ jobs:
             patchelf \
             rpm
 
-      - name: Install Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: latest
-
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: swatinem/rust-cache@v2
-      - run: deno install
+      - name: Install mise
+        uses: jdx/setup-mise@main
+        run: mise deps
 
       - name: Build Tauri and create release
         uses: tauri-apps/tauri-action@dev
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           tagName: v0.1.${{ github.run_number }}
           releaseName: drawx v0.1.${{ github.run_number }}

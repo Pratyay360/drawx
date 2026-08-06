@@ -1,11 +1,11 @@
 import { Icon } from "@iconify/react";
-import { useState, useEffect } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
 	type Canvas,
-	listCanvases,
 	createCanvas,
 	deleteCanvas,
+	listCanvases,
 } from "../services/tauri.ts";
 import { DatabaseSettings } from "./database-settings.tsx";
 import { LibraryBrowser } from "./library-browser.tsx";

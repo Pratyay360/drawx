@@ -1,25 +1,17 @@
-import { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
-import { Sidebar } from "./components/sidebar.tsx";
+import { useEffect, useState } from "react";
+import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { Canvas as CanvasComponent } from "./canvas/main.tsx";
-import {
-	type Canvas,
-	listCanvases,
-	createCanvas,
-	deleteCanvas,
-	updateCanvasTitle,
-} from "./services/tauri.ts";
-
+import { Sidebar } from "./components/sidebar.tsx";
 // shadcn/ui Imports
 import { Button } from "./components/ui/button.tsx";
-import { Input } from "./components/ui/input.tsx";
 import {
 	Card,
 	CardContent,
 	CardHeader,
 	CardTitle,
 } from "./components/ui/card.tsx";
+import { Input } from "./components/ui/input.tsx";
 import {
 	Table,
 	TableBody,
@@ -34,6 +26,14 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "./components/ui/tooltip.tsx";
+import {
+	type Canvas,
+	createCanvas,
+	deleteCanvas,
+	listCanvases,
+	updateCanvasTitle,
+} from "./services/tauri.ts";
+
 function Dashboard() {
 	const [name, setName] = useState("");
 	const [canvases, setCanvases] = useState<Canvas[]>([]);
@@ -425,9 +425,6 @@ function Dashboard() {
 	);
 }
 
-// ==========================================
-// App Component
-// ==========================================
 function App() {
 	return (
 		<BrowserRouter>

@@ -1,13 +1,21 @@
-import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
-import { Input } from "./ui/input.tsx";
+import { useEffect, useState } from "react";
+import {
+	type ExcalidrawLibrary,
+	fetchLibraryContent,
+	listLibrariesFromDb,
+	saveLibrariesToDb,
+	searchLibraries,
+	seedLibrariesFromNetwork,
+} from "../services/libraries.ts";
 import {
 	Card,
 	CardContent,
+	CardDescription,
 	CardHeader,
 	CardTitle,
-	CardDescription,
 } from "./ui/card.tsx";
+import { Input } from "./ui/input.tsx";
 import {
 	Table,
 	TableBody,
@@ -16,12 +24,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "./ui/table.tsx";
-import {
-	fetchLibraries,
-	fetchLibraryContent,
-	searchLibraries,
-	type ExcalidrawLibrary,
-} from "../services/libraries.ts";
 
 interface LibraryBrowserProps {
 	onLibrarySelect?: (library: ExcalidrawLibrary) => void;
@@ -37,11 +39,16 @@ export function LibraryBrowser({ onLibrarySelect }: LibraryBrowserProps) {
 	const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
 	useEffect(() => {
-		fetchLibraries().then((libs) => {
+		async function load() {
+			let libs = await listLibrariesFromDb();
+			if (libs.length === 0) {
+				libs = await seedLibrariesFromNetwork();
+			}
 			setLibraries(libs);
 			setFilteredLibraries(libs);
 			setLoading(false);
-		});
+		}
+		load();
 	}, []);
 
 	useEffect(() => {
@@ -57,15 +64,7 @@ export function LibraryBrowser({ onLibrarySelect }: LibraryBrowserProps) {
 		try {
 			const content = await fetchLibraryContent(library);
 			if (!content) return;
-			const blob = new Blob([JSON.stringify(content, null, 2)], {
-				type: "application/json",
-			});
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement("a");
-			a.href = url;
-			a.download = `${library.name}.excalidraw`;
-			a.click();
-			URL.revokeObjectURL(url);
+			await saveLibrariesToDb([{ ...library, content }]);
 		} finally {
 			setDownloadingId(null);
 		}
@@ -105,15 +104,15 @@ export function LibraryBrowser({ onLibrarySelect }: LibraryBrowserProps) {
 					/>
 				</div>
 
-				<div className="max-h-[400px] overflow-y-auto">
+				<div className="max-h-100 overflow-y-auto">
 					<Table>
 						<TableHeader>
 							<TableRow>
 								<TableHead>Name</TableHead>
 								<TableHead>Description</TableHead>
 								<TableHead>Author</TableHead>
-								<TableHead className="w-[100px]">Preview</TableHead>
-								<TableHead className="w-[80px]"></TableHead>
+								<TableHead className="w-25">Preview</TableHead>
+								<TableHead className="w-20"></TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -124,7 +123,7 @@ export function LibraryBrowser({ onLibrarySelect }: LibraryBrowserProps) {
 									className="cursor-pointer"
 								>
 									<TableCell className="font-medium">{library.name}</TableCell>
-									<TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
+									<TableCell className="text-sm text-muted-foreground max-w-50 truncate">
 										{library.description}
 									</TableCell>
 									<TableCell className="text-sm">
@@ -141,6 +140,7 @@ export function LibraryBrowser({ onLibrarySelect }: LibraryBrowserProps) {
 									</TableCell>
 									<TableCell onClick={(e) => e.stopPropagation()}>
 										<button
+											type="button"
 											onClick={() => handleDownload(library)}
 											disabled={downloadingId === library.id}
 											className="p-1.5 rounded hover:bg-accent transition-colors"

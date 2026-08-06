@@ -50,5 +50,12 @@
 		"tailwindcss": "^4.3.1",
 		"typescript": "~6.0.3",
 		"vite": "^8.1.0"
+	},
+	"devEngines": {
+		"packageManager": {
+			"name": "nub",
+			"version": "^0.5.0",
+			"onFail": "warn"
+		}
 	}
 }

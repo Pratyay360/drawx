@@ -1,5 +1,3 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
 import {
 	Excalidraw,
 	exportToBlob,
@@ -9,6 +7,8 @@ import {
 } from "@excalidraw/excalidraw";
 import { Icon } from "@iconify/react";
 import { Loader2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import { Sidebar } from "../components/sidebar.tsx";
 import { Button } from "../components/ui/button.tsx";
 import { Input } from "../components/ui/input.tsx";
@@ -18,7 +18,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "../components/ui/tooltip.tsx";
-
+import { loadAllLibraryItems } from "../services/libraries.ts";
 import {
 	type Canvas as CanvasData,
 	loadCanvas,
@@ -26,7 +26,6 @@ import {
 	saveCanvas,
 	updateCanvasTitle,
 } from "../services/tauri.ts";
-import { loadAllLibraryItems } from "../services/libraries.ts";
 
 function areElementsEqual(a: any[], b: any[]): boolean {
 	if (a.length !== b.length) return false;
@@ -407,7 +406,7 @@ export function Canvas() {
 								onChange={(e) => setTitleInput(e.target.value)}
 								onKeyDown={handleTitleKeyDown}
 								onBlur={handleTitleSave}
-								className="h-7 text-sm font-medium px-1.5 max-w-[250px]"
+								className="h-7 text-sm font-medium px-1.5 max-w-62.5"
 								autoFocus
 							/>
 						) : (

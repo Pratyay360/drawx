@@ -9,13 +9,6 @@ struct DbState {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct DbConfig {
-    db_type: String, // "local" or "remote"
-    local_path: Option<String>,
-    remote_url: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
 struct Canvas {
     id: String,
     title: String,
@@ -24,6 +17,22 @@ struct Canvas {
     updated_at: String,
     elements: Vec<serde_json::Value>,
     app_state: serde_json::Value,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct Library {
+    id: String,
+    name: String,
+    description: String,
+    authors: Vec<serde_json::Value>,
+    source: String,
+    preview: String,
+    created: String,
+    updated: String,
+    version: i64,
+    item_names: Option<Vec<String>>,
+    content: Option<serde_json::Value>,
 }
 
 fn now_iso() -> String {
@@ -75,17 +84,13 @@ fn generate_canvas_id() -> String {
     format!("c_{:x}", nanos)
 }
 
-fn init_db(app: &tauri::AppHandle, custom_path: Option<&str>) -> Connection {
-    let db_path = if let Some(path) = custom_path {
-        std::path::PathBuf::from(path)
-    } else {
-        let app_dir = app
-            .path()
-            .app_data_dir()
-            .expect("failed to resolve app data dir");
-        std::fs::create_dir_all(&app_dir).expect("failed to create app data dir");
-        app_dir.join("drawx.db")
-    };
+fn init_db(app: &tauri::AppHandle) -> Connection {
+    let app_dir = app
+        .path()
+        .app_data_dir()
+        .expect("failed to resolve app data dir");
+    std::fs::create_dir_all(&app_dir).expect("failed to create app data dir");
+    let db_path = app_dir.join("drawx.db");
 
     let conn = Connection::open(&db_path).expect("failed to open database");
 
@@ -97,9 +102,22 @@ fn init_db(app: &tauri::AppHandle, custom_path: Option<&str>) -> Connection {
              title TEXT NOT NULL,
              description TEXT,
              elements TEXT NOT NULL DEFAULT '[]',
-             app_state TEXT NOT NULL DEFAULT '{}',
-             created_at TEXT NOT NULL,
-             updated_at TEXT NOT NULL
+app_state TEXT NOT NULL DEFAULT '{}',
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL
+         );
+         CREATE TABLE IF NOT EXISTS libraries (
+             id TEXT PRIMARY KEY,
+             name TEXT NOT NULL,
+             description TEXT NOT NULL DEFAULT '',
+             authors TEXT NOT NULL DEFAULT '[]',
+             source TEXT NOT NULL DEFAULT '',
+             preview TEXT NOT NULL DEFAULT '',
+             created TEXT NOT NULL DEFAULT '',
+             updated TEXT NOT NULL DEFAULT '',
+             version INTEGER NOT NULL DEFAULT 0,
+             item_names TEXT,
+             content TEXT
          );",
     )
     .expect("failed to initialize database");
@@ -254,54 +272,158 @@ fn update_canvas_title(
     Ok(())
 }
 
-#[tauri::command]
-fn get_db_config(app: tauri::AppHandle) -> Result<DbConfig, String> {
-    let config_path = app
-        .path()
-        .app_config_dir()
-        .expect("failed to resolve app config dir")
-        .join("db_config.json");
-
-    if config_path.exists() {
-        let content = std::fs::read_to_string(&config_path).map_err(|e| e.to_string())?;
-        let config: DbConfig = serde_json::from_str(&content).map_err(|e| e.to_string())?;
-        Ok(config)
-    } else {
-        Ok(DbConfig {
-            db_type: "local".to_string(),
-            local_path: None,
-            remote_url: None,
-        })
-    }
+fn row_to_library(
+    id: String,
+    name: String,
+    description: String,
+    authors_json: String,
+    source: String,
+    preview: String,
+    created: String,
+    updated: String,
+    version: i64,
+    item_names: Option<String>,
+    content: Option<String>,
+) -> Result<Library, String> {
+    let authors: Vec<serde_json::Value> =
+        serde_json::from_str(&authors_json).unwrap_or_default();
+    let item_names = item_names
+        .and_then(|s| serde_json::from_str::<Vec<String>>(&s).ok());
+    let content = content
+        .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok());
+    Ok(Library {
+        id,
+        name,
+        description,
+        authors,
+        source,
+        preview,
+        created,
+        updated,
+        version,
+        item_names,
+        content,
+    })
 }
 
 #[tauri::command]
-fn set_db_config(app: tauri::AppHandle, config: DbConfig) -> Result<(), String> {
-    let config_dir = app
-        .path()
-        .app_config_dir()
-        .expect("failed to resolve app config dir");
-    std::fs::create_dir_all(&config_dir).map_err(|e| e.to_string())?;
+fn list_libraries(state: tauri::State<'_, DbState>) -> Result<Vec<Library>, String> {
+    let conn = state.conn.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, name, description, authors, source, preview, created, updated, version, item_names, content FROM libraries ORDER BY name",
+        )
+        .map_err(|e| e.to_string())?;
 
-    let config_path = config_dir.join("db_config.json");
-    let content = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
-    std::fs::write(&config_path, content).map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, String>(3)?,
+                row.get::<_, String>(4)?,
+                row.get::<_, String>(5)?,
+                row.get::<_, String>(6)?,
+                row.get::<_, String>(7)?,
+                row.get::<_, i64>(8)?,
+                row.get::<_, Option<String>>(9)?,
+                row.get::<_, Option<String>>(10)?,
+            ))
+        })
+        .map_err(|e| e.to_string())?;
 
+    let libraries = rows
+        .filter_map(|r| r.ok())
+        .map(|(id, name, description, authors, source, preview, created, updated, version, item_names, content)| {
+            row_to_library(
+                id, name, description, authors, source, preview, created, updated, version, item_names, content,
+            )
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(libraries)
+}
+
+#[tauri::command]
+fn save_libraries(
+    state: tauri::State<'_, DbState>,
+    libraries: Vec<Library>,
+) -> Result<(), String> {
+    let conn = state.conn.lock().map_err(|e| e.to_string())?;
+    for lib in &libraries {
+        let authors = serde_json::to_string(&lib.authors).map_err(|e| e.to_string())?;
+        let item_names = lib
+            .item_names
+            .as_ref()
+            .map(|v| serde_json::to_string(v).map_err(|e| e.to_string()))
+            .transpose()?;
+        let content = lib
+            .content
+            .as_ref()
+            .map(|v| serde_json::to_string(v).map_err(|e| e.to_string()))
+            .transpose()?;
+
+        conn.execute(
+            "INSERT INTO libraries (id, name, description, authors, source, preview, created, updated, version, item_names, content)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+             ON CONFLICT(id) DO UPDATE SET
+                name = excluded.name,
+                description = excluded.description,
+                authors = excluded.authors,
+                source = excluded.source,
+                preview = excluded.preview,
+                created = excluded.created,
+                updated = excluded.updated,
+                version = excluded.version,
+                item_names = excluded.item_names,
+                content = excluded.content",
+            rusqlite::params![
+                lib.id, lib.name, lib.description, authors, lib.source, lib.preview,
+                lib.created, lib.updated, lib.version, item_names, content
+            ],
+        )
+        .map_err(|e| e.to_string())?;
+    }
     Ok(())
 }
 
 #[tauri::command]
-fn select_local_db_path(app: tauri::AppHandle) -> Result<Option<String>, String> {
-    use std::path::PathBuf;
+fn clear_libraries(state: tauri::State<'_, DbState>) -> Result<(), String> {
+    let conn = state.conn.lock().map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM libraries", [])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
 
-    // For now, return a default path. In a real app, you'd use a file dialog
-    let app_dir = app
-        .path()
-        .app_data_dir()
-        .expect("failed to resolve app data dir");
-    
-    let default_path = app_dir.join("custom_drawx.db");
-    Ok(Some(default_path.to_string_lossy().to_string()))
+#[tauri::command]
+fn load_all_library_items(state: tauri::State<'_, DbState>) -> Result<Vec<serde_json::Value>, String> {
+    let conn = state.conn.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare("SELECT content FROM libraries WHERE content IS NOT NULL")
+        .map_err(|e| e.to_string())?;
+
+    let rows = stmt
+        .query_map([], |row| row.get::<_, String>(0))
+        .map_err(|e| e.to_string())?;
+
+    let mut all_items: Vec<serde_json::Value> = Vec::new();
+    for row in rows {
+        let json = row.map_err(|e| e.to_string())?;
+        if let Ok(value) = serde_json::from_str::<serde_json::Value>(&json) {
+            if let Some(items) = value.get("libraryItems").and_then(|v| v.as_array()) {
+                all_items.extend(items.iter().cloned());
+            }
+        }
+    }
+
+    Ok(all_items)
+}
+
+#[tauri::command]
+fn get_db_path(state: tauri::State<'_, DbState>) -> Result<String, String> {
+    let path = state.db_path.lock().map_err(|e| e.to_string())?;
+    Ok(path.clone())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -309,39 +431,18 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            let config_path = app
+            let conn = init_db(app.handle());
+            let db_path = app
                 .handle()
                 .path()
-                .app_config_dir()
-                .expect("failed to resolve app config dir")
-                .join("db_config.json");
-
-            let custom_path = if config_path.exists() {
-                let content = std::fs::read_to_string(&config_path).unwrap_or_default();
-                let config: DbConfig = serde_json::from_str(&content).unwrap_or(DbConfig {
-                    db_type: "local".to_string(),
-                    local_path: None,
-                    remote_url: None,
-                });
-                config.local_path
-            } else {
-                None
-            };
-
-            let conn = init_db(app.handle(), custom_path.as_deref());
+                .app_data_dir()
+                .expect("failed to resolve app data dir")
+                .join("drawx.db")
+                .to_string_lossy()
+                .to_string();
             app.manage(DbState {
                 conn: Mutex::new(conn),
-                db_path: Mutex::new(
-                    custom_path.unwrap_or_else(|| {
-                        app.handle()
-                            .path()
-                            .app_data_dir()
-                            .expect("failed to resolve app data dir")
-                            .join("drawx.db")
-                            .to_string_lossy()
-                            .to_string()
-                    }),
-                ),
+                db_path: Mutex::new(db_path),
             });
             Ok(())
         })
@@ -352,9 +453,11 @@ pub fn run() {
             load_canvas,
             save_canvas,
             update_canvas_title,
-            get_db_config,
-            set_db_config,
-            select_local_db_path,
+            list_libraries,
+            save_libraries,
+            clear_libraries,
+            load_all_library_items,
+            get_db_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
