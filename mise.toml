@@ -3,7 +3,10 @@ rust = "latest"
 cargo-make = "latest"
 rust-analyzer = "latest"
 node = "24"
-nub = { version = "latest", allow_builds = ["@nubjs/nub"] }
+nub = { version = "latest", allow_builds = "[@nubjs/nub]" }
 biome = "latest"
 bun = "latest"
 "npm:@kilocode/cli" = "latest"
+
+[deps.nubjs]
+auto = true # Auto-run before mise x/run
