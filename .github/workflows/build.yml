@@ -32,8 +32,8 @@ jobs:
             rpm
 
       - name: Install mise
-        uses: jdx/setup-mise@main
-        run: mise deps
+        uses: jdx/mise-action@v3
+      - run: mise deps
 
       - name: Build Tauri and create release
         uses: tauri-apps/tauri-action@dev
