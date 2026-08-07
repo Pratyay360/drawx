@@ -2,6 +2,12 @@
   "name": "drawx",
   "version": "0.1.0",
   "private": true,
+  "workspaces": {
+    "catalog": {
+      "vite": "npm:@voidzero-dev/vite-plus-core@0.2.8",
+      "vite-plus": "0.2.8"
+    }
+  },
   "type": "module",
   "imports": {
     "#components/*": "./src/components/*.tsx",
@@ -9,9 +15,9 @@
     "#hooks/*": "./src/hooks/*.ts"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
+    "dev": "vp dev",
+    "build": "tsc && vp build",
+    "preview": "vp preview",
     "tauri": "tauri",
     "lint": "biome lint .",
     "lint:fix": "biome lint --fix",
@@ -29,7 +35,7 @@
     "@tauri-apps/plugin-opener": "^2.5.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^1.29.0",
+    "lucide-react": "^1.30.0",
     "radix-ui": "^1.6.7",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -45,17 +51,23 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.0.5",
-    "oxfmt": "^0.62.0",
-    "oxlint": "^1.77.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~7.0.2",
-    "vite": "^8.2.1"
+    "vite": "^8.0",
+    "vite-plus": "catalog:"
   },
   "devEngines": {
-    "packageManager": {
-      "name": "nub",
-      "version": "^0.5.0",
-      "onFail": "warn"
-    }
+    "packageManager": [
+      {
+        "name": "nub",
+        "version": "^0.5.0",
+        "onFail": "warn"
+      },
+      {
+        "name": "pnpm",
+        "version": "11.20.0",
+        "onFail": "download"
+      }
+    ]
   }
 }

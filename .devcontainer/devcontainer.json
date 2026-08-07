@@ -6,9 +6,7 @@
   },
   "customizations": {
     "vscode": {
-      "extensions": [
-        "hverlin.mise-vscode"
-      ]
+      "extensions": ["hverlin.mise-vscode"]
     }
   },
   "mounts": [],

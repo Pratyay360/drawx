@@ -56,9 +56,19 @@ jobs:
           args: --target x86_64-unknown-linux-gnu --bundles deb,rpm,appimage
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@main
         with:
           name: linux-artifacts
           path: |
             src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/**/*
           retention-days: 7
+
+      - name: create release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          path: |
+            src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/**/*
+          token: ${{ github.token }}
+          draft: false
+          prerelease: false

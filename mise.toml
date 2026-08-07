@@ -8,6 +8,7 @@ biome = "latest"
 bun = "latest"
 "npm:@kilocode/cli" = "latest"
 pnpm = "latest"
+vp = "latest"
 
 [deps.nubjs]
-auto = true # Auto-run before mise x/run
+auto = true

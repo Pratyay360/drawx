@@ -17,6 +17,7 @@ struct Canvas {
     updated_at: String,
     elements: Vec<serde_json::Value>,
     app_state: serde_json::Value,
+    files: serde_json::Value,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -102,9 +103,10 @@ fn init_db(app: &tauri::AppHandle) -> Connection {
              title TEXT NOT NULL,
              description TEXT,
              elements TEXT NOT NULL DEFAULT '[]',
-app_state TEXT NOT NULL DEFAULT '{}',
-              created_at TEXT NOT NULL,
-              updated_at TEXT NOT NULL
+             app_state TEXT NOT NULL DEFAULT '{}',
+             files TEXT NOT NULL DEFAULT '{}',
+             created_at TEXT NOT NULL,
+             updated_at TEXT NOT NULL
          );
          CREATE TABLE IF NOT EXISTS libraries (
              id TEXT PRIMARY KEY,
@@ -121,6 +123,18 @@ app_state TEXT NOT NULL DEFAULT '{}',
          );",
     )
     .expect("failed to initialize database");
+
+    // Migrate pre-existing databases that lack the `files` column.
+    let columns: Vec<String> = conn
+        .prepare("PRAGMA table_info(canvases)")
+        .and_then(|mut stmt| stmt.query_map([], |row| row.get::<_, String>(1)))
+        .and_then(|rows| rows.filter_map(|r| r.ok()).collect())
+        .unwrap_or_default();
+
+    if !columns.iter().any(|c| c == "files") {
+        conn.execute_batch("ALTER TABLE canvases ADD COLUMN files TEXT NOT NULL DEFAULT '{}'")
+            .expect("failed to migrate canvases table");
+    }
 
     conn
 }
@@ -155,6 +169,9 @@ fn list_canvases(state: tauri::State<'_, DbState>) -> Result<Vec<Canvas>, String
                 updated_at,
                 elements,
                 app_state,
+                // `files` is intentionally not selected in the list view to keep
+                // the payload lean (images are large base64 blobs).
+                files: serde_json::Value::Null,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -183,6 +200,7 @@ fn create_canvas(state: tauri::State<'_, DbState>, title: String) -> Result<Canv
         updated_at: now,
         elements: Vec::new(),
         app_state: serde_json::json!({}),
+        files: serde_json::json!({}),
     })
 }
 
@@ -198,7 +216,7 @@ fn delete_canvas(state: tauri::State<'_, DbState>, id: String) -> Result<(), Str
 fn load_canvas(state: tauri::State<'_, DbState>, id: String) -> Result<Option<Canvas>, String> {
     let conn = state.conn.lock().map_err(|e| e.to_string())?;
     let result = conn.query_row(
-        "SELECT id, title, description, elements, app_state, created_at, updated_at FROM canvases WHERE id = ?1",
+        "SELECT id, title, description, elements, app_state, files, created_at, updated_at FROM canvases WHERE id = ?1",
         rusqlite::params![id],
         |row| {
             let id: String = row.get(0)?;
@@ -206,13 +224,16 @@ fn load_canvas(state: tauri::State<'_, DbState>, id: String) -> Result<Option<Ca
             let description: Option<String> = row.get(2)?;
             let elements_json: String = row.get(3)?;
             let app_state_json: String = row.get(4)?;
-            let created_at: String = row.get(5)?;
-            let updated_at: String = row.get(6)?;
+            let files_json: String = row.get(5)?;
+            let created_at: String = row.get(6)?;
+            let updated_at: String = row.get(7)?;
 
             let elements: Vec<serde_json::Value> =
                 serde_json::from_str(&elements_json).unwrap_or_default();
             let app_state: serde_json::Value =
                 serde_json::from_str(&app_state_json).unwrap_or_default();
+            let files: serde_json::Value =
+                serde_json::from_str(&files_json).unwrap_or_default();
 
             Ok(Canvas {
                 id,
@@ -222,6 +243,7 @@ fn load_canvas(state: tauri::State<'_, DbState>, id: String) -> Result<Option<Ca
                 updated_at,
                 elements,
                 app_state,
+                files,
             })
         },
     );
@@ -239,15 +261,17 @@ fn save_canvas(
     id: String,
     elements: Vec<serde_json::Value>,
     app_state: serde_json::Value,
+    files: serde_json::Value,
 ) -> Result<(), String> {
     let conn = state.conn.lock().map_err(|e| e.to_string())?;
     let now = now_iso();
     let elements_json = serde_json::to_string(&elements).map_err(|e| e.to_string())?;
     let app_state_json = serde_json::to_string(&app_state).map_err(|e| e.to_string())?;
+    let files_json = serde_json::to_string(&files).map_err(|e| e.to_string())?;
 
     conn.execute(
-        "UPDATE canvases SET elements = ?1, app_state = ?2, updated_at = ?3 WHERE id = ?4",
-        rusqlite::params![elements_json, app_state_json, now, id],
+        "UPDATE canvases SET elements = ?1, app_state = ?2, files = ?3, updated_at = ?4 WHERE id = ?5",
+        rusqlite::params![elements_json, app_state_json, files_json, now, id],
     )
     .map_err(|e| e.to_string())?;
 

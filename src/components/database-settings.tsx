@@ -2,69 +2,70 @@ import { Icon } from "@iconify/react";
 import { useEffect, useState } from "react";
 import { getDbPath } from "../services/db.ts";
 import { Button } from "./ui/button.tsx";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "./ui/card.tsx";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card.tsx";
 import { Input } from "./ui/input.tsx";
 
 interface DatabaseSettingsProps {
-	onClose: () => void;
+  onClose: () => void;
 }
 
 export function DatabaseSettings({ onClose }: DatabaseSettingsProps) {
-	const [dbPath, setDbPath] = useState<string>("");
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+  const [dbPath, setDbPath] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-	useEffect(() => {
-		getDbPath()
-			.then(setDbPath)
-			.catch(() => setError("Failed to load database path"))
-			.finally(() => setLoading(false));
-	}, []);
+  useEffect(() => {
+    let isMounted = true;
 
-	if (loading) {
-		return (
-			<div className="flex items-center justify-center p-8">
-				<Icon icon="lucide:loader-2" className="w-6 h-6 animate-spin" />
-			</div>
-		);
-	}
+    getDbPath()
+      .then((path) => {
+        if (isMounted) setDbPath(path);
+      })
+      .catch(() => {
+        if (isMounted) setError("Failed to load database path");
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
 
-	return (
-		<Card className="w-full max-w-md">
-			<CardHeader>
-				<CardTitle className="flex items-center gap-2">
-					<Icon icon="lucide:database" className="w-5 h-5" />
-					Database Settings
-				</CardTitle>
-				<CardDescription>
-					Drawings are stored in the local SQLite database
-				</CardDescription>
-			</CardHeader>
-			<CardContent className="space-y-4">
-				{error && (
-					<div className="p-3 rounded bg-destructive/10 text-destructive text-sm">
-						{error}
-					</div>
-				)}
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-				<div className="space-y-2">
-					<label className="text-sm font-medium">Database Location</label>
-					<Input type="text" value={dbPath} readOnly />
-					<p className="text-xs text-muted-foreground">
-						The designated app data directory is used automatically.
-					</p>
-				</div>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Icon icon="lucide:loader-2" className="w-6 h-6 animate-spin" />
+      </div>
+    );
+  }
 
-				<div className="flex justify-end gap-2 pt-4">
-					<Button onClick={onClose}>Close</Button>
-				</div>
-			</CardContent>
-		</Card>
-	);
+  return (
+    <Card className="w-full max-w-md">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Icon icon="lucide:database" className="w-5 h-5" />
+          Database Settings
+        </CardTitle>
+        <CardDescription>Drawings are stored in the local SQLite database</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {error && (
+          <div className="p-3 rounded bg-destructive/10 text-destructive text-sm">{error}</div>
+        )}
+
+        <div className="space-y-2">
+          <Input type="text" value={dbPath} readOnly />
+          <p className="text-xs text-muted-foreground">
+            The designated app data directory is used automatically.
+          </p>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-4">
+          <Button onClick={onClose}>Close</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
