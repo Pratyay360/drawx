@@ -2,16 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
-    tags: ["v*"]
   pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
+  packages: write
 
-# Use bash on every runner (including Windows) so all `run:` steps use the
-# same shell syntax.
 defaults:
   run:
     shell: bash
@@ -21,10 +18,10 @@ jobs:
     name: Backend tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
 
       - name: Install mise
-        uses: jdx/mise-action@v4
+        uses: jdx/mise-action@main
 
       - run: mise install
 
@@ -35,7 +32,7 @@ jobs:
           echo "gomodcache=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
 
       - name: Cache Go build cache & modules
-        uses: actions/cache@v4
+        uses: actions/cache@main
         with:
           path: |
             ${{ steps.go-cache.outputs.gocache }}
@@ -44,8 +41,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      # The store is pure Go (modernc.org/sqlite, no CGO), so it is fully
-      # testable without the GTK/WebKit system dependencies Wails needs.
       - name: Vet + test SQLite store
         run: |
           go vet ./internal/store
@@ -55,10 +50,10 @@ jobs:
     name: Frontend lint, typecheck & build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
 
       - name: Install mise
-        uses: jdx/mise-action@v4
+        uses: jdx/mise-action@main
 
       - run: mise install
 
@@ -93,7 +88,7 @@ jobs:
             os: windows-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
 
       # Wails v3 needs GTK4 + WebKitGTK headers on Linux (also required to
       # compile the wails3 CLI itself, so this must run before `go install`).
@@ -113,7 +108,7 @@ jobs:
             rpm
 
       - name: Install mise
-        uses: jdx/mise-action@v4
+        uses: jdx/mise-action@main
 
       - run: mise install
 
@@ -124,7 +119,7 @@ jobs:
           echo "gomodcache=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
 
       - name: Cache Go build cache & modules
-        uses: actions/cache@v4
+        uses: actions/cache@main
         with:
           path: |
             ${{ steps.go-cache.outputs.gocache }}
@@ -139,7 +134,7 @@ jobs:
         run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
-        uses: actions/cache@v4
+        uses: actions/cache@main
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-pnpm-${{ hashFiles('frontend/pnpm-lock.yaml') }}
@@ -164,7 +159,7 @@ jobs:
           wails3 task build
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@main
         with:
           name: drawx-${{ matrix.name }}
           path: bin/drawx*
@@ -180,9 +175,9 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@main
         with:
           path: artifacts
 
