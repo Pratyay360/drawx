@@ -4,9 +4,9 @@ catalog:
 minimumReleaseAgeExclude:
   - lucide-react@1.30.0
 overrides:
-  vite: 'catalog:'
+  vite: "catalog:"
 peerDependencyRules:
   allowAny:
     - vite
   allowedVersions:
-    vite: '*'
+    vite: "*"

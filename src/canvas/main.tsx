@@ -391,9 +391,7 @@ export function Canvas() {
           if (imported && Array.isArray(imported.elements)) {
             const importedAppState = getPersistentAppState(imported.appState || {});
             const importedFiles =
-              imported.files &&
-              typeof imported.files === "object" &&
-              !Array.isArray(imported.files)
+              imported.files && typeof imported.files === "object" && !Array.isArray(imported.files)
                 ? imported.files
                 : {};
             excalidrawAPI?.updateScene({
