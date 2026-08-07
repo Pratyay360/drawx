@@ -47,6 +47,7 @@ jobs:
         uses: jdx/mise-action@main
 
       - run: mise deps
+      - run: vp install
 
       - name: Build
         uses: tauri-apps/tauri-action@dev
