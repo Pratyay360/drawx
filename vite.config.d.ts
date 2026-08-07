@@ -1,2 +1,2 @@
-declare const _default: import("vite").UserConfigFnPromise;
+declare const _default: (env: import("vite").ConfigEnv) => Promise<import("vite").UserConfig>;
 export default _default;
