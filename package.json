@@ -2,12 +2,7 @@
   "name": "drawx",
   "version": "0.1.0",
   "private": true,
-  "workspaces": {
-    "catalog": {
-      "vite": "npm:@voidzero-dev/vite-plus-core@0.2.8",
-      "vite-plus": "0.2.8"
-    }
-  },
+  "packageManager": "pnpm@11.20.0+sha512.9a6f330a95b66446ea088faf1521405a8a01f07fde7124cc9958dfed52d4bb436737e65b08f85f37b46fcba375092558ac51262b816844b22f63406ed166bfee",
   "type": "module",
   "imports": {
     "#components/*": "./src/components/*.tsx",
@@ -53,7 +48,7 @@
     "@vitejs/plugin-react": "^6.0.5",
     "tailwindcss": "^4.3.3",
     "typescript": "~7.0.2",
-    "vite": "^8.0",
+    "vite": "catalog:",
     "vite-plus": "catalog:"
   },
   "devEngines": {
@@ -65,8 +60,8 @@
       },
       {
         "name": "pnpm",
-        "version": "11.20.0",
-        "onFail": "download"
+        "version": "^11.20.0",
+        "onFail": "warn"
       }
     ]
   }
