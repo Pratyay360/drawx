@@ -128,7 +128,7 @@ fn init_db(app: &tauri::AppHandle) -> Connection {
     let columns: Vec<String> = conn
         .prepare("PRAGMA table_info(canvases)")
         .and_then(|mut stmt| stmt.query_map([], |row| row.get::<_, String>(1)))
-        .and_then(|rows| rows.filter_map(|r| r.ok()).collect())
+        .and_then(|rows| rows.collect())
         .unwrap_or_default();
 
     if !columns.iter().any(|c| c == "files") {
