@@ -127,8 +127,10 @@ fn init_db(app: &tauri::AppHandle) -> Connection {
     // Migrate pre-existing databases that lack the `files` column.
     let columns: Vec<String> = conn
         .prepare("PRAGMA table_info(canvases)")
-        .and_then(|mut stmt| stmt.query_map([], |row| row.get::<_, String>(1)))
-        .and_then(|rows| rows.collect())
+        .and_then(|mut stmt| {
+            let rows = stmt.query_map([], |row| row.get::<_, String>(1))?;
+            rows.collect()
+        })
         .unwrap_or_default();
 
     if !columns.iter().any(|c| c == "files") {
@@ -309,12 +311,9 @@ fn row_to_library(
     item_names: Option<String>,
     content: Option<String>,
 ) -> Result<Library, String> {
-    let authors: Vec<serde_json::Value> =
-        serde_json::from_str(&authors_json).unwrap_or_default();
-    let item_names = item_names
-        .and_then(|s| serde_json::from_str::<Vec<String>>(&s).ok());
-    let content = content
-        .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok());
+    let authors: Vec<serde_json::Value> = serde_json::from_str(&authors_json).unwrap_or_default();
+    let item_names = item_names.and_then(|s| serde_json::from_str::<Vec<String>>(&s).ok());
+    let content = content.and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok());
     Ok(Library {
         id,
         name,
@@ -359,21 +358,42 @@ fn list_libraries(state: tauri::State<'_, DbState>) -> Result<Vec<Library>, Stri
 
     let libraries = rows
         .filter_map(|r| r.ok())
-        .map(|(id, name, description, authors, source, preview, created, updated, version, item_names, content)| {
-            row_to_library(
-                id, name, description, authors, source, preview, created, updated, version, item_names, content,
-            )
-        })
+        .map(
+            |(
+                id,
+                name,
+                description,
+                authors,
+                source,
+                preview,
+                created,
+                updated,
+                version,
+                item_names,
+                content,
+            )| {
+                row_to_library(
+                    id,
+                    name,
+                    description,
+                    authors,
+                    source,
+                    preview,
+                    created,
+                    updated,
+                    version,
+                    item_names,
+                    content,
+                )
+            },
+        )
         .collect::<Result<Vec<_>, _>>()?;
 
     Ok(libraries)
 }
 
 #[tauri::command]
-fn save_libraries(
-    state: tauri::State<'_, DbState>,
-    libraries: Vec<Library>,
-) -> Result<(), String> {
+fn save_libraries(state: tauri::State<'_, DbState>, libraries: Vec<Library>) -> Result<(), String> {
     let conn = state.conn.lock().map_err(|e| e.to_string())?;
     for lib in &libraries {
         let authors = serde_json::to_string(&lib.authors).map_err(|e| e.to_string())?;
@@ -421,7 +441,9 @@ fn clear_libraries(state: tauri::State<'_, DbState>) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn load_all_library_items(state: tauri::State<'_, DbState>) -> Result<Vec<serde_json::Value>, String> {
+fn load_all_library_items(
+    state: tauri::State<'_, DbState>,
+) -> Result<Vec<serde_json::Value>, String> {
     let conn = state.conn.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare("SELECT content FROM libraries WHERE content IS NOT NULL")
