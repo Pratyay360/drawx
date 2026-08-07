@@ -1,34 +1,19 @@
-name: CI
+name: Release
 
 on:
   push:
-  pull_request:
-  workflow_dispatch:
+    tags: ['v*']
 
 permissions:
-  contents: read
+  contents: write
+  packages: write
+  id-token: write
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@main
-
-      - name: Install mise
-        uses: jdx/mise-action@main
-
-      - run: mise deps
-
-      - name: Lint
-        run: nub run lint
-
-      - name: Type check
-        run: npx tsc --noEmit
-
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
 
       - name: Install system dependencies
         run: |
@@ -48,17 +33,13 @@ jobs:
 
       - run: mise deps
 
-      - name: Build
+      - name: Build and release
         uses: tauri-apps/tauri-action@dev
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'drawx ${{ github.ref_name }}'
+          releaseDraft: false
+          prerelease: false
           args: --target x86_64-unknown-linux-gnu --bundles deb,rpm,appimage
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-artifacts
-          path: |
-            src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/**/*
-          retention-days: 7
