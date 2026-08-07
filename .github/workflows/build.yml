@@ -74,26 +74,13 @@ jobs:
         run: pnpm build
 
   build:
-    name: Build (${{ matrix.name }})
+    name: Build Linux
     needs: [test, lint]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: Linux
-            os: ubuntu-latest
-          - name: macOS
-            os: macos-latest
-          - name: Windows
-            os: windows-latest
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
 
-      # Wails v3 needs GTK4 + WebKitGTK headers on Linux (also required to
-      # compile the wails3 CLI itself, so this must run before `go install`).
-      - name: Install system dependencies (Linux)
-        if: runner.os == 'Linux'
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -141,8 +128,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
-      # Install dependencies up front with the frozen lockfile so the
-      # `build:frontend` task's own `pnpm install` is a no-op.
       - name: Install frontend dependencies
         working-directory: frontend
         run: pnpm install --frozen-lockfile
@@ -150,7 +135,6 @@ jobs:
       - name: Install Wails v3 CLI
         run: |
           export PATH="$PATH:$(go env GOPATH)/bin"
-          # Pinned to the version in go.mod: v3 is pre-release, so @latest won't resolve.
           go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.5
 
       - name: Build binary
@@ -161,7 +145,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@main
         with:
-          name: drawx-${{ matrix.name }}
+          name: drawx-Linux
           path: bin/drawx*
           if-no-files-found: error
           retention-days: 7
@@ -169,7 +153,6 @@ jobs:
   release:
     name: Release
     needs: build
-    # Only tag pushes (v*) create releases.
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
