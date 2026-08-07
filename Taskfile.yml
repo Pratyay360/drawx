@@ -1,0 +1,57 @@
+# Wails v3 project tasks. Requires the `wails3` CLI and Go 1.24+.
+# Install the toolchain with `mise install` and the wails3 CLI with
+# `mise use go:github.com/wailsapp/wails/v3/cmd/wails3`.
+#
+# The platform-specific build tasks (windows/darwin/linux) are generated from
+# build/config.yml. Recreate them any time after editing config.yml with:
+#   wails3 generate build-assets
+
+version: '3'
+
+vars:
+  APP_NAME: "drawx"
+  BIN_DIR: "bin"
+  VITE_PORT: '{{.Opn}}.WAILS_VITE_PORT | default 9245{{.Cls}}'
+  GOOS: '{{.Opn}}.GOOS | default OS{{.Cls}}'
+
+includes:
+  common: ./build/Taskfile.yml
+  windows: ./build/windows/Taskfile.yml
+  darwin: ./build/darwin/Taskfile.yml
+  linux: ./build/linux/Taskfile.yml
+
+tasks:
+  build:
+    summary: Builds the application
+    cmds:
+      - task: "{{.Opn}}.GOOS{{.Cls}}:build"
+
+  package:
+    summary: Packages a production build of the application
+    cmds:
+      - task: "{{.Opn}}.GOOS{{.Cls}}:package"
+
+  run:
+    summary: Runs the application
+    cmds:
+      - task: "{{.Opn}}.GOOS{{.Cls}}:run"
+
+  dev:
+    summary: Runs the application in development mode
+    cmds:
+      - wails3 dev -config ./build/config.yml -port {{.Opn}}.VITE_PORT{{.Cls}}
+
+  generate:bindings:
+    summary: Regenerates the frontend bindings from Go services
+    cmds:
+      - task: common:generate:bindings
+
+  generate:icons:
+    summary: Generates platform icons from build/appicon.png
+    cmds:
+      - task: common:generate:icons
+
+  generate:build-assets:
+    summary: Regenerates the build/ directory from build/config.yml
+    cmds:
+      - task: common:update:build-assets
