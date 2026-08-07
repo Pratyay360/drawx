@@ -2,73 +2,193 @@ name: CI
 
 on:
   push:
+    branches: [main, master]
+    tags: ["v*"]
   pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# Use bash on every runner (including Windows) so all `run:` steps use the
+# same shell syntax.
+defaults:
+  run:
+    shell: bash
+
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@main
-
-      - name: Install mise
-        uses: jdx/mise-action@main
-
-      - run: mise deps
-
-      - name: Lint
-        run: nub run lint
-
-      - name: Type check
-        run: npx tsc --noEmit
-
-  build:
+  test:
+    name: Backend tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install system dependencies
+      - name: Install mise
+        uses: jdx/mise-action@v4
+
+      - run: mise install
+
+      - name: Get Go cache dirs
+        id: go-cache
+        run: |
+          echo "gocache=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
+          echo "gomodcache=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Go build cache & modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ steps.go-cache.outputs.gocache }}
+            ${{ steps.go-cache.outputs.gomodcache }}
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      # The store is pure Go (modernc.org/sqlite, no CGO), so it is fully
+      # testable without the GTK/WebKit system dependencies Wails needs.
+      - name: Vet + test SQLite store
+        run: |
+          go vet ./internal/store
+          go test ./internal/store
+
+  lint:
+    name: Frontend lint, typecheck & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install mise
+        uses: jdx/mise-action@v4
+
+      - run: mise install
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        working-directory: frontend
+        run: pnpm lint
+
+      - name: Type check
+        working-directory: frontend
+        run: pnpm typecheck
+
+      - name: Build (production)
+        working-directory: frontend
+        run: pnpm build
+
+  build:
+    name: Build (${{ matrix.name }})
+    needs: [test, lint]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-latest
+          - name: macOS
+            os: macos-latest
+          - name: Windows
+            os: windows-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Wails v3 needs GTK4 + WebKitGTK headers on Linux (also required to
+      # compile the wails3 CLI itself, so this must run before `go install`).
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libdbus-1-dev \
+            build-essential \
             pkg-config \
-            libgtk-3-dev \
-            libwebkit2gtk-4.1-dev \
+            libgtk-4-dev \
+            libwebkitgtk-6.0-dev \
+            libsoup-3.0-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
             patchelf \
             rpm
 
       - name: Install mise
-        uses: jdx/mise-action@main
+        uses: jdx/mise-action@v4
 
-      - run: mise deps
+      - run: mise install
 
-      - name: Build
-        uses: tauri-apps/tauri-action@dev
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get Go cache dirs
+        id: go-cache
+        run: |
+          echo "gocache=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
+          echo "gomodcache=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Go build cache & modules
+        uses: actions/cache@v4
         with:
-          args: --target x86_64-unknown-linux-gnu --bundles deb,rpm,appimage
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@main
-        with:
-          name: linux-artifacts
           path: |
-            src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/**/*
+            ${{ steps.go-cache.outputs.gocache }}
+            ${{ steps.go-cache.outputs.gomodcache }}
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Get pnpm store dir
+        id: pnpm-store
+        working-directory: frontend
+        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      # Install dependencies up front with the frozen lockfile so the
+      # `build:frontend` task's own `pnpm install` is a no-op.
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Wails v3 CLI
+        run: |
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          # Pinned to the version in go.mod: v3 is pre-release, so @latest won't resolve.
+          go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.5
+
+      - name: Build binary
+        run: |
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          wails3 task build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: drawx-${{ matrix.name }}
+          path: bin/drawx*
+          if-no-files-found: error
           retention-days: 7
 
-      - name: create release
+  release:
+    name: Release
+    needs: build
+    # Only tag pushes (v*) create releases.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          name: ${{ github.ref_name }}
-          path: |
-            src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/**/*
+          files: artifacts/**/*
+          generate_release_notes: true
           token: ${{ github.token }}
-          draft: false
-          prerelease: false

@@ -1,20 +1,30 @@
-<!--VITE PLUS START-->
+# Drawx — Development Guide
 
-# Using Vite+, the Unified Toolchain for the Web
+Drawx is a desktop app built with **Wails v3** (Go backend) and a
+**React + Vite + TypeScript** frontend living in `frontend/`.
 
-This project is using Vite+, a unified toolchain built on top of Vite, Rolldown, Vitest, tsdown, Oxlint, Oxfmt, and Vite Task. Vite+ wraps runtime management, package management, and frontend tooling in a single global CLI called `vp`. Vite+ is distinct from Vite, and it invokes Vite through `vp dev` and `vp build`. Run `vp help` to print a list of commands and `vp <command> --help` for information about a specific command.
+## Toolchain
 
-Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.dev/guide/.
+- Tooling (Go, Node, pnpm, biome, bun, deno) is managed by **mise** — run
+  `mise install` after pulling changes.
+- The Wails CLI (`wails3`) is installed separately (pinned to the version in
+  `go.mod`):
+  `go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.5`.
 
-## Built-in Commands vs Scripts
+## Commands
 
-`vp <name>` runs a built-in command. `vp run <name>` runs a `package.json` script or a `vite.config.ts` task. Scripts cannot overwrite built-ins, so `vp dev` and `vp run dev` may do different things. Check `package.json` and `vite.config.ts` first, and run `vp run <name>` when the project defines a script or task with that name.
+- `wails3 dev` — run the app with Vite hot reload.
+- `wails3 task build` / `wails3 task package` — build / package binaries.
+- `cd frontend && pnpm dev` — run the frontend alone against a Vite dev server.
+- `cd frontend && pnpm lint` / `pnpm typecheck` / `pnpm build` — frontend checks.
+- `go test ./internal/store` — backend unit tests.
 
-## Review Checklist
+## Conventions
 
-- [ ] Run `vp install` after pulling remote changes and before getting started.
-- [ ] Run `vp check` and `vp test` to format, lint, type check and test changes.
-- [ ] Check if there are `vite.config.ts` tasks or `package.json` scripts necessary for validation, run via `vp run <script>`.
-- [ ] If setup, runtime, or package-manager behavior looks wrong, run `vp env doctor` and include its output when asking for help.
-
-<!--VITE PLUS END-->
+- Keep the Wails layer thin: all persistence lives in `internal/store`
+  (pure Go, no Wails imports) so it stays unit-testable.
+- `AppService` in `app.go` is the only thing bound to the frontend. After
+  changing its methods, regenerate bindings:
+  `wails3 generate bindings -clean=true`.
+- Frontend services (under `frontend/src/services/`) are the only code that
+  imports from `frontend/bindings/`.

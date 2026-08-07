@@ -1,14 +1,7 @@
 [tools]
-rust = "latest"
-cargo-make = "latest"
-rust-analyzer = "latest"
+go = "latest"
 node = "24"
-nub = { version = "latest", allow_builds = "[@nubjs/nub]" }
 biome = "latest"
 bun = "latest"
-"npm:@kilocode/cli" = "latest"
 pnpm = "latest"
-vp = "latest"
-
-[deps.nubjs]
-auto = true
+deno = "latest"

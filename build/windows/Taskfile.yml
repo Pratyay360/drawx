@@ -1,0 +1,56 @@
+version: '3'
+
+includes:
+  common: ../Taskfile.yml
+
+tasks:
+  build:
+    summary: Builds the application for Windows
+    deps:
+      - task: common:go:mod:tidy
+      - task: common:generate:icons
+      - task: common:build:frontend
+    cmds:
+      - go build {{.BUILD_FLAGS}} -o {{.BIN_DIR}}/{{.APP_NAME}}.exe
+    vars:
+      BUILD_FLAGS: '{{if eq .PRODUCTION "true"}}-tags production -trimpath -buildvcs=false -ldflags="-w -s -H windowsgui"{{else}}-buildvcs=false -gcflags=all="-l"{{end}}'
+    env:
+      GOOS: windows
+      CGO_ENABLED: 1
+      GOARCH: '{{.ARCH | default ARCH}}'
+      PRODUCTION: '{{.PRODUCTION | default "false"}}'
+
+  run:
+    summary: Runs the application for Windows
+    deps:
+      - task: build
+    cmds:
+      - {{.BIN_DIR}}/{{.APP_NAME}}.exe
+
+  package:
+    summary: Packages a production build of the application for Windows
+    deps:
+      - task: build
+        vars:
+          PRODUCTION: "true"
+    cmds:
+      - task: create:nsis
+      - task: create:msix
+
+  create:nsis:
+    summary: Creates an NSIS installer
+    deps:
+      - task: build
+        vars:
+          PRODUCTION: "true"
+    cmds:
+      - makensis build/windows/nsis/installer.nsi
+
+  create:msix:
+    summary: Creates an MSIX package
+    deps:
+      - task: build
+        vars:
+          PRODUCTION: "true"
+    cmds:
+      - wails3 generate msix -name "{{.APP_NAME}}" -binary "{{.BIN_DIR}}/{{.APP_NAME}}.exe"

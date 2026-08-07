@@ -6,11 +6,17 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-tailwindcss
+
 node_modules
 dist
 dist-ssr
 *.local
+
+# Go / Wails
+bin/
+*.db
+*.db-wal
+*.db-shm
 
 # Editor directories and files
 .vscode/*

@@ -1,0 +1,59 @@
+version: '3'
+
+includes:
+  common: ../Taskfile.yml
+
+tasks:
+  build:
+    summary: Builds the application for macOS
+    deps:
+      - task: common:go:mod:tidy
+      - task: common:generate:icons
+      - task: common:build:frontend
+    cmds:
+      - go build {{.BUILD_FLAGS}} -o {{.BIN_DIR}}/{{.APP_NAME}}
+    vars:
+      BUILD_FLAGS: '{{if eq .PRODUCTION "true"}}-tags production -trimpath -buildvcs=false -ldflags="-w -s"{{else}}-buildvcs=false -gcflags=all="-l"{{end}}'
+    env:
+      GOOS: darwin
+      CGO_ENABLED: 1
+      GOARCH: '{{.ARCH | default ARCH}}'
+      PRODUCTION: '{{.PRODUCTION | default "false"}}'
+
+  run:
+    summary: Runs the application for macOS
+    deps:
+      - task: build
+    cmds:
+      - open {{.BIN_DIR}}/{{.APP_NAME}}.app
+
+  package:
+    summary: Packages a production build of the application for macOS
+    deps:
+      - task: build
+        vars:
+          PRODUCTION: "true"
+    cmds:
+      - task: create:dmg
+      - task: create:app
+
+  create:dmg:
+    summary: Creates a dmg package
+    deps:
+      - task: build
+        vars:
+          PRODUCTION: "true"
+    cmds:
+      - hdiutil create -volname {{.APP_NAME}} -srcfolder {{.BIN_DIR}}/{{.APP_NAME}}.app -ov -format UDZO {{.BIN_DIR}}/{{.APP_NAME}}.dmg
+
+  create:app:
+    summary: Creates an .app package
+    deps:
+      - task: build
+        vars:
+          PRODUCTION: "true"
+    cmds:
+      - mkdir -p {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/MacOS
+      - mkdir -p {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Resources
+      - cp {{.BIN_DIR}}/{{.APP_NAME}} {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/MacOS/
+      - cp build/darwin/icons.icns {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Resources/
