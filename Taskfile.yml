@@ -1,0 +1,74 @@
+# Root Taskfile for Drawx – orchestrates platform-specific builds.
+# Common tasks live in build/Taskfile.yml and are included by each
+# platform Taskfile (build/<os>/Taskfile.yml) under the "common:" namespace.
+version: '3'
+
+includes:
+  linux:
+    taskfile: ./build/linux/Taskfile.yml
+    optional: true
+  darwin:
+    taskfile: ./build/darwin/Taskfile.yml
+    optional: true
+  windows:
+    taskfile: ./build/windows/Taskfile.yml
+    optional: true
+  ios:
+    taskfile: ./build/ios/Taskfile.yml
+    optional: true
+  android:
+    taskfile: ./build/android/Taskfile.yml
+    optional: true
+  common: ./build/Taskfile.yml
+
+vars:
+  APP_NAME: drawx
+  BIN_DIR: bin
+  PACKAGE_MANAGER: pnpm
+  VITE_PORT: "34115"
+
+tasks:
+  build:
+    summary: Builds the application for the current OS
+    cmds:
+      - task: "{{OS}}:build"
+
+  package:
+    summary: Packages the application for the current OS
+    cmds:
+      - task: "{{OS}}:package"
+
+  run:
+    summary: Runs the built application
+    cmds:
+      - task: "{{OS}}:run"
+
+  dev:frontend:
+    summary: Runs the frontend dev server
+    cmds:
+      - task: common:dev:frontend
+
+  install:frontend:deps:
+    summary: Install frontend dependencies
+    cmds:
+      - task: common:install:frontend:deps
+
+  generate:bindings:
+    summary: Generates bindings for the frontend
+    cmds:
+      - task: common:generate:bindings
+
+  build:frontend:
+    summary: Builds the frontend
+    cmds:
+      - task: common:build:frontend
+
+  build:server:
+    summary: Builds the server binary
+    cmds:
+      - task: common:build:server
+
+  update:build-assets:
+    summary: Updates the build assets
+    cmds:
+      - task: common:update:build-assets
