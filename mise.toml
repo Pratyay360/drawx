@@ -4,6 +4,7 @@ rust = "latest"
 cargo-make = "latest"
 rust-analyzer = "latest"
 node = "22"
+biome = "latest"
 
 [tasks]
 install = { run = "deno install" }

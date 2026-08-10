@@ -1,9 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 
 export interface DbConfig {
-	db_type: "local" | "remote";
 	local_path: string | null;
-	remote_url: string | null;
 }
 
 export async function getDbConfig(): Promise<DbConfig> {
@@ -12,9 +10,7 @@ export async function getDbConfig(): Promise<DbConfig> {
 	} catch (error) {
 		console.error("Failed to get database config:", error);
 		return {
-			db_type: "local",
 			local_path: null,
-			remote_url: null,
 		};
 	}
 }

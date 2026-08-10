@@ -10,6 +10,14 @@ export default defineConfig(async () => ({
 
 	clearScreen: false,
 
+	resolve: {
+		// @excalidraw/excalidraw exports its CSS under "development" and
+		// "production" conditions with no "default" fallback. Tailwind CSS v4's
+		// Vite plugin uses enhanced-resolve which doesn't match these by default,
+		// so we add them explicitly here.
+		conditions: ["development", "production"],
+	},
+
 	server: {
 		port: 1420,
 		strictPort: true,

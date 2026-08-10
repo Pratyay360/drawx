@@ -26,7 +26,10 @@ import {
 	saveCanvas,
 	updateCanvasTitle,
 } from "../services/tauri.ts";
-import { loadAllLibraryItems } from "../services/libraries.ts";
+import {
+	loadAllLibraryItems,
+	onLibraryConfigUpdated,
+} from "../services/libraries.ts";
 
 function areElementsEqual(a: any[], b: any[]): boolean {
 	if (a.length !== b.length) return false;
@@ -87,6 +90,9 @@ export function Canvas() {
 
 	useEffect(() => {
 		loadAllLibraryItems().then(setLibraryItems);
+		return onLibraryConfigUpdated(() => {
+			loadAllLibraryItems().then(setLibraryItems);
+		});
 	}, []);
 
 	const fetchCanvas = useCallback(

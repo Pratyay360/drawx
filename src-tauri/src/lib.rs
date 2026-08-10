@@ -3,16 +3,28 @@ use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use tauri::Manager;
 
-struct DbState {
-    conn: Mutex<Connection>,
-    db_path: Mutex<String>,
+pub struct DbState {
+    pub conn: Mutex<Connection>,
+    pub db_path: Mutex<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct DbConfig {
-    db_type: String, // "local" or "remote"
     local_path: Option<String>,
-    remote_url: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct SavedLibrary {
+    id: String,
+    name: String,
+    description: String,
+    authors: serde_json::Value,
+    source: String,
+    preview: String,
+    created: String,
+    updated: String,
+    version: i32,
+    item_names: serde_json::Value,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -100,7 +112,8 @@ fn init_db(app: &tauri::AppHandle, custom_path: Option<&str>) -> Connection {
              app_state TEXT NOT NULL DEFAULT '{}',
              created_at TEXT NOT NULL,
              updated_at TEXT NOT NULL
-         );",
+         );
+",
     )
     .expect("failed to initialize database");
 
@@ -267,11 +280,7 @@ fn get_db_config(app: tauri::AppHandle) -> Result<DbConfig, String> {
         let config: DbConfig = serde_json::from_str(&content).map_err(|e| e.to_string())?;
         Ok(config)
     } else {
-        Ok(DbConfig {
-            db_type: "local".to_string(),
-            local_path: None,
-            remote_url: None,
-        })
+        Ok(DbConfig { local_path: None })
     }
 }
 
@@ -290,24 +299,84 @@ fn set_db_config(app: tauri::AppHandle, config: DbConfig) -> Result<(), String> 
     Ok(())
 }
 
-#[tauri::command]
-fn select_local_db_path(app: tauri::AppHandle) -> Result<Option<String>, String> {
-    use std::path::PathBuf;
+fn saved_libraries_path(app: &tauri::AppHandle) -> std::path::PathBuf {
+    app.path()
+        .app_config_dir()
+        .expect("failed to resolve app config dir")
+        .join("saved_libraries.json")
+}
 
-    // For now, return a default path. In a real app, you'd use a file dialog
-    let app_dir = app
+#[tauri::command]
+fn get_saved_libraries(app: tauri::AppHandle) -> Result<Vec<SavedLibrary>, String> {
+    let path = saved_libraries_path(&app);
+    if !path.exists() {
+        return Ok(Vec::new());
+    }
+    let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    Ok(serde_json::from_str(&content).unwrap_or_default())
+}
+
+#[tauri::command]
+fn save_library(app: tauri::AppHandle, library: SavedLibrary) -> Result<(), String> {
+    let config_dir = app
         .path()
-        .app_data_dir()
-        .expect("failed to resolve app data dir");
-    
-    let default_path = app_dir.join("custom_drawx.db");
-    Ok(Some(default_path.to_string_lossy().to_string()))
+        .app_config_dir()
+        .expect("failed to resolve app config dir");
+    std::fs::create_dir_all(&config_dir).map_err(|e| e.to_string())?;
+
+    let path = saved_libraries_path(&app);
+    let mut libraries: Vec<SavedLibrary> = if path.exists() {
+        let content = std::fs::read_to_string(&path).unwrap_or_default();
+        serde_json::from_str(&content).unwrap_or_default()
+    } else {
+        Vec::new()
+    };
+
+    libraries.retain(|l| l.id != library.id);
+    libraries.push(library);
+
+    let json = serde_json::to_string_pretty(&libraries).map_err(|e| e.to_string())?;
+    std::fs::write(&path, json).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn remove_saved_library(app: tauri::AppHandle, id: String) -> Result<(), String> {
+    let path = saved_libraries_path(&app);
+    if !path.exists() {
+        return Ok(());
+    }
+    let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let mut libraries: Vec<SavedLibrary> = serde_json::from_str(&content).unwrap_or_default();
+    libraries.retain(|l| l.id != id);
+    let json = serde_json::to_string_pretty(&libraries).map_err(|e| e.to_string())?;
+    std::fs::write(&path, json).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+async fn select_local_db_path(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let file_path = app
+        .dialog()
+        .file()
+        .set_title("Select database file location")
+        .add_filter("SQLite Database", &["db", "sqlite"])
+        .set_file_name("drawx.db")
+        .blocking_save_file();
+
+    Ok(file_path
+        .map(|path| path.into_path().map_err(|e| e.to_string()))
+        .transpose()?
+        .map(|path| path.to_string_lossy().to_string()))
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let config_path = app
                 .handle()
@@ -319,9 +388,7 @@ pub fn run() {
             let custom_path = if config_path.exists() {
                 let content = std::fs::read_to_string(&config_path).unwrap_or_default();
                 let config: DbConfig = serde_json::from_str(&content).unwrap_or(DbConfig {
-                    db_type: "local".to_string(),
                     local_path: None,
-                    remote_url: None,
                 });
                 config.local_path
             } else {
@@ -331,17 +398,15 @@ pub fn run() {
             let conn = init_db(app.handle(), custom_path.as_deref());
             app.manage(DbState {
                 conn: Mutex::new(conn),
-                db_path: Mutex::new(
-                    custom_path.unwrap_or_else(|| {
-                        app.handle()
-                            .path()
-                            .app_data_dir()
-                            .expect("failed to resolve app data dir")
-                            .join("drawx.db")
-                            .to_string_lossy()
-                            .to_string()
-                    }),
-                ),
+                db_path: Mutex::new(custom_path.unwrap_or_else(|| {
+                    app.handle()
+                        .path()
+                        .app_data_dir()
+                        .expect("failed to resolve app data dir")
+                        .join("drawx.db")
+                        .to_string_lossy()
+                        .to_string()
+                })),
             });
             Ok(())
         })
@@ -355,6 +420,9 @@ pub fn run() {
             get_db_config,
             set_db_config,
             select_local_db_path,
+            get_saved_libraries,
+            save_library,
+            remove_saved_library,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

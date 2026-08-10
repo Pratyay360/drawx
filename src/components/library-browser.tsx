@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Icon } from "@iconify/react";
 import { Input } from "./ui/input.tsx";
 import {
@@ -18,9 +18,12 @@ import {
 } from "./ui/table.tsx";
 import {
 	fetchLibraries,
-	fetchLibraryContent,
 	searchLibraries,
+	getSavedLibraries,
+	saveLibraryToConfig,
+	removeLibraryFromConfig,
 	type ExcalidrawLibrary,
+	type SavedLibrary,
 } from "../services/libraries.ts";
 
 interface LibraryBrowserProps {
@@ -32,9 +35,10 @@ export function LibraryBrowser({ onLibrarySelect }: LibraryBrowserProps) {
 	const [filteredLibraries, setFilteredLibraries] = useState<
 		ExcalidrawLibrary[]
 	>([]);
+	const [savedLibraries, setSavedLibraries] = useState<SavedLibrary[]>([]);
+	const [savingId, setSavingId] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [searchQuery, setSearchQuery] = useState("");
-	const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
 	useEffect(() => {
 		fetchLibraries().then((libs) => {
@@ -42,6 +46,7 @@ export function LibraryBrowser({ onLibrarySelect }: LibraryBrowserProps) {
 			setFilteredLibraries(libs);
 			setLoading(false);
 		});
+		getSavedLibraries().then(setSavedLibraries);
 	}, []);
 
 	useEffect(() => {
@@ -52,22 +57,45 @@ export function LibraryBrowser({ onLibrarySelect }: LibraryBrowserProps) {
 		}
 	}, [searchQuery, libraries]);
 
-	async function handleDownload(library: ExcalidrawLibrary) {
-		setDownloadingId(library.id);
+	const isSaved = useCallback(
+		(libraryId: string) =>
+			savedLibraries.some((lib) => lib.id === libraryId),
+		[savedLibraries],
+	);
+
+	async function handleToggleSave(library: ExcalidrawLibrary) {
+		if (isSaved(library.id)) {
+			try {
+				await removeLibraryFromConfig(library.id);
+				setSavedLibraries((prev) =>
+					prev.filter((lib) => lib.id !== library.id),
+				);
+			} catch (error) {
+				console.error("Failed to remove library from config:", error);
+			}
+			return;
+		}
+
+		setSavingId(library.id);
 		try {
-			const content = await fetchLibraryContent(library);
-			if (!content) return;
-			const blob = new Blob([JSON.stringify(content, null, 2)], {
-				type: "application/json",
-			});
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement("a");
-			a.href = url;
-			a.download = `${library.name}.excalidraw`;
-			a.click();
-			URL.revokeObjectURL(url);
+			const saved: SavedLibrary = {
+				id: library.id,
+				name: library.name,
+				description: library.description,
+				authors: library.authors,
+				source: library.source,
+				preview: library.preview,
+				created: library.created,
+				updated: library.updated,
+				version: library.version,
+				item_names: library.itemNames || [],
+			};
+			await saveLibraryToConfig(saved);
+			setSavedLibraries((prev) => [...prev, saved]);
+		} catch (error) {
+			console.error("Failed to save library to config:", error);
 		} finally {
-			setDownloadingId(null);
+			setSavingId(null);
 		}
 	}
 
@@ -87,7 +115,7 @@ export function LibraryBrowser({ onLibrarySelect }: LibraryBrowserProps) {
 					Excalidraw Libraries
 				</CardTitle>
 				<CardDescription>
-					All community libraries are loaded by default
+					Save libraries to config to add their components to your canvas
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
@@ -117,48 +145,66 @@ export function LibraryBrowser({ onLibrarySelect }: LibraryBrowserProps) {
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{filteredLibraries.map((library) => (
-								<TableRow
-									key={library.id}
-									onClick={() => onLibrarySelect?.(library)}
-									className="cursor-pointer"
-								>
-									<TableCell className="font-medium">{library.name}</TableCell>
-									<TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
-										{library.description}
-									</TableCell>
-									<TableCell className="text-sm">
-										{library.authors[0]?.name || "Unknown"}
-									</TableCell>
-									<TableCell>
-										{library.preview && (
-											<img
-												src={`https://libraries.excalidraw.com/${library.preview}`}
-												alt={`${library.name} preview`}
-												className="w-16 h-12 object-cover rounded"
-											/>
-										)}
-									</TableCell>
-									<TableCell onClick={(e) => e.stopPropagation()}>
-										<button
-											onClick={() => handleDownload(library)}
-											disabled={downloadingId === library.id}
-											className="p-1.5 rounded hover:bg-accent transition-colors"
-											title={`Download ${library.name}`}
-											aria-label={`Download ${library.name}`}
-										>
-											{downloadingId === library.id ? (
-												<Icon
-													icon="lucide:loader-2"
-													className="w-4 h-4 animate-spin"
+							{filteredLibraries.map((library) => {
+								const saved = isSaved(library.id);
+								const saving = savingId === library.id;
+								return (
+									<TableRow
+										key={library.id}
+										onClick={() => onLibrarySelect?.(library)}
+										className="cursor-pointer"
+									>
+										<TableCell className="font-medium">
+											{library.name}
+										</TableCell>
+										<TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
+											{library.description}
+										</TableCell>
+										<TableCell className="text-sm">
+											{library.authors[0]?.name || "Unknown"}
+										</TableCell>
+										<TableCell>
+											{library.preview && (
+												<img
+													src={`https://libraries.excalidraw.com/${library.preview}`}
+													alt={`${library.name} preview`}
+													className="w-16 h-12 object-cover rounded"
 												/>
-											) : (
-												<Icon icon="lucide:download" className="w-4 h-4" />
 											)}
-										</button>
-									</TableCell>
-								</TableRow>
-							))}
+										</TableCell>
+										<TableCell onClick={(e) => e.stopPropagation()}>
+												<button
+												type="button"
+												onClick={() => handleToggleSave(library)}
+												disabled={saving}
+												className={`p-1.5 rounded transition-colors ${
+													saved
+														? "text-primary hover:bg-accent"
+														: "text-muted-foreground hover:bg-accent"
+												}`}
+												title={saved ? `Remove ${library.name}` : `Save ${library.name}`}
+												aria-label={
+													saved
+														? `Remove ${library.name} from saved`
+														: `Save ${library.name}`
+												}
+											>
+												{saving ? (
+													<Icon
+														icon="lucide:loader-2"
+														className="w-4 h-4 animate-spin"
+													/>
+												) : (
+													<Icon
+														icon={saved ? "lucide:bookmark-check" : "lucide:bookmark-plus"}
+														className="w-4 h-4"
+													/>
+												)}
+											</button>
+										</TableCell>
+									</TableRow>
+								);
+							})}
 						</TableBody>
 					</Table>
 				</div>
@@ -170,7 +216,8 @@ export function LibraryBrowser({ onLibrarySelect }: LibraryBrowserProps) {
 				)}
 
 				<div className="text-sm text-muted-foreground">
-					{filteredLibraries.length} of {libraries.length} libraries
+					{filteredLibraries.length} of {libraries.length} libraries ·{" "}
+					{savedLibraries.length} saved to config
 				</div>
 			</CardContent>
 		</Card>
