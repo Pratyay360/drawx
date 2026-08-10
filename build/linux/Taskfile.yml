@@ -25,7 +25,7 @@ tasks:
     deps:
       - task: build
     cmds:
-      - {{.BIN_DIR}}/{{.APP_NAME}}
+      - '{{.BIN_DIR}}/{{.APP_NAME}}'
 
   package:
     summary: Packages a production build of the application for Linux
