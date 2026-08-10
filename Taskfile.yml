@@ -24,17 +24,17 @@ tasks:
   build:
     summary: Builds the application
     cmds:
-      - task: "{{.Opn}}.GOOS{{.Cls}}:build"
+      - task: "{{.GOOS}}:build"
 
   package:
     summary: Packages a production build of the application
     cmds:
-      - task: "{{.Opn}}.GOOS{{.Cls}}:package"
+      - task: "{{.GOOS}}:package"
 
   run:
     summary: Runs the application
     cmds:
-      - task: "{{.Opn}}.GOOS{{.Cls}}:run"
+      - task: "{{.GOOS}}:run"
 
   dev:
     summary: Runs the application in development mode
