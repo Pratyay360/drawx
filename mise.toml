@@ -1,5 +1,7 @@
 [tools]
-go = "latest"
+# Pinned so CI (mise-action) and local builds use the same toolchain.
+# go.mod requires go >= 1.25.
+go = "1.26"
 node = "24"
 biome = "latest"
 bun = "latest"

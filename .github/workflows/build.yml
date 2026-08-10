@@ -17,11 +17,12 @@ jobs:
   test:
     name: Backend tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v7
 
       - name: Install mise
-        uses: jdx/mise-action@main
+        uses: jdx/mise-action@v4
 
       - run: mise install
 
@@ -32,7 +33,7 @@ jobs:
           echo "gomodcache=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
 
       - name: Cache Go build cache & modules
-        uses: actions/cache@main
+        uses: actions/cache@v6
         with:
           path: |
             ${{ steps.go-cache.outputs.gocache }}
@@ -49,11 +50,12 @@ jobs:
   lint:
     name: Frontend lint, typecheck & build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v7
 
       - name: Install mise
-        uses: jdx/mise-action@main
+        uses: jdx/mise-action@v4
 
       - run: mise install
 
@@ -87,8 +89,9 @@ jobs:
           - name: Windows
             os: windows-latest
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v7
 
       # Wails v3 needs GTK4 + WebKitGTK headers on Linux (also required to
       # compile the wails3 CLI itself, so this must run before `go install`).
@@ -108,7 +111,7 @@ jobs:
             rpm
 
       - name: Install mise
-        uses: jdx/mise-action@main
+        uses: jdx/mise-action@v4
 
       - run: mise install
 
@@ -119,7 +122,7 @@ jobs:
           echo "gomodcache=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
 
       - name: Cache Go build cache & modules
-        uses: actions/cache@main
+        uses: actions/cache@v6
         with:
           path: |
             ${{ steps.go-cache.outputs.gocache }}
@@ -134,7 +137,7 @@ jobs:
         run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
-        uses: actions/cache@main
+        uses: actions/cache@v6
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-pnpm-${{ hashFiles('frontend/pnpm-lock.yaml') }}
@@ -159,7 +162,7 @@ jobs:
           wails3 task build
 
       - name: Upload artifact
-        uses: actions/upload-artifact@main
+        uses: actions/upload-artifact@v7
         with:
           name: drawx-${{ matrix.name }}
           path: bin/drawx*
@@ -172,17 +175,18 @@ jobs:
     # Only tag pushes (v*) create releases.
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@main
+      - uses: actions/download-artifact@v8
         with:
           path: artifacts
 
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: artifacts/**/*
           generate_release_notes: true
