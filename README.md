@@ -36,8 +36,8 @@ wails3 dev                  # builds the Go backend, starts Vite with hot reload
 ## Building
 
 ```sh
-wails3 task build           # builds the current platform binary into bin/
-wails3 task package         # produces installers (AppImage/deb/rpm, dmg, NSIS)
+wails3 build           # builds the Linux binary into bin/
+wails3 package         # produces installers (AppImage/deb/rpm)
 ```
 
 You can also run the frontend on its own (useful while iterating on UI):
@@ -56,8 +56,7 @@ app.go                      # AppService bound to the frontend
 internal/store/             # SQLite persistence (pure Go, unit-tested)
 frontend/                   # React + Vite + TypeScript frontend
   bindings/drawx/           # generated Wails bindings (regenerate with wails3)
-build/                      # wails3 build config & per-platform Taskfiles
-Taskfile.yml                # wails3 tasks (build, dev, package, ...)
+build/                      # wails3 build config
 ```
 
 ## Regenerating bindings

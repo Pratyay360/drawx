@@ -14,7 +14,7 @@ Drawx is a desktop app built with **Wails v3** (Go backend) and a
 ## Commands
 
 - `wails3 dev` — run the app with Vite hot reload.
-- `wails3 task build` / `wails3 task package` — build / package binaries.
+- `wails3 build` / `wails3 package` — build / package binaries.
 - `cd frontend && pnpm dev` — run the frontend alone against a Vite dev server.
 - `cd frontend && pnpm lint` / `pnpm typecheck` / `pnpm build` — frontend checks.
 - `go test ./internal/store` — backend unit tests.
