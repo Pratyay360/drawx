@@ -1,6 +1,12 @@
 import { mergeLibraryItems, restoreLibraryItems } from "@excalidraw/excalidraw";
+import type { LibraryItem, LibraryItems } from "@excalidraw/excalidraw/types";
 import { invoke } from "@tauri-apps/api/core";
 import { isTauri } from "./tauri";
+
+interface ExcalidrawLibraryFile {
+	type?: string;
+	libraryItems?: unknown;
+}
 
 export interface ExcalidrawLibrary {
 	name: string;
@@ -27,7 +33,7 @@ export interface SavedLibrary {
 	version: number;
 	item_names: string[];
 	/** Normalized v2 library items persisted to disk (empty until content is fetched). */
-	items: any[];
+	items: LibraryItem[];
 	/** ISO timestamp of the last successful content fetch, or null. */
 	fetched_at: string | null;
 }
@@ -62,7 +68,7 @@ export function onLibraryConfigUpdated(callback: () => void): () => void {
 		globalThis.removeEventListener(LIBRARY_CONFIG_UPDATED_EVENT, callback);
 }
 
-function notifyLibraryItemsInstalled(items: readonly any[]) {
+function notifyLibraryItemsInstalled(items: readonly LibraryItem[]) {
 	globalThis.dispatchEvent(
 		new CustomEvent(LIBRARY_ITEMS_INSTALLED_EVENT, { detail: items }),
 	);
@@ -94,7 +100,7 @@ export function onLibraryBrowseRequested(
 
 /** Subscribe to libraries being installed/refreshed so canvases can merge them in. */
 export function onLibraryItemsInstalled(
-	callback: (items: readonly any[]) => void,
+	callback: (items: readonly LibraryItem[]) => void,
 ): () => void {
 	const handler = (event: Event) => {
 		const detail = (event as CustomEvent).detail;
@@ -118,7 +124,7 @@ export async function fetchLibraries(): Promise<ExcalidrawLibrary[]> {
 
 export async function fetchLibraryContent(
 	library: ExcalidrawLibrary,
-): Promise<any> {
+): Promise<ExcalidrawLibraryFile | null> {
 	const contentUrl = `https://libraries.excalidraw.com/libraries/${library.source}`;
 	try {
 		const response = await fetch(contentUrl);
@@ -147,14 +153,17 @@ function hashString(input: string): string {
  * re-merging the same content never duplicates items, persisted content stays
  * stable across refetches, and upstream reordering of items doesn't shift ids.
  */
-export function toLibraryItems(content: any, libraryId: string): any[] {
+export function toLibraryItems(
+	content: ExcalidrawLibraryFile | null | undefined,
+	libraryId: string,
+): LibraryItem[] {
 	const raw = content?.libraryItems;
 	if (!Array.isArray(raw)) return [];
 	try {
-		const restored = restoreLibraryItems(raw, "published") as any[];
+		const restored = restoreLibraryItems(raw, "published") as LibraryItems;
 		return restored.map((item) => {
 			const elementIds = (item.elements || [])
-				.map((element: any) => element.id)
+				.map((element) => element.id)
 				.sort()
 				.join(",");
 			const suffix = elementIds
@@ -219,7 +228,7 @@ export async function saveLibraryToConfig(
 export async function saveLibraryContent(
 	id: string,
 	itemNames: string[],
-	items: readonly any[],
+	items: readonly LibraryItem[],
 ): Promise<void> {
 	if (isTauri()) {
 		await invoke("save_library_content", { id, itemNames, items });
@@ -254,10 +263,10 @@ export async function removeLibraryFromConfig(id: string): Promise<void> {
 }
 
 /** The user's full in-editor library (downloaded + hand-added items), persisted. */
-export async function getUserLibrary(): Promise<any[]> {
+export async function getUserLibrary(): Promise<LibraryItem[]> {
 	if (isTauri()) {
 		try {
-			return await invoke<any[]>("get_user_library");
+			return await invoke<LibraryItem[]>("get_user_library");
 		} catch (error) {
 			console.error("Failed to load user library:", error);
 			return [];
@@ -273,7 +282,9 @@ export async function getUserLibrary(): Promise<any[]> {
 	}
 }
 
-export async function setUserLibrary(items: readonly any[]): Promise<void> {
+export async function setUserLibrary(
+	items: readonly LibraryItem[],
+): Promise<void> {
 	try {
 		if (isTauri()) {
 			await invoke("set_user_library", { items });
@@ -293,7 +304,9 @@ let installQueue: Promise<void> = Promise.resolve();
  * Install library items: merge them into the persisted user library (deduped)
  * and notify any mounted canvas to merge them into the editor library.
  */
-export function installLibraryItems(items: readonly any[]): Promise<void> {
+export function installLibraryItems(
+	items: readonly LibraryItem[],
+): Promise<void> {
 	if (!Array.isArray(items) || items.length === 0) {
 		return Promise.resolve();
 	}

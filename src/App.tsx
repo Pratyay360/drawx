@@ -1,5 +1,5 @@
 import { Icon } from "@iconify/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { Canvas as CanvasComponent } from "./canvas/main.tsx";
 import { LibraryBrowserModal } from "./components/library-browser-modal.tsx";
@@ -45,18 +45,18 @@ function Dashboard() {
 	const [editTitle, setEditTitle] = useState("");
 	const navigate = useNavigate();
 
-	useEffect(() => {
-		loadDrawings();
-	}, [loadDrawings]);
-
-	async function loadDrawings() {
+	const loadDrawings = useCallback(async () => {
 		try {
 			const result = await listCanvases();
 			setCanvases(result);
 		} catch (error) {
 			console.error("Failed to load drawings:", error);
 		}
-	}
+	}, []);
+
+	useEffect(() => {
+		loadDrawings();
+	}, [loadDrawings]);
 
 	async function handleCreateCanvas(e: React.FormEvent) {
 		e.preventDefault();
@@ -206,7 +206,10 @@ function Dashboard() {
 										return (
 											<Card
 												key={canvas.id}
-												onClick={() => navigate(`/canvas/${canvas.id}`)}
+												onClick={() => {
+													if (editingId !== canvas.id)
+														navigate(`/canvas/${canvas.id}`);
+												}}
 												className="cursor-pointer group transition-colors hover:bg-accent"
 											>
 												<CardHeader className="p-4 pb-2">
@@ -246,19 +249,7 @@ function Dashboard() {
 												</CardHeader>
 												<CardContent className="p-4 pt-0">
 													{editingId === canvas.id ? (
-														<div
-															className="flex items-center gap-1 mt-1"
-															onClick={(e) => e.stopPropagation()}
-															onKeyDown={(e) => {
-																// Enable activation via keyboard (Enter/Space) to satisfy jsx-a11y rule
-																if (e.key === "Enter" || e.key === " ") {
-																	e.preventDefault();
-																	e.stopPropagation();
-																}
-															}}
-															role="button"
-															tabIndex={0}
-														>
+														<div className="flex items-center gap-1 mt-1">
 															<Input
 																type="text"
 																value={editTitle}
@@ -320,15 +311,15 @@ function Dashboard() {
 											{filteredCanvases.map((canvas) => (
 												<TableRow
 													key={canvas.id}
-													onClick={() => navigate(`/canvas/${canvas.id}`)}
+													onClick={() => {
+														if (editingId !== canvas.id)
+															navigate(`/canvas/${canvas.id}`);
+													}}
 													className="cursor-pointer group"
 												>
 													<TableCell>
 														{editingId === canvas.id ? (
-															<div
-																className="flex items-center gap-1"
-																onClick={(e) => e.stopPropagation()}
-															>
+															<div className="flex items-center gap-1">
 																<Input
 																	type="text"
 																	value={editTitle}

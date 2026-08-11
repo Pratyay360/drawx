@@ -12,6 +12,14 @@
 		"enabled": true,
 		"indentStyle": "tab"
 	},
+	"css": {
+		"linter": {
+			"enabled": true
+		},
+		"parser": {
+			"tailwindDirectives": true
+		}
+	},
 	"linter": {
 		"enabled": true,
 		"rules": {

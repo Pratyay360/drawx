@@ -1,3 +1,5 @@
+import type { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
+import type { AppState } from "@excalidraw/excalidraw/types";
 import { invoke } from "@tauri-apps/api/core";
 
 export interface Canvas {
@@ -6,17 +8,19 @@ export interface Canvas {
 	description?: string | null;
 	createdAt: string;
 	updatedAt: string;
-	elements: any[];
-	appState: any;
+	elements: ExcalidrawElement[];
+	appState: Partial<AppState>;
 }
 
 type RawCanvas = Canvas & {
 	created_at?: string;
 	updated_at?: string;
-	app_state?: any;
+	app_state?: Partial<AppState>;
 };
 
-export function sanitizeExcalidrawAppState(appState: any): any {
+export function sanitizeExcalidrawAppState(
+	appState: Partial<AppState>,
+): Partial<AppState> {
 	if (!appState || typeof appState !== "object" || Array.isArray(appState)) {
 		return {};
 	}
@@ -43,7 +47,8 @@ function normalizeCanvas(canvas: RawCanvas): Canvas {
 export function isTauri(): boolean {
 	return (
 		typeof window !== "undefined" &&
-		(window as any).__TAURI_INTERNALS__ !== undefined
+		(window as Window & { __TAURI_INTERNALS__?: unknown })
+			.__TAURI_INTERNALS__ !== undefined
 	);
 }
 
@@ -122,8 +127,8 @@ export async function loadCanvas(id: string): Promise<Canvas | null> {
 
 export async function saveCanvas(
 	id: string,
-	elements: any[],
-	appState: any,
+	elements: ExcalidrawElement[],
+	appState: Partial<AppState>,
 ): Promise<void> {
 	const sanitizedAppState = sanitizeExcalidrawAppState(appState);
 

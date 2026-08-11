@@ -1,4 +1,6 @@
 import { exportToSvg } from "@excalidraw/excalidraw";
+import type { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
+import type { LibraryItem } from "@excalidraw/excalidraw/types";
 import { Icon } from "@iconify/react";
 import { useEffect, useMemo, useState } from "react";
 import type { SavedLibrary } from "../services/libraries.ts";
@@ -34,7 +36,7 @@ function enqueueThumbnailRender(task: () => Promise<void>): Promise<void> {
 
 interface LibraryItemThumbnailProps {
 	itemId: string;
-	elements: any[];
+	elements: readonly ExcalidrawElement[];
 }
 
 function LibraryItemThumbnail({ itemId, elements }: LibraryItemThumbnailProps) {
@@ -106,7 +108,11 @@ function LibraryItemThumbnail({ itemId, elements }: LibraryItemThumbnailProps) {
 		/>
 	);
 }
-function getItemName(item: any, index: number, itemNames: string[]): string {
+function getItemName(
+	item: LibraryItem | undefined,
+	index: number,
+	itemNames: string[],
+): string {
 	return (
 		item?.name?.trim() || itemNames?.[index]?.trim() || `Item ${index + 1}`
 	);
@@ -115,7 +121,7 @@ function getItemName(item: any, index: number, itemNames: string[]): string {
 // Most library items don't carry a name, so search also matches text drawn
 // inside the item's elements (text elements and arrow labels).
 function getItemSearchText(
-	item: any,
+	item: LibraryItem | undefined,
 	index: number,
 	itemNames: string[],
 ): string {

@@ -1,5 +1,5 @@
 import { Icon } from "@iconify/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { requestLibraryBrowse } from "../services/libraries.ts";
 import {
@@ -43,20 +43,20 @@ export function Sidebar() {
 	const { id: currentCanvasId } = useParams();
 	const navigate = useNavigate();
 
-	useEffect(() => {
-		loadCanvases();
-		window.addEventListener("canvas-updated", loadCanvases);
-		return () => window.removeEventListener("canvas-updated", loadCanvases);
-	}, []);
-
-	async function loadCanvases() {
+	const loadCanvases = useCallback(async () => {
 		try {
 			const result = await listCanvases();
 			setCanvases(result);
 		} catch (error) {
 			console.error("Failed to load canvases:", error);
 		}
-	}
+	}, []);
+
+	useEffect(() => {
+		loadCanvases();
+		window.addEventListener("canvas-updated", loadCanvases);
+		return () => window.removeEventListener("canvas-updated", loadCanvases);
+	}, [loadCanvases]);
 
 	async function handleCreateCanvas() {
 		setIsCreating(true);
@@ -126,6 +126,7 @@ export function Sidebar() {
 						<span>Drawx</span>
 					</Link>
 					<button
+						type="button"
 						onClick={handleCreateCanvas}
 						disabled={isCreating}
 						className="p-1 rounded"
@@ -181,6 +182,7 @@ export function Sidebar() {
 										>
 											<span className="truncate">{canvas.title}</span>
 											<button
+												type="button"
 												onClick={(e) => handleDeleteCanvas(canvas.id, e)}
 												disabled={deletingId === canvas.id}
 												className="opacity-0 group-hover:opacity-100 p-0.5 rounded transition-opacity"
@@ -240,6 +242,7 @@ export function Sidebar() {
 										>
 											<span className="truncate">{canvas.title}</span>
 											<button
+												type="button"
 												onClick={(e) => handleDeleteCanvas(canvas.id, e)}
 												disabled={deletingId === canvas.id}
 												className="opacity-0 group-hover:opacity-100 p-0.5 rounded transition-opacity"
@@ -267,6 +270,7 @@ export function Sidebar() {
 						>
 							<p className="mb-2">No drawings yet</p>
 							<button
+								type="button"
 								onClick={handleCreateCanvas}
 								className="hover:underline"
 								style={{ color: "var(--color-primary)" }}
@@ -283,6 +287,7 @@ export function Sidebar() {
 				>
 					<div className="flex gap-1 mb-1">
 						<button
+							type="button"
 							onClick={() => setShowSettings(true)}
 							className="flex-1 p-1 rounded"
 							style={{ color: "var(--color-text-disabled)" }}
@@ -292,6 +297,7 @@ export function Sidebar() {
 							<Icon icon="lucide:database" className="w-4 h-4 mx-auto" />
 						</button>
 						<button
+							type="button"
 							onClick={() => requestLibraryBrowse(null)}
 							className="flex-1 p-1 rounded"
 							style={{ color: "var(--color-text-disabled)" }}
@@ -302,6 +308,7 @@ export function Sidebar() {
 						</button>
 					</div>
 					<button
+						type="button"
 						onClick={() => setSidebarOpen(false)}
 						className="w-full p-1 rounded"
 						style={{ color: "var(--color-text-disabled)" }}
@@ -315,6 +322,7 @@ export function Sidebar() {
 
 			{!sidebarOpen && (
 				<button
+					type="button"
 					onClick={() => setSidebarOpen(true)}
 					className="fixed left-0 top-1/2 -translate-y-1/2 z-30 p-1.5 rounded-r shadow-sm"
 					style={{

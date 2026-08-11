@@ -8,6 +8,17 @@ import {
 	MainMenu,
 	WelcomeScreen,
 } from "@excalidraw/excalidraw";
+import type {
+	ExcalidrawElement,
+	OrderedExcalidrawElement,
+} from "@excalidraw/excalidraw/element/types";
+import type {
+	AppState,
+	BinaryFiles,
+	ExcalidrawImperativeAPI,
+	LibraryItem,
+	LibraryItems,
+} from "@excalidraw/excalidraw/types";
 import { Icon } from "@iconify/react";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -35,7 +46,12 @@ import {
 	updateCanvasTitle,
 } from "../services/tauri.ts";
 
-function areElementsEqual(a: any[], b: any[]): boolean {
+type ElementSignature = { id: string; version: number };
+
+function areElementsEqual(
+	a: ElementSignature[],
+	b: ElementSignature[],
+): boolean {
 	if (a.length !== b.length) return false;
 	for (let i = 0; i < a.length; i++) {
 		if (a[i].id !== b[i].id || a[i].version !== b[i].version) {
@@ -45,7 +61,10 @@ function areElementsEqual(a: any[], b: any[]): boolean {
 	return true;
 }
 
-function areAppStatesEqual(a: any, b: any): boolean {
+function areAppStatesEqual(
+	a: Partial<AppState>,
+	b: Partial<AppState>,
+): boolean {
 	return (
 		a.gridSize === b.gridSize &&
 		a.zenModeEnabled === b.zenModeEnabled &&
@@ -54,7 +73,7 @@ function areAppStatesEqual(a: any, b: any): boolean {
 	);
 }
 
-function getPersistentAppState(appState: any): any {
+function getPersistentAppState(appState: Partial<AppState>): Partial<AppState> {
 	if (!appState || typeof appState !== "object") return {};
 	return {
 		viewBackgroundColor: appState.viewBackgroundColor,
@@ -70,13 +89,14 @@ export function Canvas() {
 	const [canvasData, setCanvasData] = useState<CanvasData | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [isChangingCanvas, setIsChangingCanvas] = useState(false);
-	const [elements, setElements] = useState<any[]>([]);
-	const [appState, setAppState] = useState<any>({});
-	const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
+	const [elements, setElements] = useState<ExcalidrawElement[]>([]);
+	const [appState, setAppState] = useState<Partial<AppState>>({});
+	const [excalidrawAPI, setExcalidrawAPI] =
+		useState<ExcalidrawImperativeAPI | null>(null);
 
 	// Library items are loaded from disk (never from the network) when the
 	// canvas mounts, so saved libraries are available instantly and offline.
-	const initialLibraryItemsRef = useRef<Promise<any[]> | null>(null);
+	const initialLibraryItemsRef = useRef<Promise<LibraryItems> | null>(null);
 	if (!initialLibraryItemsRef.current) {
 		initialLibraryItemsRef.current = getUserLibrary();
 	}
@@ -89,8 +109,8 @@ export function Canvas() {
 	const [titleInput, setTitleInput] = useState("");
 
 	const lastSavedData = useRef<{
-		elements: { id: string; version: number }[];
-		appState: any;
+		elements: ElementSignature[];
+		appState: Partial<AppState>;
 	}>({
 		elements: [],
 		appState: {},
@@ -98,11 +118,11 @@ export function Canvas() {
 
 	const isSavingRef = useRef(false);
 	const librarySaveTimerRef = useRef<number | null>(null);
-	const pendingLibraryRef = useRef<any[] | null>(null);
+	const pendingLibraryRef = useRef<LibraryItem[] | null>(null);
 
 	// Persist the full editor library (downloaded + hand-added items) whenever
 	// it changes, so nothing is lost between sessions or across canvases.
-	const handleLibraryChange = useCallback((items: readonly any[]) => {
+	const handleLibraryChange = useCallback((items: readonly LibraryItem[]) => {
 		pendingLibraryRef.current = [...items];
 		if (librarySaveTimerRef.current !== null) {
 			globalThis.clearTimeout(librarySaveTimerRef.current);
@@ -157,7 +177,7 @@ export function Canvas() {
 					setTitleInput(data.title);
 
 					lastSavedData.current = {
-						elements: resolvedElements.map((e: any) => ({
+						elements: resolvedElements.map((e) => ({
 							id: e.id,
 							version: e.version,
 						})),
@@ -169,7 +189,7 @@ export function Canvas() {
 							elements: resolvedElements,
 							appState: {
 								...sanitizedAppState,
-							},
+							} as AppState,
 						});
 					}
 				}
@@ -231,10 +251,9 @@ export function Canvas() {
 
 	const handleExcalidrawChange = useCallback(
 		(
-			excalidrawElements: readonly any[],
-			// deno-lint-ignore no-explicit-any
-			excalidrawAppState: any,
-			_files: any,
+			excalidrawElements: readonly OrderedExcalidrawElement[],
+			excalidrawAppState: AppState,
+			_files: BinaryFiles,
 		) => {
 			if (loading || isChangingCanvas) return;
 
@@ -298,7 +317,7 @@ export function Canvas() {
 
 		excalidrawAPI.updateScene({
 			elements: elements,
-			appState: appState,
+			appState: appState as AppState,
 		});
 	}, [excalidrawAPI, elements, appState]);
 
@@ -341,7 +360,7 @@ export function Canvas() {
 								elements: imported.elements,
 								appState: {
 									...importedAppState,
-								},
+								} as AppState,
 							});
 
 							setElements(imported.elements);
