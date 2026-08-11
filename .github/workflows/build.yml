@@ -36,9 +36,12 @@ jobs:
         with:
           deno-version: latest
 
+      - name: Install nub
+        run: deno install -g nub
+
       - uses: dtolnay/rust-toolchain@stable
       - uses: swatinem/rust-cache@v2
-      - run: deno install
+      - run: nub install
 
       - name: Build Tauri and create release
         uses: tauri-apps/tauri-action@dev
