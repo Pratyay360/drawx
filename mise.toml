@@ -5,10 +5,11 @@ cargo-make = "latest"
 rust-analyzer = "latest"
 node = "22"
 biome = "latest"
+nub = "latest"
 
 [tasks]
-install = { run = "deno install" }
-update = { run = "deno update" }
-build = { run = "deno run tauri build" }
-lint = { run = "deno run lint ." }
-format = { run = "deno run format ." }
+install = { run = "nub install" }
+update = { run = "nub update" }
+build = { run = "nub run tauri build" }
+lint = { run = "nub run lint ." }
+format = { run = "nub run format ." }
