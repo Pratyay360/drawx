@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
 import {
+	DefaultSidebar,
 	Excalidraw,
+	Sidebar as ExcalidrawSidebar,
 	exportToBlob,
 	exportToSvg,
 	MainMenu,
@@ -9,6 +9,9 @@ import {
 } from "@excalidraw/excalidraw";
 import { Icon } from "@iconify/react";
 import { Loader2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { LibraryPanelTab } from "../components/library-panel-tab.tsx";
 import { Sidebar } from "../components/sidebar.tsx";
 import { Button } from "../components/ui/button.tsx";
 import { Input } from "../components/ui/input.tsx";
@@ -18,7 +21,11 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "../components/ui/tooltip.tsx";
-
+import {
+	getUserLibrary,
+	onLibraryItemsInstalled,
+	setUserLibrary,
+} from "../services/libraries.ts";
 import {
 	type Canvas as CanvasData,
 	loadCanvas,
@@ -26,10 +33,6 @@ import {
 	saveCanvas,
 	updateCanvasTitle,
 } from "../services/tauri.ts";
-import {
-	loadAllLibraryItems,
-	onLibraryConfigUpdated,
-} from "../services/libraries.ts";
 
 function areElementsEqual(a: any[], b: any[]): boolean {
 	if (a.length !== b.length) return false;
@@ -69,7 +72,13 @@ export function Canvas() {
 	const [elements, setElements] = useState<any[]>([]);
 	const [appState, setAppState] = useState<any>({});
 	const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
-	const [libraryItems, setLibraryItems] = useState<any[]>([]);
+
+	// Library items are loaded from disk (never from the network) when the
+	// canvas mounts, so saved libraries are available instantly and offline.
+	const initialLibraryItemsRef = useRef<Promise<any[]>>();
+	if (!initialLibraryItemsRef.current) {
+		initialLibraryItemsRef.current = getUserLibrary();
+	}
 
 	const [saveStatus, setSaveStatus] = useState<"saved" | "unsaved" | "saving">(
 		"saved",
@@ -87,13 +96,45 @@ export function Canvas() {
 	});
 
 	const isSavingRef = useRef(false);
+	const librarySaveTimerRef = useRef<number | null>(null);
+	const pendingLibraryRef = useRef<any[] | null>(null);
 
-	useEffect(() => {
-		loadAllLibraryItems().then(setLibraryItems);
-		return onLibraryConfigUpdated(() => {
-			loadAllLibraryItems().then(setLibraryItems);
-		});
+	// Persist the full editor library (downloaded + hand-added items) whenever
+	// it changes, so nothing is lost between sessions or across canvases.
+	const handleLibraryChange = useCallback((items: readonly any[]) => {
+		pendingLibraryRef.current = [...items];
+		if (librarySaveTimerRef.current !== null) {
+			window.clearTimeout(librarySaveTimerRef.current);
+		}
+		librarySaveTimerRef.current = window.setTimeout(() => {
+			const toSave = pendingLibraryRef.current;
+			pendingLibraryRef.current = null;
+			if (toSave) setUserLibrary(toSave);
+		}, 300);
 	}, []);
+
+	// Flush any pending library save when the canvas unmounts, so the user's
+	// last in-editor library edits are never lost.
+	useEffect(() => {
+		return () => {
+			if (librarySaveTimerRef.current !== null) {
+				window.clearTimeout(librarySaveTimerRef.current);
+				librarySaveTimerRef.current = null;
+			}
+			const toSave = pendingLibraryRef.current;
+			pendingLibraryRef.current = null;
+			if (toSave) setUserLibrary(toSave);
+		};
+	}, []);
+
+	// Libraries installed/refreshed from the library browser are merged into
+	// the editor library (never replacing what's already there).
+	useEffect(() => {
+		if (!excalidrawAPI) return;
+		return onLibraryItemsInstalled((items) => {
+			excalidrawAPI.updateLibrary({ libraryItems: items, merge: true });
+		});
+	}, [excalidrawAPI]);
 
 	const fetchCanvas = useCallback(
 		async (canvasId: string, isInitialMount: boolean) => {
@@ -149,7 +190,7 @@ export function Canvas() {
 		setSaveStatus("saved");
 		const isInitialMount = !excalidrawAPI;
 		fetchCanvas(id, isInitialMount);
-	}, [id, fetchCanvas]);
+	}, [id, excalidrawAPI, fetchCanvas]);
 
 	useEffect(() => {
 		if (loading || isChangingCanvas || !id || saveStatus !== "unsaved") return;
@@ -258,13 +299,6 @@ export function Canvas() {
 			appState: appState,
 		});
 	}, [excalidrawAPI, elements, appState]);
-
-	useEffect(() => {
-		if (!excalidrawAPI || libraryItems.length === 0) return;
-		excalidrawAPI.updateScene({
-			appState: { libraryItems },
-		});
-	}, [excalidrawAPI, libraryItems]);
 
 	const handleExportToJSON = useCallback(() => {
 		if (!canvasData) return;
@@ -473,8 +507,10 @@ export function Canvas() {
 						initialData={{
 							elements: elements,
 							appState: appState,
+							libraryItems: initialLibraryItemsRef.current,
 						}}
 						onChange={handleExcalidrawChange}
+						onLibraryChange={handleLibraryChange}
 					>
 						<MainMenu>
 							<MainMenu.DefaultItems.ClearCanvas />
@@ -525,6 +561,23 @@ export function Canvas() {
 								</div>
 							</WelcomeScreen.Center>
 						</WelcomeScreen>
+
+						{/* Custom tab next to the Library tab: browse saved libraries
+						    without leaving the canvas. */}
+						<DefaultSidebar>
+							<DefaultSidebar.TabTriggers>
+								<ExcalidrawSidebar.TabTrigger
+									tab="drawx-libraries"
+									title="Drawx libraries"
+									aria-label="Drawx libraries"
+								>
+									<Icon icon="lucide:shapes" className="w-4 h-4" />
+								</ExcalidrawSidebar.TabTrigger>
+							</DefaultSidebar.TabTriggers>
+							<ExcalidrawSidebar.Tab tab="drawx-libraries">
+								<LibraryPanelTab />
+							</ExcalidrawSidebar.Tab>
+						</DefaultSidebar>
 					</Excalidraw>
 
 					{isChangingCanvas && (

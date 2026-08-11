@@ -1,11 +1,12 @@
 import { Icon } from "@iconify/react";
-import { useState, useEffect } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { onLibraryBrowseRequested } from "../services/libraries.ts";
 import {
 	type Canvas,
-	listCanvases,
 	createCanvas,
 	deleteCanvas,
+	listCanvases,
 } from "../services/tauri.ts";
 import { DatabaseSettings } from "./database-settings.tsx";
 import { LibraryBrowser } from "./library-browser.tsx";
@@ -41,6 +42,9 @@ export function Sidebar() {
 	const [deletingId, setDeletingId] = useState<string | null>(null);
 	const [showSettings, setShowSettings] = useState(false);
 	const [showLibraries, setShowLibraries] = useState(false);
+	const [librariesBrowseId, setLibrariesBrowseId] = useState<string | null>(
+		null,
+	);
 	const { id: currentCanvasId } = useParams();
 	const navigate = useNavigate();
 
@@ -48,6 +52,15 @@ export function Sidebar() {
 		loadCanvases();
 		window.addEventListener("canvas-updated", loadCanvases);
 		return () => window.removeEventListener("canvas-updated", loadCanvases);
+	}, []);
+
+	// The Excalidraw library panel can ask to open the library browser at a
+	// specific saved library (or the top level when libraryId is null).
+	useEffect(() => {
+		return onLibraryBrowseRequested((libraryId) => {
+			setLibrariesBrowseId(libraryId);
+			setShowLibraries(true);
+		});
 	}, []);
 
 	async function loadCanvases() {
@@ -293,7 +306,10 @@ export function Sidebar() {
 							<Icon icon="lucide:database" className="w-4 h-4 mx-auto" />
 						</button>
 						<button
-							onClick={() => setShowLibraries(true)}
+							onClick={() => {
+								setLibrariesBrowseId(null);
+								setShowLibraries(true);
+							}}
 							className="flex-1 p-1 rounded"
 							style={{ color: "var(--color-text-disabled)" }}
 							title="Libraries"
@@ -342,17 +358,20 @@ export function Sidebar() {
 
 			{showLibraries && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-					<div className="bg-background rounded-lg shadow-lg p-4 max-w-3xl w-full max-h-[80vh] overflow-y-auto">
+					<div className="bg-background rounded-lg shadow-lg p-4 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
 						<div className="flex justify-between items-center mb-4">
 							<h2 className="text-lg font-semibold">Libraries</h2>
 							<button
-								onClick={() => setShowLibraries(false)}
+								onClick={() => {
+									setShowLibraries(false);
+									setLibrariesBrowseId(null);
+								}}
 								className="p-1 rounded hover:bg-accent"
 							>
 								<Icon icon="lucide:x" className="w-5 h-5" />
 							</button>
 						</div>
-						<LibraryBrowser />
+						<LibraryBrowser initialBrowseId={librariesBrowseId} />
 					</div>
 				</div>
 			)}

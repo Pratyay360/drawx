@@ -1,3 +1,4 @@
+import { mergeLibraryItems, restoreLibraryItems } from "@excalidraw/excalidraw";
 import { invoke } from "@tauri-apps/api/core";
 import { isTauri } from "./tauri";
 
@@ -25,20 +26,79 @@ export interface SavedLibrary {
 	updated: string;
 	version: number;
 	item_names: string[];
+	/** Normalized v2 library items persisted to disk (empty until content is fetched). */
+	items: any[];
+	/** ISO timestamp of the last successful content fetch, or null. */
+	fetched_at: string | null;
 }
 
 const LIBRARIES_API_URL = "https://libraries.excalidraw.com/libraries.json";
 
+/** Number of items shown for a saved library (names first, content as fallback). */
+export function libraryItemCount(library: SavedLibrary): number {
+	if (library.item_names.length > 0) return library.item_names.length;
+	return library.items.length;
+}
+
 const SAVED_LIBRARIES_KEY = "drawx_saved_libraries";
+const USER_LIBRARY_KEY = "drawx_user_library";
 
 const LIBRARY_CONFIG_UPDATED_EVENT = "library-config-updated";
+const LIBRARY_ITEMS_INSTALLED_EVENT = "library-items-installed";
+const LIBRARY_BROWSE_REQUESTED_EVENT = "library-browse-requested";
 
 function notifyLibraryConfigUpdated() {
 	window.dispatchEvent(new Event(LIBRARY_CONFIG_UPDATED_EVENT));
 }
 
-// In-memory cache only — library item content is never persisted to disk.
-let memoryCache: { key: string; items: any[] } | null = null;
+export function onLibraryConfigUpdated(callback: () => void): () => void {
+	window.addEventListener(LIBRARY_CONFIG_UPDATED_EVENT, callback);
+	return () =>
+		window.removeEventListener(LIBRARY_CONFIG_UPDATED_EVENT, callback);
+}
+
+function notifyLibraryItemsInstalled(items: any[]) {
+	window.dispatchEvent(
+		new CustomEvent(LIBRARY_ITEMS_INSTALLED_EVENT, { detail: items }),
+	);
+}
+
+/**
+ * Ask the app to open the library browser modal, optionally at a specific
+ * saved library's item view. Used by UI inside the Excalidraw panel.
+ */
+export function requestLibraryBrowse(libraryId: string | null): void {
+	window.dispatchEvent(
+		new CustomEvent(LIBRARY_BROWSE_REQUESTED_EVENT, {
+			detail: { libraryId },
+		}),
+	);
+}
+
+export function onLibraryBrowseRequested(
+	callback: (libraryId: string | null) => void,
+): () => void {
+	const handler = (event: Event) => {
+		const libraryId = (event as CustomEvent).detail?.libraryId ?? null;
+		callback(libraryId);
+	};
+	window.addEventListener(LIBRARY_BROWSE_REQUESTED_EVENT, handler);
+	return () =>
+		window.removeEventListener(LIBRARY_BROWSE_REQUESTED_EVENT, handler);
+}
+
+/** Subscribe to libraries being installed/refreshed so canvases can merge them in. */
+export function onLibraryItemsInstalled(
+	callback: (items: any[]) => void,
+): () => void {
+	const handler = (event: Event) => {
+		const detail = (event as CustomEvent).detail;
+		if (Array.isArray(detail)) callback(detail);
+	};
+	window.addEventListener(LIBRARY_ITEMS_INSTALLED_EVENT, handler);
+	return () =>
+		window.removeEventListener(LIBRARY_ITEMS_INSTALLED_EVENT, handler);
+}
 
 export async function fetchLibraries(): Promise<ExcalidrawLibrary[]> {
 	try {
@@ -68,6 +128,41 @@ export async function fetchLibraryContent(
 	}
 }
 
+function hashString(input: string): string {
+	let hash = 0;
+	for (let i = 0; i < input.length; i++) {
+		hash = (hash * 31 + input.charCodeAt(i)) | 0;
+	}
+	return Math.abs(hash).toString(36);
+}
+
+/**
+ * Normalize a fetched `.excalidrawlib` payload into Excalidraw v2 library items.
+ * Item ids are content-addressed (`<libraryId>-<hash of element ids>`) so
+ * re-merging the same content never duplicates items, persisted content stays
+ * stable across refetches, and upstream reordering of items doesn't shift ids.
+ */
+export function toLibraryItems(content: any, libraryId: string): any[] {
+	const raw = content?.libraryItems;
+	if (!Array.isArray(raw)) return [];
+	try {
+		const restored = restoreLibraryItems(raw, "published") as any[];
+		return restored.map((item) => {
+			const elementIds = (item.elements || [])
+				.map((element: any) => element.id)
+				.sort()
+				.join(",");
+			const suffix = elementIds
+				? hashString(elementIds)
+				: hashString(`${libraryId}${item.id}`);
+			return { ...item, id: `${libraryId}-${suffix}` };
+		});
+	} catch (error) {
+		console.error("Failed to normalize library items:", error);
+		return [];
+	}
+}
+
 export async function getSavedLibraries(): Promise<SavedLibrary[]> {
 	if (isTauri()) {
 		try {
@@ -86,13 +181,41 @@ export async function getSavedLibraries(): Promise<SavedLibrary[]> {
 	}
 }
 
-export async function saveLibraryToConfig(library: SavedLibrary): Promise<void> {
+/** Upsert the metadata bookmark for a library (content is managed separately). */
+export async function saveLibraryToConfig(
+	library: SavedLibrary,
+): Promise<void> {
 	if (isTauri()) {
 		await invoke("save_library", { library });
 	} else {
 		const saved = await getSavedLibraries();
 		const next = saved.filter((lib) => lib.id !== library.id);
 		next.push(library);
+		localStorage.setItem(SAVED_LIBRARIES_KEY, JSON.stringify(next));
+	}
+	notifyLibraryConfigUpdated();
+}
+
+/** Persist fetched content (item names + normalized items) for a saved library. */
+export async function saveLibraryContent(
+	id: string,
+	itemNames: string[],
+	items: any[],
+): Promise<void> {
+	if (isTauri()) {
+		await invoke("save_library_content", { id, itemNames, items });
+	} else {
+		const saved = await getSavedLibraries();
+		const next = saved.map((lib) =>
+			lib.id === id
+				? {
+						...lib,
+						item_names: itemNames,
+						items,
+						fetched_at: new Date().toISOString(),
+					}
+				: lib,
+		);
 		localStorage.setItem(SAVED_LIBRARIES_KEY, JSON.stringify(next));
 	}
 	notifyLibraryConfigUpdated();
@@ -111,38 +234,61 @@ export async function removeLibraryFromConfig(id: string): Promise<void> {
 	notifyLibraryConfigUpdated();
 }
 
-export function onLibraryConfigUpdated(callback: () => void): () => void {
-	window.addEventListener(LIBRARY_CONFIG_UPDATED_EVENT, callback);
-	return () => window.removeEventListener(LIBRARY_CONFIG_UPDATED_EVENT, callback);
+/** The user's full in-editor library (downloaded + hand-added items), persisted. */
+export async function getUserLibrary(): Promise<any[]> {
+	if (isTauri()) {
+		try {
+			return await invoke<any[]>("get_user_library");
+		} catch (error) {
+			console.error("Failed to load user library:", error);
+			return [];
+		}
+	}
+	try {
+		const data = localStorage.getItem(USER_LIBRARY_KEY);
+		const parsed = data ? JSON.parse(data) : [];
+		return Array.isArray(parsed) ? parsed : [];
+	} catch (error) {
+		console.error("Failed to parse user library:", error);
+		return [];
+	}
 }
 
-export async function loadAllLibraryItems(
-	onProgress?: (loaded: number, total: number) => void,
-): Promise<any[]> {
-	const saved = await getSavedLibraries();
-	const key = saved.map((lib) => lib.id).sort().join(",");
-	if (memoryCache && memoryCache.key === key) {
-		return memoryCache.items;
+export async function setUserLibrary(items: any[]): Promise<void> {
+	try {
+		if (isTauri()) {
+			await invoke("set_user_library", { items });
+		} else {
+			localStorage.setItem(USER_LIBRARY_KEY, JSON.stringify(items));
+		}
+	} catch (error) {
+		console.error("Failed to save user library:", error);
 	}
+}
 
-	const allItems: any[] = [];
+// Installs are serialized so concurrent saves (e.g. saving two libraries back-
+// to-back) can't interleave their read-modify-write and lose items.
+let installQueue: Promise<void> = Promise.resolve();
 
-	const BATCH = 10;
-	for (let i = 0; i < saved.length; i += BATCH) {
-		const batch = saved.slice(i, i + BATCH);
-		const contents = await Promise.all(
-			batch.map((lib) => fetchLibraryContent(lib)),
-		);
-		contents.forEach((content) => {
-			if (content?.libraryItems) {
-				allItems.push(...content.libraryItems);
-			}
-		});
-		onProgress?.(Math.min(i + BATCH, saved.length), saved.length);
+/**
+ * Install library items: merge them into the persisted user library (deduped)
+ * and notify any mounted canvas to merge them into the editor library.
+ */
+export function installLibraryItems(items: any[]): Promise<void> {
+	if (!Array.isArray(items) || items.length === 0) {
+		return Promise.resolve();
 	}
-
-	memoryCache = { key, items: allItems };
-	return allItems;
+	const task = installQueue.then(async () => {
+		try {
+			const current = await getUserLibrary();
+			await setUserLibrary(mergeLibraryItems(current, items));
+		} catch (error) {
+			console.error("Failed to persist installed library items:", error);
+		}
+		notifyLibraryItemsInstalled(items);
+	});
+	installQueue = task.catch(() => {});
+	return task;
 }
 
 export function searchLibraries(
