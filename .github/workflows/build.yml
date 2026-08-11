@@ -30,15 +30,7 @@ jobs:
             librsvg2-dev \
             patchelf \
             rpm
-
-      - name: Install Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: latest
-
-      - name: Install nub
-        run: deno install -g nub
-
+      - uses: nubjs/setup-nub@v0
       - uses: dtolnay/rust-toolchain@stable
       - uses: swatinem/rust-cache@v2
       - run: nub install
