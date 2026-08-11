@@ -1,4 +1,3 @@
-// deno-lint-ignore-file
 import {
 	DefaultSidebar,
 	Excalidraw,
