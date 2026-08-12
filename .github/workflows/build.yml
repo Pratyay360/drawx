@@ -21,7 +21,7 @@ jobs:
             rust-targets: aarch64-apple-darwin,x86_64-apple-darwin
             args: --target universal-apple-darwin --bundles dmg
           - platform: windows-latest
-            rust-targets: ''
+            rust-targets: ""
             args: --bundles nsis
           - platform: ubuntu-latest
             rust-targets: x86_64-unknown-linux-gnu

@@ -6,35 +6,35 @@ import { defineConfig } from "vite";
 const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig(async () => ({
-	plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss()],
 
-	clearScreen: false,
+  clearScreen: false,
 
-	resolve: {
-		// @excalidraw/excalidraw exports its CSS under "development" and
-		// "production" conditions with no "default" fallback. Tailwind CSS v4's
-		// Vite plugin uses enhanced-resolve which doesn't match these by default,
-		// so we add them explicitly here.
-		conditions: ["development", "production"],
-	},
+  resolve: {
+    // @excalidraw/excalidraw exports its CSS under "development" and
+    // "production" conditions with no "default" fallback. Tailwind CSS v4's
+    // Vite plugin uses enhanced-resolve which doesn't match these by default,
+    // so we add them explicitly here.
+    conditions: ["development", "production"],
+  },
 
-	server: {
-		port: 1420,
-		strictPort: true,
-		host: host || false,
-		hmr: host
-			? {
-					protocol: "ws",
-					host,
-					port: 1421,
-				}
-			: undefined,
-		watch: {
-			ignored: ["**/src-tauri/**"],
-		},
-	},
+  server: {
+    port: 1420,
+    strictPort: true,
+    host: host || false,
+    hmr: host
+      ? {
+          protocol: "ws",
+          host,
+          port: 1421,
+        }
+      : undefined,
+    watch: {
+      ignored: ["**/src-tauri/**"],
+    },
+  },
 
-	build: {
-		chunkSizeWarningLimit: 10000,
-	},
+  build: {
+    chunkSizeWarningLimit: 10000,
+  },
 }));
