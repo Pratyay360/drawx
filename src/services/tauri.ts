@@ -5,7 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 export interface Canvas {
 	id: string;
 	title: string;
-	description?: string;
+	description: string;
 	createdAt: string;
 	updatedAt: string;
 	elements: ExcalidrawElement[];
@@ -52,7 +52,7 @@ export function isTauri(): boolean {
 	);
 }
 
-// Local storage helper key
+
 const LOCAL_STORAGE_KEY = "drawx_canvases";
 
 function getLocalStorageCanvases(): Canvas[] {
@@ -74,7 +74,7 @@ function saveLocalStorageCanvases(canvases: Canvas[]) {
 	}
 }
 
-// API wrapper functions
+
 export async function listCanvases(): Promise<Canvas[]> {
 	if (isTauri()) {
 		const canvases = await invoke<RawCanvas[]>("list_canvases");
@@ -93,7 +93,7 @@ export async function createCanvas(title: string): Promise<Canvas> {
 		const newCanvas: Canvas = {
 			id: `c_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
 			title,
-			description: null,
+			description: "",
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
 			elements: [],

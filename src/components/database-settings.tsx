@@ -22,7 +22,7 @@ interface DatabaseSettingsProps {
 
 export function DatabaseSettings({ onClose }: DatabaseSettingsProps) {
 	const [config, setConfig] = useState<DbConfig>({
-		local_path: null,
+		local_path: "",
 	});
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
