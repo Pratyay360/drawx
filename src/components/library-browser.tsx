@@ -4,6 +4,7 @@ import {
 	type ExcalidrawLibrary,
 	fetchLibraries,
 	fetchLibraryContent,
+	getLibraryAssetUrl,
 	getSavedLibraries,
 	installLibraryItems,
 	libraryItemCount,
@@ -36,8 +37,8 @@ import {
 
 interface LibraryBrowserProps {
 	onLibrarySelect?: (library: ExcalidrawLibrary) => void;
-	/** Open directly into a saved library's item browser (from the panel tab). */
 	initialBrowseId?: string | null;
+	source?: "sidebar" | "canvas";
 }
 
 function formatFetchedAt(fetchedAt: string | null): string {
@@ -53,6 +54,7 @@ function formatFetchedAt(fetchedAt: string | null): string {
 export function LibraryBrowser({
 	onLibrarySelect,
 	initialBrowseId = null,
+	source = "canvas",
 }: LibraryBrowserProps) {
 	const [libraries, setLibraries] = useState<ExcalidrawLibrary[]>([]);
 	const [filteredLibraries, setFilteredLibraries] = useState<
@@ -65,9 +67,9 @@ export function LibraryBrowser({
 	const [loading, setLoading] = useState(true);
 	const [savedLoaded, setSavedLoaded] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
-	const [browsingId, setBrowsingId] = useState<string | null>(null);
+	const [browsingId, setBrowsingId] = useState<string | null>(initialBrowseId);
 	const [pendingBrowseId, setPendingBrowseId] = useState<string | null>(
-		initialBrowseId ?? null,
+		initialBrowseId,
 	);
 
 	const refreshSaved = useCallback(async () => {
@@ -76,8 +78,6 @@ export function LibraryBrowser({
 		setSavedLoaded(true);
 	}, []);
 
-	// Apply a requested browse once saved libraries have loaded, so opening
-	// from the Excalidraw panel goes straight to the item browser (no flash).
 	useEffect(() => {
 		if (pendingBrowseId == null) return;
 		if (savedLibraries.some((lib) => lib.id === pendingBrowseId)) {
@@ -222,6 +222,7 @@ export function LibraryBrowser({
 		return (
 			<LibraryItemBrowser
 				library={browsingLibrary}
+				source={source}
 				onBack={() => setBrowsingId(null)}
 				onRefreshContent={() => handleRefreshLibrary(browsingLibrary)}
 			/>
@@ -262,7 +263,7 @@ export function LibraryBrowser({
 										<div className="flex items-center gap-3">
 											{saved.preview ? (
 												<img
-													src={`https://libraries.excalidraw.com/libraries/${saved.preview}`}
+													src={getLibraryAssetUrl(saved.preview)}
 													alt={`${saved.name} preview`}
 													className="w-14 h-10 object-cover rounded shrink-0"
 												/>
@@ -401,7 +402,7 @@ export function LibraryBrowser({
 											<TableCell>
 												{library.preview && (
 													<img
-														src={`https://libraries.excalidraw.com/libraries/${library.preview}`}
+														src={getLibraryAssetUrl(library.preview)}
 														alt={`${library.name} preview`}
 														className="w-16 h-12 object-cover rounded"
 													/>

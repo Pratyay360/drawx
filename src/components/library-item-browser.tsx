@@ -16,21 +16,17 @@ import { Input } from "./ui/input.tsx";
 
 interface LibraryItemBrowserProps {
 	library: SavedLibrary;
+	source: "sidebar" | "canvas";
 	onBack: () => void;
 	onRefreshContent: () => Promise<void>;
 }
 
-// Rendered thumbnails are cached by item id (ids are content-addressed, so the
-// cache stays valid across modal opens and library refreshes).
 const thumbnailUrlCache = new Map<string, string>();
-
-// Thumbnail renders are queued so a library with many items doesn't burst
-// the main thread with parallel SVG exports.
 let thumbnailQueue: Promise<void> = Promise.resolve();
 
 function enqueueThumbnailRender(task: () => Promise<void>): Promise<void> {
 	const run = thumbnailQueue.then(task);
-	thumbnailQueue = run.catch(() => {});
+	thumbnailQueue = run.catch(() => { });
 	return run;
 }
 
@@ -51,8 +47,6 @@ function LibraryItemThumbnail({ itemId, elements }: LibraryItemThumbnailProps) {
 
 		enqueueThumbnailRender(async () => {
 			if (cancelled) return;
-			// Skip if another effect run already rendered it (e.g. StrictMode
-			// double-mount or a concurrent remount).
 			const cachedUrl = thumbnailUrlCache.get(itemId);
 			if (cachedUrl) {
 				setUrl(cachedUrl);
@@ -118,8 +112,7 @@ function getItemName(
 	);
 }
 
-// Most library items don't carry a name, so search also matches text drawn
-// inside the item's elements (text elements and arrow labels).
+
 function getItemSearchText(
 	item: LibraryItem | undefined,
 	index: number,
@@ -169,7 +162,6 @@ export function LibraryItemBrowser({
 			);
 	}, [library.items, library.item_names, query]);
 
-	// Escape clears the active search first, then goes back to the library list.
 	useEffect(() => {
 		const handler = (e: KeyboardEvent) => {
 			if (e.key !== "Escape") return;

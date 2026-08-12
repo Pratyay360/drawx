@@ -6,6 +6,7 @@ import { isTauri } from "./tauri";
 interface ExcalidrawLibraryFile {
 	type?: string;
 	libraryItems?: unknown;
+	library?: unknown;
 }
 
 export interface ExcalidrawLibrary {
@@ -111,6 +112,14 @@ export function onLibraryItemsInstalled(
 		globalThis.removeEventListener(LIBRARY_ITEMS_INSTALLED_EVENT, handler);
 }
 
+export function getLibraryAssetUrl(path: string): string {
+	if (!path) return "";
+	if (path.startsWith("http://") || path.startsWith("https://")) {
+		return path;
+	}
+	return `https://libraries.excalidraw.com/libraries/${path}`;
+}
+
 export async function fetchLibraries(): Promise<ExcalidrawLibrary[]> {
 	try {
 		const response = await fetch(LIBRARIES_API_URL);
@@ -125,7 +134,7 @@ export async function fetchLibraries(): Promise<ExcalidrawLibrary[]> {
 export async function fetchLibraryContent(
 	library: ExcalidrawLibrary,
 ): Promise<ExcalidrawLibraryFile | null> {
-	const contentUrl = `https://libraries.excalidraw.com/libraries/${library.source}`;
+	const contentUrl = getLibraryAssetUrl(library.source);
 	try {
 		const response = await fetch(contentUrl);
 		if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -157,7 +166,7 @@ export function toLibraryItems(
 	content: ExcalidrawLibraryFile | null | undefined,
 	libraryId: string,
 ): LibraryItem[] {
-	const raw = content?.libraryItems;
+	const raw = content?.libraryItems ?? content?.library;
 	if (!Array.isArray(raw)) return [];
 	try {
 		const restored = restoreLibraryItems(raw, "published") as LibraryItems;
@@ -237,11 +246,11 @@ export async function saveLibraryContent(
 		const next = saved.map((lib) =>
 			lib.id === id
 				? {
-						...lib,
-						item_names: itemNames,
-						items,
-						fetched_at: new Date().toISOString(),
-					}
+					...lib,
+					item_names: itemNames,
+					items,
+					fetched_at: new Date().toISOString(),
+				}
 				: lib,
 		);
 		localStorage.setItem(SAVED_LIBRARIES_KEY, JSON.stringify(next));
@@ -319,7 +328,7 @@ export function installLibraryItems(
 		}
 		notifyLibraryItemsInstalled(items);
 	});
-	installQueue = task.catch(() => {});
+	installQueue = task.catch(() => { });
 	return task;
 }
 

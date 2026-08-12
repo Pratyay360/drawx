@@ -1,6 +1,7 @@
 import { Icon } from "@iconify/react";
 import { useEffect, useState } from "react";
 import {
+	getLibraryAssetUrl,
 	getSavedLibraries,
 	libraryItemCount,
 	onLibraryConfigUpdated,
@@ -51,7 +52,7 @@ export function LibraryPanelTab() {
 							>
 								{library.preview ? (
 									<img
-										src={`https://libraries.excalidraw.com/libraries/${library.preview}`}
+										src={getLibraryAssetUrl(library.preview)}
 										alt=""
 										className="w-9 h-7 object-cover rounded shrink-0"
 									/>
