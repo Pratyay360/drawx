@@ -525,6 +525,7 @@ async fn select_local_db_path(app: tauri::AppHandle) -> Result<Option<String>, S
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
@@ -537,9 +538,8 @@ pub fn run() {
 
             let custom_path = if config_path.exists() {
                 let content = std::fs::read_to_string(&config_path).unwrap_or_default();
-                let config: DbConfig = serde_json::from_str(&content).unwrap_or(DbConfig {
-                    local_path: None,
-                });
+                let config: DbConfig =
+                    serde_json::from_str(&content).unwrap_or(DbConfig { local_path: None });
                 config.local_path
             } else {
                 None

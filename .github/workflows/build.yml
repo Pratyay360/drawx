@@ -17,11 +17,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: macos-latest
-            rust-targets: aarch64-apple-darwin,x86_64-apple-darwin
-            args: --target universal-apple-darwin --bundles dmg
+          # - platform: macos-latest
+          #   rust-targets: aarch64-apple-darwin,x86_64-apple-darwin
+          #   args: --target universal-apple-darwin --bundles dmg
           - platform: windows-latest
-            rust-targets: ""
+            rust-targets: ''
             args: --bundles nsis
           - platform: ubuntu-latest
             rust-targets: x86_64-unknown-linux-gnu
@@ -32,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@main
 
-      - name: Install system dependencies (Ubuntu only)
+      - name: Install system dependencies
         if: matrix.platform == 'ubuntu-latest'
         run: |
           sudo apt-get update
@@ -50,16 +50,19 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.rust-targets }}
-      - uses: swatinem/rust-cache@v2
+      - uses: swatinem/rust-cache@main
       - run: nub install
 
       - name: Build Tauri and create release
         uses: tauri-apps/tauri-action@dev
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: v0.1.${{ github.run_number }}
           releaseName: drawx v0.1.${{ github.run_number }}
           releaseDraft: false
           prerelease: false
+          includeUpdaterJson: true
           args: ${{ matrix.args }}

@@ -8,6 +8,8 @@ biome = "latest"
 nub = "latest"
 ghalint = "latest"
 act = "latest"
+cargo-binstall = "latest"
+minisign = "latest"
 
 [tasks]
 install = { run = "nub install" }
