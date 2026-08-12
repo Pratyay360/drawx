@@ -1,0 +1,16 @@
+{
+	"tasks": {
+		"dev": "wails3 dev",
+		"build": "wails3 task build",
+		"package": "wails3 task package",
+		"bindings": "wails3 generate bindings -clean=true",
+		"lint": "pnpm --dir frontend lint",
+		"lint:fix": "pnpm --dir frontend lint:fix",
+		"format": "pnpm --dir frontend format",
+		"typecheck": "pnpm --dir frontend typecheck"
+	},
+	"exclude": [
+		"frontend/node_modules",
+		"frontend/dist"
+	]
+}
