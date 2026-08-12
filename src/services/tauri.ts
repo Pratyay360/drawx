@@ -5,7 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 export interface Canvas {
 	id: string;
 	title: string;
-	description?: string | null;
+	description?: string;
 	createdAt: string;
 	updatedAt: string;
 	elements: ExcalidrawElement[];

@@ -589,7 +589,10 @@ export function Canvas() {
 								<ExcalidrawSidebar.TabTrigger
 									tab="drawx-libraries"
 									title="Drawx libraries"
-									aria-label="Drawx libraries"><Icon icon="lucide:shapes" className="w-4 h-4" /></ExcalidrawSidebar.TabTrigger>
+									aria-label="Drawx libraries"
+								>
+									<Icon icon="lucide:shapes" className="w-4 h-4" />
+								</ExcalidrawSidebar.TabTrigger>
 							</DefaultSidebar.TabTriggers>
 							<ExcalidrawSidebar.Tab tab="drawx-libraries">
 								<LibraryPanelTab />

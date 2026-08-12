@@ -246,11 +246,11 @@ export async function saveLibraryContent(
 		const next = saved.map((lib) =>
 			lib.id === id
 				? {
-					...lib,
-					item_names: itemNames,
-					items,
-					fetched_at: new Date().toISOString(),
-				}
+						...lib,
+						item_names: itemNames,
+						items,
+						fetched_at: new Date().toISOString(),
+					}
 				: lib,
 		);
 		localStorage.setItem(SAVED_LIBRARIES_KEY, JSON.stringify(next));
@@ -328,7 +328,7 @@ export function installLibraryItems(
 		}
 		notifyLibraryItemsInstalled(items);
 	});
-	installQueue = task.catch(() => { });
+	installQueue = task.catch(() => {});
 	return task;
 }
 

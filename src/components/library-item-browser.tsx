@@ -26,7 +26,7 @@ let thumbnailQueue: Promise<void> = Promise.resolve();
 
 function enqueueThumbnailRender(task: () => Promise<void>): Promise<void> {
 	const run = thumbnailQueue.then(task);
-	thumbnailQueue = run.catch(() => { });
+	thumbnailQueue = run.catch(() => {});
 	return run;
 }
 
@@ -111,7 +111,6 @@ function getItemName(
 		item?.name?.trim() || itemNames?.[index]?.trim() || `Item ${index + 1}`
 	);
 }
-
 
 function getItemSearchText(
 	item: LibraryItem | undefined,
