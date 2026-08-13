@@ -1,0 +1,10 @@
+# Keep these out of the Flatpak source tree (flatpak-builder copies the
+# whole repo as a `type: dir` source).
+.git
+.jj
+node_modules
+target
+dist
+src-tauri/target
+flatpak/repo
+*.flatpak

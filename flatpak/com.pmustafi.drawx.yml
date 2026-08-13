@@ -1,0 +1,41 @@
+id: com.pmustafi.drawx
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+# Provides the Rust toolchain inside the build sandbox.
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: drawx
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=network
+  - --device=dri
+  # The app stores its SQLite db / libraries under the user's home.
+  - --filesystem=home
+  # Desktop notifications (tauri-plugin-notification).
+  - --talk-name=org.freedesktop.Notifications
+  # File dialogs (tauri-plugin-dialog) via xdg-desktop-portal.
+  - --talk-name=org.freedesktop.portal.*
+modules:
+  - name: drawx
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/rust-stable/bin
+      env:
+        # Tauri embeds the frontend from ../dist at compile time, so the
+        # web assets must already be built before `cargo build` runs.
+        CARGO_TARGET_DIR: /run/build/drawx/target
+    build-commands:
+      - cargo build --release --manifest-path src-tauri/Cargo.toml
+      - install -Dm755 target/release/drawx /app/bin/drawx
+      - install -Dm644 flatpak/com.pmustafi.drawx.desktop /app/share/applications/com.pmustafi.drawx.desktop
+      - install -Dm644 flatpak/com.pmustafi.drawx.metainfo.xml /app/share/metainfo/com.pmustafi.drawx.metainfo.xml
+      - install -Dm644 src-tauri/icons/32x32.png /app/share/icons/hicolor/32x32/apps/com.pmustafi.drawx.png
+      - install -Dm644 src-tauri/icons/128x128.png /app/share/icons/hicolor/128x128/apps/com.pmustafi.drawx.png
+      - install -Dm644 src-tauri/icons/icon.png /app/share/icons/hicolor/256x256/apps/com.pmustafi.drawx.png
+    sources:
+      - type: dir
+        path: .
+        skip-if-present: target

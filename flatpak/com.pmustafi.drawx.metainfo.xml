@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.pmustafi.drawx</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>drawx</name>
+  <summary>Offline first brainstorming app</summary>
+  <description>
+    <p>drawx is an offline-first brainstorming application.</p>
+  </description>
+  <launchable type="desktop-id">com.pmustafi.drawx.desktop</launchable>
+  <url type="homepage">https://github.com/pratyay360/drawx</url>
+  <developer id="com.pmustafi">
+    <name>Pratyay360</name>
+  </developer>
+</component>

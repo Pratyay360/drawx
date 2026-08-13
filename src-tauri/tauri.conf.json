@@ -22,10 +22,7 @@
 			{
 				"title": "drawx",
 				"width": 800,
-				"height": 600,
-				"wix": {
-					"upgradeCode": "c1ca73de-0489-520c-8e19-35d21478f7be"
-				}
+				"height": 600
 			}
 		],
 		"security": {
@@ -36,6 +33,11 @@
 		"createUpdaterArtifacts": true,
 		"active": true,
 		"targets": "all",
+		"windows": {
+			"wix": {
+				"upgradeCode": "c1ca73de-0489-520c-8e19-35d21478f7be"
+			}
+		},
 		"icon": [
 			"icons/32x32.png",
 			"icons/128x128.png",
