@@ -3,17 +3,22 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: write
 
 env:
   CN_APPLICATION: "pratyay/drawx"
 
 jobs:
   draft:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@main
@@ -30,7 +35,7 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-22.04
+          - ubuntu-latest
           - macos-latest
           - windows-latest
 
@@ -47,7 +52,7 @@ jobs:
           cache: true
 
       - name: install Linux dependencies
-        if: matrix.os == 'ubuntu-22.04'
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y webkit2gtk-4.1
@@ -79,10 +84,20 @@ jobs:
           api-key: ${{ secrets.CN_API_KEY }}
           path: ./src-tauri
 
+      - name: upload build artifacts for GitHub release
+        uses: actions/upload-artifact@main
+        with:
+          name: release-assets-${{ matrix.os }}-${{ github.run_number }}
+
+          path: |
+            src-tauri/target/release/bundle/*/*
+            src-tauri/target/*/release/bundle/*/*
+          if-no-files-found: ignore
+
   publish:
     needs: build
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@main
@@ -92,3 +107,24 @@ jobs:
         with:
           command: release publish ${{ env.CN_APPLICATION }} --framework tauri
           api-key: ${{ secrets.CN_API_KEY }}
+
+      - name: download all artifacts
+        uses: actions/download-artifact@main
+        with:
+          path: ./release-assets
+          pattern: release-assets-*
+          merge-multiple: true
+
+      - name: extract version
+        id: get_version
+        run: |
+          VERSION=${{ github.run_number }}
+          echo "version=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: publish to gh releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./release-assets/*
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || steps.get_version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

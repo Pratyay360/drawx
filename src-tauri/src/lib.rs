@@ -2,7 +2,15 @@ use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use tauri::Manager;
+use tauri_plugin_dialog;
 
+pub fn run() {
+    builder
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_dialog::init())
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
 pub struct DbState {
     pub conn: Mutex<Connection>,
     pub db_path: Mutex<String>,
