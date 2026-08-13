@@ -62,7 +62,11 @@
           run: rustup target add ${{ matrix.target }}
 
         - name: Build Tauri App
-          run: cargo tauri build -- -vv --target ${{ matrix.target }}
+          # All matrix targets are the runner's native architecture, so we build
+          # natively. Passing `--target` puts the binary under
+          # target/<triple>/release/ while Tauri's bundler resolves it at
+          # target/release/, causing "can't open main binary" (os error 2).
+          run: cargo tauri build -- -vv
 
         - name: Upload Build Artifacts (CrabNebula Cloud)
           uses: crabnebula-dev/cloud-release@dev
