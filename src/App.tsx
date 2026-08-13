@@ -4,7 +4,6 @@ import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { Canvas as CanvasComponent } from "./canvas/main.tsx";
 import { LibraryBrowserModal } from "./components/library-browser-modal.tsx";
 import { Sidebar } from "./components/sidebar.tsx";
-// shadcn/ui Imports
 import { Button } from "./components/ui/button.tsx";
 import {
 	Card,

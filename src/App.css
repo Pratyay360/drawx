@@ -89,11 +89,9 @@
 	--color-text-primary: var(--foreground);
 	--color-text-secondary: var(--muted-foreground);
 	--color-text-muted: var(--muted-foreground);
-	--color-text-disabled: color-mix(
-		in oklch,
-		var(--muted-foreground),
-		transparent 25%
-	);
+	--color-text-disabled: color-mix(in oklch,
+			var(--muted-foreground),
+			transparent 25%);
 	--color-primary: var(--primary);
 	--color-danger: var(--destructive);
 }
@@ -137,10 +135,12 @@
 		border-color: var(--border);
 		outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
 	}
+
 	body {
 		background-color: var(--background);
 		color: var(--foreground);
 	}
+
 	html {
 		font-family: var(--font-mono);
 	}

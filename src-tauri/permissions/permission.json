@@ -1,0 +1,13 @@
+{
+  "default": null,
+  "permission": [
+    {
+      "identifier": "create-db",
+      "description": "create database && save data to local storage",
+      "commands": {
+        "allow": ["writeFile", "readFile", "createDir", "removeDir", "removeFile"],
+        "deny": []
+      }
+    }
+  ]
+}
