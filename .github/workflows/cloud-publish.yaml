@@ -55,12 +55,9 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y webkit2gtk-4.1
-          # linuxdeploy (used for the AppImage bundle) is a type-2 AppImage that
-          # requires FUSE to run. Install libfuse3; combined with
-          # APPIMAGE_EXTRACT_AND_RUN below, this avoids the `failed to run
-          # linuxdeploy` failure on images that don't ship FUSE 2 by default.
-          sudo apt-get install -y libfuse3
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev patchelf libxdo-dev
+          # Install FUSE support for AppImage bundling (libfuse2 / libfuse3 across Ubuntu versions)
+          sudo apt-get install -y libfuse2t64 || sudo apt-get install -y libfuse2 || sudo apt-get install -y libfuse3-3 fuse3 || true
 
       - name: build Tauri app for Windows, Linux
         if: matrix.os != 'macos-latest'
@@ -79,8 +76,8 @@ jobs:
         run: |
           rustup target add x86_64-apple-darwin
           nub install
-          nub run tauri build -- --target x86_64-apple-darwin
-          nub run tauri build -- --target aarch64-apple-darwin
+          nub run tauri build --target x86_64-apple-darwin
+          nub run tauri build --target aarch64-apple-darwin
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}

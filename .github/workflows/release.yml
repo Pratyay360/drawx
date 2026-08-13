@@ -36,12 +36,9 @@ jobs:
           sudo apt-get update
           # `rpm` provides `rpmbuild`, required to build the .rpm bundle
           # (targets is "all", which already includes rpm).
-          sudo apt-get install -y pkg-config libssl-dev libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf rpm
-          # linuxdeploy (used for the AppImage bundle) is a type-2 AppImage that
-          # requires FUSE to run. Install libfuse3; combined with
-          # APPIMAGE_EXTRACT_AND_RUN below, this avoids the `failed to run
-          # linuxdeploy` failure on images that don't ship FUSE 2 by default.
-          sudo apt-get install -y libfuse3
+          sudo apt-get install -y pkg-config libssl-dev libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf rpm libxdo-dev
+          # Install FUSE support for AppImage bundling (libfuse2 / libfuse3 across Ubuntu versions)
+          sudo apt-get install -y libfuse2t64 || sudo apt-get install -y libfuse2 || sudo apt-get install -y libfuse3-3 fuse3 || true
 
       - name: Install front-end dependencies
         run: nub install
@@ -51,7 +48,7 @@ jobs:
           # Run the linuxdeploy AppImage by extracting it instead of mounting,
           # so bundling the AppImage target does not depend on FUSE 2 being present.
           APPIMAGE_EXTRACT_AND_RUN: '1'
-        run: cargo tauri build -- -vv
+        run: nub run tauri build
 
       - name: Build Flatpak (Linux only)
         if: runner.os == 'Linux'
