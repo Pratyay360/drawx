@@ -14,7 +14,7 @@
 			"endpoints": [
 				"https://cdn.crabnebula.app/update/pratyay/drawx/{{target}}-{{arch}}/{{current_version}}"
 			],
-			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM5RkY4QzFFQTBBRTFGMEUKUldRT0g2NmdIb3oveVFMUWNNYnRUS2k1TFlubFlFb1Fjc3hSZ0ZScUtCU0ZLNlVRWnVTcTQ1NDAK"
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE0QjMzRjIyOUQzMTBFMDkKUldRSkRqR2RJait6cEgzRkw0R3pPQ3JkcXRKZUdLUXR3SXQ1dmhYcjI1ejdzSlNOWlNHTS80N0sK"
 		}
 	},
 	"app": {
