@@ -56,6 +56,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y webkit2gtk-4.1
+          # linuxdeploy (used for the AppImage bundle) is a type-2 AppImage that
+          # requires FUSE to run. Install libfuse3; combined with
+          # APPIMAGE_EXTRACT_AND_RUN below, this avoids the `failed to run
+          # linuxdeploy` failure on images that don't ship FUSE 2 by default.
+          sudo apt-get install -y libfuse3
 
       - name: build Tauri app for Windows, Linux
         if: matrix.os != 'macos-latest'
@@ -63,6 +68,9 @@ jobs:
           nub install
           nub run tauri build
         env:
+          # Run the linuxdeploy AppImage by extracting it instead of mounting,
+          # so bundling the AppImage target does not depend on FUSE 2 being present.
+          APPIMAGE_EXTRACT_AND_RUN: '1'
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
