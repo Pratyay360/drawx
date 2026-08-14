@@ -38,6 +38,11 @@
 				"upgradeCode": "c1ca73de-0489-520c-8e19-35d21478f7be"
 			}
 		},
+		"linux": {
+			"appimage": {
+				"bundleMediaFramework": true
+			}
+		},
 		"icon": [
 			"icons/32x32.png",
 			"icons/128x128.png",
