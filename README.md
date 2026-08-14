@@ -15,8 +15,8 @@ This template should help get you started developing with Tauri, React and Types
 [windows](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/nsis-x86_64)
 [windows](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/windows-x86_64)
 
-
-<head>
+<div>
+	<head>
 	<script src="https://cdn.tailwindcss.com"></script>
 </head>
 
@@ -88,3 +88,4 @@ This template should help get you started developing with Tauri, React and Types
 		highlightUserOSButton();
 	</script>
 </body>
+</div>
