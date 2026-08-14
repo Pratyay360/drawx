@@ -1,10 +1,11 @@
 id: com.pmustafi.drawx
-runtime: org.freedesktop.Platform
-runtime-version: '23.08'
-sdk: org.freedesktop.Sdk
+runtime: org.gnome.Platform
+runtime-version: '48'
+sdk: org.gnome.Sdk
 
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
+  - org.freedesktop.Sdk.Extension.node22
 command: drawx
 finish-args:
   - --share=ipc
@@ -19,10 +20,12 @@ modules:
   - name: drawx
     buildsystem: simple
     build-options:
-      append-path: /usr/lib/sdk/rust-stable/bin
+      append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node22/bin
       env:
         CARGO_TARGET_DIR: /run/build/drawx/target
     build-commands:
+      - npx --yes @nubjs/nub install
+      - npx --yes @nubjs/nub run build
       - cargo build --release --manifest-path src-tauri/Cargo.toml
       - install -Dm755 target/release/drawx /app/bin/drawx
       - install -Dm644 flatpak/com.pmustafi.drawx.desktop /app/share/applications/com.pmustafi.drawx.desktop
@@ -32,5 +35,4 @@ modules:
       - install -Dm644 src-tauri/icons/icon.png /app/share/icons/hicolor/256x256/apps/com.pmustafi.drawx.png
     sources:
       - type: dir
-        path: .
-        skip-if-present: target
+        path: ../

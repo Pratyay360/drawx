@@ -92,16 +92,77 @@ fn generate_canvas_id() -> String {
     format!("c_{:x}", nanos)
 }
 
+fn home_dir() -> Option<std::path::PathBuf> {
+    std::env::var("HOME")
+        .ok()
+        .filter(|home| !home.trim().is_empty())
+        .map(std::path::PathBuf::from)
+}
+
+fn data_dir_base() -> std::path::PathBuf {
+    match std::env::var("XDG_DATA_HOME") {
+        Ok(dir) if !dir.trim().is_empty() => std::path::PathBuf::from(dir),
+        _ => match home_dir() {
+            Some(home) => home.join(".local/share"),
+            None => std::env::temp_dir(),
+        },
+    }
+}
+
+fn config_dir_base() -> std::path::PathBuf {
+    match std::env::var("XDG_CONFIG_HOME") {
+        Ok(dir) if !dir.trim().is_empty() => std::path::PathBuf::from(dir),
+        _ => match home_dir() {
+            Some(home) => home.join(".config"),
+            None => std::env::temp_dir(),
+        },
+    }
+}
+
+/// Best-effort app data dir. Never fails: falls back to `$XDG_DATA_HOME` /
+/// `~/.local/share`, then a temp dir, each keyed by the app identifier.
+fn resolve_data_dir(app: &tauri::AppHandle) -> std::path::PathBuf {
+    match app.path().app_data_dir() {
+        Ok(dir) => dir,
+        Err(_) => data_dir_base().join(&app.config().identifier),
+    }
+}
+
+/// Best-effort app config dir. Never fails (mirrors `resolve_data_dir`).
+fn resolve_config_dir(app: &tauri::AppHandle) -> std::path::PathBuf {
+    match app.path().app_config_dir() {
+        Ok(dir) => dir,
+        Err(_) => config_dir_base().join(&app.config().identifier),
+    }
+}
+
+/// Create and return a writable data dir, falling back to a temp dir if the
+/// preferred location can't be created so DB setup never aborts startup.
+fn prepare_data_dir(app: &tauri::AppHandle) -> std::path::PathBuf {
+    let preferred = resolve_data_dir(app);
+    match std::fs::create_dir_all(&preferred) {
+        Ok(_) => preferred,
+        Err(err) => {
+            eprintln!(
+                "warning: could not create app data dir at {:?}: {err}; using temp dir",
+                preferred
+            );
+            let fallback = std::env::temp_dir().join(&app.config().identifier);
+            std::fs::create_dir_all(&fallback).expect("failed to create fallback data dir");
+            fallback
+        }
+    }
+}
+
 fn init_db(app: &tauri::AppHandle, custom_path: Option<&str>) -> Connection {
     let db_path = if let Some(path) = custom_path {
-        std::path::PathBuf::from(path)
+        let path = std::path::PathBuf::from(path);
+        if let Some(parent) = path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        path
     } else {
-        let app_dir = app
-            .path()
-            .app_data_dir()
-            .expect("failed to resolve app data dir");
-        std::fs::create_dir_all(&app_dir).expect("failed to create app data dir");
-        app_dir.join("drawx.db")
+        prepare_data_dir(app).join("drawx.db")
     };
 
     let conn = Connection::open(&db_path).expect("failed to open database");
@@ -149,10 +210,7 @@ fn init_db(app: &tauri::AppHandle, custom_path: Option<&str>) -> Connection {
 /// Import the old `saved_libraries.json` config file into the database (once),
 /// then remove it so the DB becomes the single source of truth.
 fn migrate_legacy_saved_libraries(app: &tauri::AppHandle, conn: &Connection) {
-    let config_dir = match app.path().app_config_dir() {
-        Ok(dir) => dir,
-        Err(_) => return,
-    };
+    let config_dir = resolve_config_dir(app);
     let path = config_dir.join("saved_libraries.json");
     if !path.exists() {
         return;
@@ -534,12 +592,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
         .setup(|app| {
-            let config_path = app
-                .handle()
-                .path()
-                .app_config_dir()
-                .expect("failed to resolve app config dir")
-                .join("db_config.json");
+            let config_path = resolve_config_dir(app.handle()).join("db_config.json");
 
             let custom_path = if config_path.exists() {
                 let content = std::fs::read_to_string(&config_path).unwrap_or_default();
@@ -550,18 +603,13 @@ pub fn run() {
                 None
             };
 
+            let default_db_path = prepare_data_dir(app.handle()).join("drawx.db");
             let conn = init_db(app.handle(), custom_path.as_deref());
             app.manage(DbState {
                 conn: Mutex::new(conn),
-                db_path: Mutex::new(custom_path.unwrap_or_else(|| {
-                    app.handle()
-                        .path()
-                        .app_data_dir()
-                        .expect("failed to resolve app data dir")
-                        .join("drawx.db")
-                        .to_string_lossy()
-                        .to_string()
-                })),
+                db_path: Mutex::new(
+                    custom_path.unwrap_or_else(|| default_db_path.to_string_lossy().to_string()),
+                ),
             });
             Ok(())
         })
