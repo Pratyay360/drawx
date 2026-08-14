@@ -1,23 +1,20 @@
-import { Icon } from "@iconify/react";
+import { IconButton } from "@astryxdesign/core/IconButton";
+import { Icon } from "@astryxdesign/core/Icon";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "../hooks/use-theme.ts";
 
 export function ThemeToggle() {
 	const { theme, toggleTheme } = useTheme();
 	const isDark = theme === "dark";
+	const label = isDark ? "Switch to light mode" : "Switch to dark mode";
 
 	return (
-		<button
-			type="button"
+		<IconButton
+			label={label}
+			tooltip={label}
+			variant="ghost"
+			icon={<Icon icon={isDark ? Sun : Moon} size="sm" />}
 			onClick={toggleTheme}
-			className="flex-1 p-1 rounded"
-			style={{ color: "var(--color-text-disabled)" }}
-			title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-			aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-		>
-			<Icon
-				icon={isDark ? "lucide:sun" : "lucide:moon"}
-				className="w-4 h-4 mx-auto"
-			/>
-		</button>
+		/>
 	);
 }

@@ -1,4 +1,11 @@
-import { Icon } from "@iconify/react";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { DialogHeader } from "@astryxdesign/core/Dialog";
+import { Icon } from "@astryxdesign/core/Icon";
+import { Layout, LayoutContent, LayoutFooter } from "@astryxdesign/core/Layout";
+import { HStack, VStack } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
+import { FolderOpen, Loader2, Save } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import {
 	type DbConfig,
@@ -6,15 +13,6 @@ import {
 	selectLocalDbPath,
 	setDbConfig,
 } from "../services/db.ts";
-import { Button } from "./ui/button.tsx";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "./ui/card.tsx";
-import { Input } from "./ui/input.tsx";
 
 interface DatabaseSettingsProps {
 	onClose: () => void;
@@ -66,76 +64,85 @@ export function DatabaseSettings({ onClose }: DatabaseSettingsProps) {
 
 	if (loading) {
 		return (
-			<div className="flex items-center justify-center p-8">
-				<Icon icon="lucide:loader-2" className="w-6 h-6 animate-spin" />
-			</div>
+			<Layout
+				header={
+					<DialogHeader
+						title="Database Settings"
+						onOpenChange={onClose}
+					/>
+				}
+				content={
+					<LayoutContent isScrollable={false}>
+						<HStack hAlign="center" padding={8}>
+							<Icon icon={Loader2} size="lg" />
+						</HStack>
+					</LayoutContent>
+				}
+			/>
 		);
 	}
 
 	return (
-		<Card className="w-full max-w-md">
-			<CardHeader>
-				<CardTitle className="flex items-center gap-2">
-					<Icon icon="lucide:database" className="w-5 h-5" />
-					Database Settings
-				</CardTitle>
-				<CardDescription>
-					Store your drawings locally on this device
-				</CardDescription>
-			</CardHeader>
-			<CardContent className="space-y-4">
-				{error && (
-					<div className="p-3 rounded bg-destructive/10 text-destructive text-sm">
-						{error}
-					</div>
-				)}
-
-				<div className="space-y-2">
-					<label htmlFor="database-location" className="text-sm font-medium">
-						Database Location
-					</label>
-					<div className="flex gap-2">
-						<Input
-							id="database-location"
-							type="text"
-							value={config.local_path || "Default location"}
-							readOnly
-							className="flex-1"
-						/>
-						<Button variant="outline" onClick={handleSelectPath}>
-							<Icon icon="lucide:folder-open" className="w-4 h-4 mr-1" />
-							Browse…
-						</Button>
-					</div>
-					<p className="text-xs text-muted-foreground">
-						{config.local_path
-							? "Custom database location"
-							: "Using default app data directory"}
-					</p>
-					{config.local_path && (
-						<p className="text-xs text-amber-600 dark:text-amber-400">
-							Restart the app for the new database location to take effect.
-						</p>
-					)}
-				</div>
-
-				<div className="flex justify-end gap-2 pt-4">
-					<Button variant="outline" onClick={onClose}>
-						Cancel
-					</Button>
-					<Button onClick={handleSave} disabled={saving}>
-						{saving ? (
-							<Icon
-								icon="lucide:loader-2"
-								className="w-4 h-4 animate-spin mr-2"
-							/>
-						) : (
-							<Icon icon="lucide:save" className="w-4 h-4 mr-2" />
+		<Layout
+			header={
+				<DialogHeader
+					title="Database Settings"
+					subtitle="Store your drawings locally on this device"
+					onOpenChange={onClose}
+				/>
+			}
+			content={
+				<LayoutContent padding={4}>
+					<VStack gap={3}>
+						{error && (
+							<Banner status="error" title={error} />
 						)}
-						Save Changes
-					</Button>
-				</div>
-			</CardContent>
-		</Card>
+
+						<VStack gap={2}>
+							<Text type="label" weight="medium">
+								Database Location
+							</Text>
+							<HStack gap={2}>
+								<Text type="code" maxLines={1}>
+									{config.local_path || "Default location"}
+								</Text>
+								<Button
+									label="Browse…"
+									variant="secondary"
+									icon={<Icon icon={FolderOpen} size="sm" />}
+									onClick={handleSelectPath}
+								/>
+							</HStack>
+							<Text type="supporting">
+								{config.local_path
+									? "Custom database location"
+									: "Using default app data directory"}
+							</Text>
+							{config.local_path && (
+								<Banner
+									status="warning"
+									title="Restart required"
+									description="Restart the app for the new database location to take effect."
+								/>
+							)}
+						</VStack>
+					</VStack>
+				</LayoutContent>
+			}
+			footer={
+				<LayoutFooter hasDivider padding={4}>
+					<HStack justify="end" gap={2}>
+						<Button label="Cancel" variant="secondary" onClick={onClose} />
+						<Button
+							label="Save Changes"
+							variant="primary"
+							icon={<Icon icon={Save} size="sm" />}
+							onClick={handleSave}
+							isLoading={saving}
+						/>
+					</HStack>
+				</LayoutFooter>
+			}
+		/>
 	);
 }

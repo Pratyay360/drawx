@@ -1,31 +1,41 @@
-import { Icon } from "@iconify/react";
+import { AppShell } from "@astryxdesign/core/AppShell";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Center } from "@astryxdesign/core/Center";
+import { ClickableCard } from "@astryxdesign/core/ClickableCard";
+import { Grid } from "@astryxdesign/core/Grid";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Icon } from "@astryxdesign/core/Icon";
+import { IconButton } from "@astryxdesign/core/IconButton";
+import { LinkProvider } from "@astryxdesign/core/Link";
+import {
+	SegmentedControl,
+	SegmentedControlItem,
+} from "@astryxdesign/core/SegmentedControl";
+import { HStack, VStack } from "@astryxdesign/core/Stack";
+import {
+	Table,
+	TableCell,
+	TableHeaderCell,
+	TableRow,
+} from "@astryxdesign/core/Table";
+import { Text } from "@astryxdesign/core/Text";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import {
+	Check,
+	FileText,
+	Grid2x2,
+	List,
+	Pencil,
+	Search,
+	Trash2,
+	X,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
+import { BrowserRouter, Link, Route, Routes, useNavigate } from "react-router-dom";
 import { Canvas as CanvasComponent } from "./canvas/main.tsx";
 import { LibraryBrowserModal } from "./components/library-browser-modal.tsx";
 import { Sidebar } from "./components/sidebar.tsx";
-import { Button } from "./components/ui/button.tsx";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "./components/ui/card.tsx";
-import { Input } from "./components/ui/input.tsx";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "./components/ui/table.tsx";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "./components/ui/tooltip.tsx";
 import {
 	type Canvas,
 	createCanvas,
@@ -109,6 +119,14 @@ function Dashboard() {
 		setEditingId(null);
 	}
 
+	function handleTitleKeyDown(id: string, e: React.KeyboardEvent) {
+		if (e.key === "Enter") {
+			handleRename(id);
+		} else if (e.key === "Escape") {
+			handleCancelEdit();
+		}
+	}
+
 	const filteredCanvases = canvases.filter((canvas) =>
 		canvas.title.toLowerCase().includes(searchQuery.toLowerCase()),
 	);
@@ -123,322 +141,267 @@ function Dashboard() {
 	};
 
 	return (
-		<TooltipProvider delayDuration={200}>
-			<div className="flex h-screen bg-background text-foreground font-sans">
-				<Sidebar />
-				<main className="flex-1 overflow-auto px-6 py-8 lg:px-10">
-					<div className="mx-auto flex max-w-5xl flex-col gap-6">
-						{/* Header */}
-						<header className="flex items-center justify-between">
-							<div>
-								<h1 className="text-xl font-semibold tracking-tight">Drawx</h1>
-							</div>
-							<div className="flex items-center gap-1.5">
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<Button
-											variant={viewMode === "grid" ? "secondary" : "ghost"}
-											size="icon"
-											onClick={() => setViewMode("grid")}
-										>
-											<Icon icon="lucide:grid" className="h-4 w-4" />
-										</Button>
-									</TooltipTrigger>
-									<TooltipContent>Grid view</TooltipContent>
-								</Tooltip>
+		<AppShell contentPadding={4} sideNav={<Sidebar />}>
+			<VStack gap={5} maxWidth={960}>
+				<HStack justify="between" align="center">
+					<Heading level={1}>Drawx</Heading>
+					<SegmentedControl
+						value={viewMode}
+						onChange={(value) => setViewMode(value as "grid" | "list")}
+						label="Canvas view mode"
+						size="sm"
+					>
+						<SegmentedControlItem
+							value="grid"
+							label="Grid view"
+							isLabelHidden
+							icon={<Icon icon={Grid2x2} size="sm" />}
+						/>
+						<SegmentedControlItem
+							value="list"
+							label="List view"
+							isLabelHidden
+							icon={<Icon icon={List} size="sm" />}
+						/>
+					</SegmentedControl>
+				</HStack>
 
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<Button
-											variant={viewMode === "list" ? "secondary" : "ghost"}
-											size="icon"
-											onClick={() => setViewMode("list")}
-										>
-											<Icon icon="lucide:list" className="h-4 w-4" />
-										</Button>
-									</TooltipTrigger>
-									<TooltipContent>List view</TooltipContent>
-								</Tooltip>
+				<form onSubmit={handleCreateCanvas}>
+					<HStack gap={2}>
+						<TextInput
+							label="New drawing name"
+							isLabelHidden
+							placeholder="New drawing name..."
+							value={name}
+							onChange={setName}
+							isDisabled={loading}
+							width={320}
+						/>
+						<Button
+							label={loading ? "Creating..." : "Create"}
+							type="submit"
+							isDisabled={loading || !name.trim()}
+						/>
+					</HStack>
+				</form>
 
-								<div className="w-px h-4 mx-1 bg-border" />
-							</div>
-						</header>
+				<TextInput
+					label="Search drawings"
+					isLabelHidden
+					placeholder="Search..."
+					value={searchQuery}
+					onChange={setSearchQuery}
+					startIcon={Search}
+					hasClear
+					width={256}
+				/>
 
-						{/* Create Form */}
-						<form onSubmit={handleCreateCanvas} className="flex gap-2">
-							<Input
-								type="text"
-								value={name}
-								onChange={(e) => setName(e.currentTarget.value)}
-								placeholder="New drawing name..."
-								className="max-w-sm"
-								disabled={loading}
-							/>
-							<Button type="submit" disabled={loading || !name.trim()}>
-								{loading ? "Creating..." : "Create"}
-							</Button>
-						</form>
-
-						{/* Search */}
-						<div className="relative max-w-xs">
-							<Icon
-								icon="lucide:search"
-								className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground"
-							/>
-							<Input
-								type="text"
-								placeholder="Search..."
-								value={searchQuery}
-								onChange={(e) => setSearchQuery(e.currentTarget.value)}
-								className="pl-8"
-							/>
-						</div>
-
-						{/* Content */}
-						{filteredCanvases.length > 0 ? (
-							viewMode === "grid" ? (
-								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-									{filteredCanvases.map((canvas) => {
-										return (
-											<Card
-												key={canvas.id}
-												onClick={() => {
-													if (editingId !== canvas.id)
-														navigate(`/canvas/${canvas.id}`);
-												}}
-												className="cursor-pointer group transition-colors hover:bg-accent"
-											>
-												<CardHeader className="p-4 pb-2">
-													<div className="flex items-start justify-between">
-														<CardTitle className="text-sm font-medium truncate">
-															{canvas.title}
-														</CardTitle>
-														<div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2">
-															<Button
-																variant="ghost"
-																size="icon"
-																className="h-6 w-6"
-																onClick={(e) =>
-																	startEditing(canvas.id, canvas.title, e)
-																}
-															>
-																<Icon
-																	icon="lucide:pencil"
-																	className="h-3 w-3 text-muted-foreground"
-																/>
-															</Button>
-															<Button
-																variant="ghost"
-																size="icon"
-																className="h-6 w-6"
-																onClick={(e) =>
-																	handleDeleteCanvas(canvas.id, e)
-																}
-															>
-																<Icon
-																	icon="lucide:trash-2"
-																	className="h-3 w-3 text-destructive"
-																/>
-															</Button>
-														</div>
-													</div>
-												</CardHeader>
-												<CardContent className="p-4 pt-0">
-													{editingId === canvas.id ? (
-														<div className="flex items-center gap-1 mt-1">
-															<Input
-																type="text"
-																value={editTitle}
-																onChange={(e) =>
-																	setEditTitle(e.currentTarget.value)
-																}
-																onKeyDown={(e) => {
-																	if (e.key === "Enter")
-																		handleRename(canvas.id);
-																	if (e.key === "Escape") handleCancelEdit();
-																}}
-																className="h-7 text-xs"
-																autoFocus
-															/>
-															<Button
-																variant="ghost"
-																size="icon"
-																className="h-6 w-6 shrink-0"
-																onClick={() => handleRename(canvas.id)}
-															>
-																<Icon
-																	icon="lucide:check"
-																	className="h-3 w-3 text-green-600 dark:text-green-400"
-																/>
-															</Button>
-															<Button
-																variant="ghost"
-																size="icon"
-																className="h-6 w-6 shrink-0"
-																onClick={handleCancelEdit}
-															>
-																<Icon
-																	icon="lucide:x"
-																	className="h-3 w-3 text-muted-foreground"
-																/>
-															</Button>
-														</div>
-													) : (
-														<p className="text-xs text-muted-foreground">
-															{formatDate(canvas.updatedAt)}
-														</p>
-													)}
-												</CardContent>
-											</Card>
-										);
-									})}
-								</div>
-							) : (
-								<Card>
-									<Table>
-										<TableHeader>
-											<TableRow>
-												<TableHead className="w-[40%]">Title</TableHead>
-												<TableHead>Updated</TableHead>
-												<TableHead className="text-right">Actions</TableHead>
-											</TableRow>
-										</TableHeader>
-										<TableBody>
-											{filteredCanvases.map((canvas) => (
-												<TableRow
-													key={canvas.id}
-													onClick={() => {
-														if (editingId !== canvas.id)
-															navigate(`/canvas/${canvas.id}`);
-													}}
-													className="cursor-pointer group"
-												>
-													<TableCell>
-														{editingId === canvas.id ? (
-															<div className="flex items-center gap-1">
-																<Input
-																	type="text"
-																	value={editTitle}
-																	onChange={(e) =>
-																		setEditTitle(e.currentTarget.value)
-																	}
-																	onKeyDown={(e) => {
-																		if (e.key === "Enter")
-																			handleRename(canvas.id);
-																		if (e.key === "Escape") handleCancelEdit();
-																	}}
-																	className="h-7 text-xs"
-																	autoFocus
-																/>
-																<Button
-																	variant="ghost"
-																	size="icon"
-																	className="h-6 w-6 shrink-0"
-																	onClick={() => handleRename(canvas.id)}
-																>
-																	<Icon
-																		icon="lucide:check"
-																		className="h-3 w-3 text-green-600 dark:text-green-400"
-																	/>
-																</Button>
-																<Button
-																	variant="ghost"
-																	size="icon"
-																	className="h-6 w-6 shrink-0"
-																	onClick={handleCancelEdit}
-																>
-																	<Icon
-																		icon="lucide:x"
-																		className="h-3 w-3 text-muted-foreground"
-																	/>
-																</Button>
-															</div>
-														) : (
-															<span className="text-sm font-medium">
-																{canvas.title}
-															</span>
-														)}
-													</TableCell>
-													<TableCell className="text-xs text-muted-foreground">
-														{formatDate(canvas.updatedAt)}
-													</TableCell>
-													<TableCell
-														className="text-right"
-														onClick={(e) => e.stopPropagation()}
-													>
-														<div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-															<Button
-																variant="ghost"
-																size="icon"
-																className="h-7 w-7"
-																onClick={(e) =>
-																	startEditing(canvas.id, canvas.title, e)
-																}
-															>
-																<Icon
-																	icon="lucide:pencil"
-																	className="h-3 w-3 text-muted-foreground"
-																/>
-															</Button>
-															<Button
-																variant="ghost"
-																size="icon"
-																className="h-7 w-7"
-																onClick={(e) =>
-																	handleDeleteCanvas(canvas.id, e)
-																}
-															>
-																<Icon
-																	icon="lucide:trash-2"
-																	className="h-3 w-3 text-destructive"
-																/>
-															</Button>
-														</div>
-													</TableCell>
-												</TableRow>
-											))}
-										</TableBody>
-									</Table>
-								</Card>
-							)
-						) : (
-							<div className="text-center py-16 text-muted-foreground">
-								<Icon
-									icon="lucide:file-text"
-									className="w-10 h-10 mx-auto mb-3 opacity-30"
-								/>
-								<p className="text-sm">
-									{searchQuery
-										? `No results for "${searchQuery}"`
-										: "No drawings yet. Create one above."}
-								</p>
-								{searchQuery && (
-									<Button
-										variant="link"
-										size="sm"
-										onClick={() => setSearchQuery("")}
-										className="mt-2"
+				{filteredCanvases.length > 0 ? (
+					viewMode === "grid" ? (
+						<Grid columns={{ minWidth: 280, max: 3 }} gap={3}>
+							{filteredCanvases.map((canvas) => (
+								<ClickableCard
+									key={canvas.id}
+									label={`Open ${canvas.title}`}
+									padding={3}
+									onClick={() => {
+										if (editingId !== canvas.id)
+											navigate(`/canvas/${canvas.id}`);
+									}}
+								>
+									<VStack gap={2}>
+										<HStack justify="between" align="center">
+											<Text weight="medium" maxLines={1}>
+												{canvas.title}
+											</Text>
+											<HStack gap={1}>
+												<IconButton
+													label={`Rename ${canvas.title}`}
+													variant="ghost"
+													size="sm"
+													icon={<Icon icon={Pencil} size="sm" />}
+													onClick={(e) =>
+														startEditing(
+															canvas.id,
+															canvas.title,
+															e,
+														)
+													}
+												/>
+												<IconButton
+													label={`Delete ${canvas.title}`}
+													variant="ghost"
+													size="sm"
+													icon={<Icon icon={Trash2} size="sm" />}
+													onClick={(e) =>
+														handleDeleteCanvas(canvas.id, e)
+													}
+												/>
+											</HStack>
+										</HStack>
+										{editingId === canvas.id ? (
+											<HStack gap={1}>
+												<TextInput
+													label="Rename drawing"
+													isLabelHidden
+													value={editTitle}
+													onChange={setEditTitle}
+													onKeyDown={(e) =>
+														handleTitleKeyDown(canvas.id, e)
+													}
+													hasAutoFocus
+													size="sm"
+													width="100%"
+												/>
+												<IconButton
+													label="Save name"
+													variant="ghost"
+													size="sm"
+													icon={<Icon icon={Check} size="sm" />}
+													onClick={() => handleRename(canvas.id)}
+												/>
+												<IconButton
+													label="Cancel rename"
+													variant="ghost"
+													size="sm"
+													icon={<Icon icon={X} size="sm" />}
+													onClick={handleCancelEdit}
+												/>
+											</HStack>
+										) : (
+											<Text type="supporting">
+												{formatDate(canvas.updatedAt)}
+											</Text>
+										)}
+									</VStack>
+								</ClickableCard>
+							))}
+						</Grid>
+					) : (
+						<Card padding={0}>
+							<Table density="compact" hasHover>
+								<TableRow isHeaderRow>
+									<TableHeaderCell>Title</TableHeaderCell>
+									<TableHeaderCell>Updated</TableHeaderCell>
+									<TableHeaderCell>Actions</TableHeaderCell>
+								</TableRow>
+								{filteredCanvases.map((canvas) => (
+									<TableRow
+										key={canvas.id}
+										onClick={() => {
+											if (editingId !== canvas.id)
+												navigate(`/canvas/${canvas.id}`);
+										}}
 									>
-										Clear search
-									</Button>
-								)}
-							</div>
-						)}
-					</div>
-				</main>
-			</div>
-		</TooltipProvider>
+										<TableCell>
+											{editingId === canvas.id ? (
+												<HStack gap={1}>
+													<TextInput
+														label="Rename drawing"
+														isLabelHidden
+														value={editTitle}
+														onChange={setEditTitle}
+														onKeyDown={(e) =>
+															handleTitleKeyDown(canvas.id, e)
+														}
+														hasAutoFocus
+														size="sm"
+														width="100%"
+													/>
+													<IconButton
+														label="Save name"
+														variant="ghost"
+														size="sm"
+														icon={<Icon icon={Check} size="sm" />}
+														onClick={() => handleRename(canvas.id)}
+													/>
+													<IconButton
+														label="Cancel rename"
+														variant="ghost"
+														size="sm"
+														icon={<Icon icon={X} size="sm" />}
+														onClick={handleCancelEdit}
+													/>
+												</HStack>
+											) : (
+												<Text weight="medium">
+													{canvas.title}
+												</Text>
+											)}
+										</TableCell>
+										<TableCell>
+											<Text type="supporting">
+												{formatDate(canvas.updatedAt)}
+											</Text>
+										</TableCell>
+										<TableCell
+											onClick={(e) => e.stopPropagation()}
+										>
+											<HStack justify="end" gap={1}>
+												<IconButton
+													label={`Rename ${canvas.title}`}
+													variant="ghost"
+													size="sm"
+													icon={<Icon icon={Pencil} size="sm" />}
+													onClick={(e) =>
+														startEditing(
+															canvas.id,
+															canvas.title,
+															e,
+														)
+													}
+												/>
+												<IconButton
+													label={`Delete ${canvas.title}`}
+													variant="ghost"
+													size="sm"
+													icon={<Icon icon={Trash2} size="sm" />}
+													onClick={(e) =>
+														handleDeleteCanvas(canvas.id, e)
+													}
+												/>
+											</HStack>
+										</TableCell>
+									</TableRow>
+								))}
+							</Table>
+						</Card>
+					)
+				) : (
+					<Center>
+						<VStack gap={3} hAlign="center">
+							<Icon icon={FileText} size="lg" />
+							<Text type="supporting">
+								{searchQuery
+									? `No results for "${searchQuery}"`
+									: "No drawings yet. Create one above."}
+							</Text>
+							{searchQuery && (
+								<Button
+									label="Clear search"
+									variant="ghost"
+									size="sm"
+									onClick={() => setSearchQuery("")}
+								/>
+							)}
+						</VStack>
+					</Center>
+				)}
+			</VStack>
+		</AppShell>
 	);
 }
 
 function App() {
 	return (
 		<BrowserRouter>
-			<Routes>
-				<Route path="/" element={<Dashboard />} />
-				<Route path="/canvas/:id" element={<CanvasComponent />} />
-			</Routes>
-			<LibraryBrowserModal />
+			<LinkProvider component={Link}>
+				<Routes>
+					<Route path="/" element={<Dashboard />} />
+					<Route path="/canvas/:id" element={<CanvasComponent />} />
+				</Routes>
+				<LibraryBrowserModal />
+			</LinkProvider>
 		</BrowserRouter>
 	);
 }

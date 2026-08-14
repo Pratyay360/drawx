@@ -11,6 +11,7 @@
   "permissions": [
     "updater:default",
     "fs:default",
-    "notification:default"
+    "notification:default",
+    "clipboard-manager:default"
   ]
 }

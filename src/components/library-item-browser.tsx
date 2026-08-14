@@ -1,18 +1,28 @@
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Center } from "@astryxdesign/core/Center";
+import { Grid } from "@astryxdesign/core/Grid";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Icon } from "@astryxdesign/core/Icon";
+import { IconButton } from "@astryxdesign/core/IconButton";
+import { Section } from "@astryxdesign/core/Section";
+import { HStack, VStack } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
+import { TextInput } from "@astryxdesign/core/TextInput";
 import { exportToSvg } from "@excalidraw/excalidraw";
 import type { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
 import type { LibraryItem } from "@excalidraw/excalidraw/types";
-import { Icon } from "@iconify/react";
+import {
+	ArrowLeft,
+	CloudDownload,
+	Download,
+	ImageOff,
+	Loader2,
+	RefreshCw,
+	Search,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { SavedLibrary } from "../services/libraries.ts";
-import { Button } from "./ui/button.tsx";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "./ui/card.tsx";
-import { Input } from "./ui/input.tsx";
 
 interface LibraryItemBrowserProps {
 	library: SavedLibrary;
@@ -91,16 +101,9 @@ function LibraryItemThumbnail({ itemId, elements }: LibraryItemThumbnailProps) {
 		);
 	}
 	if (failed) {
-		return (
-			<Icon icon="lucide:image-off" className="w-5 h-5 text-muted-foreground" />
-		);
+		return <Icon icon={ImageOff} size="sm" />;
 	}
-	return (
-		<Icon
-			icon="lucide:loader-2"
-			className="w-5 h-5 animate-spin text-muted-foreground"
-		/>
-	);
+	return <Icon icon={Loader2} size="sm" />;
 }
 function getItemName(
 	item: LibraryItem | undefined,
@@ -184,138 +187,98 @@ export function LibraryItemBrowser({
 	}
 
 	return (
-		<Card className="w-full">
-			<CardHeader>
-				<div className="flex items-center gap-2">
-					<Button
-						variant="ghost"
-						size="icon-sm"
-						onClick={onBack}
-						title="Back to libraries"
-						aria-label="Back to libraries"
-					>
-						<Icon icon="lucide:arrow-left" className="w-4 h-4" />
-					</Button>
-					<div className="min-w-0 flex-1">
-						<CardTitle className="flex items-center gap-2 truncate">
-							<Icon icon="lucide:library" className="w-5 h-5 shrink-0" />
-							<span className="truncate">{library.name}</span>
-							<span className="text-xs font-normal text-muted-foreground shrink-0">
-								{hasContent ? `${library.items.length} items` : "No items"}
-							</span>
-						</CardTitle>
-						<CardDescription className="truncate">
-							{library.description || "Saved library"}
-						</CardDescription>
-					</div>
-					<Button
-						variant="ghost"
-						size="sm"
-						className="h-7 px-2 text-xs gap-1 shrink-0"
-						onClick={handleRefresh}
-						disabled={refreshing}
-						title="Download latest content"
-					>
-						{refreshing ? (
-							<Icon
-								icon="lucide:loader-2"
-								className="w-3.5 h-3.5 animate-spin"
-							/>
-						) : (
-							<Icon icon="lucide:refresh-cw" className="w-3.5 h-3.5" />
-						)}
-						Refresh
-					</Button>
-				</div>
-			</CardHeader>
+		<Section>
+			<HStack gap={2} align="center">
+				<IconButton
+					label="Back to libraries"
+					variant="ghost"
+					icon={<Icon icon={ArrowLeft} size="sm" />}
+					onClick={onBack}
+					tooltip="Back to libraries"
+				/>
+				<VStack gap={0} width="100%">
+					<HStack gap={2} align="center">
+						<Heading level={2} maxLines={1}>
+							{library.name}
+						</Heading>
+						<Text type="supporting">
+							{hasContent ? `${library.items.length} items` : "No items"}
+						</Text>
+					</HStack>
+					<Text type="supporting" maxLines={1}>
+						{library.description || "Saved library"}
+					</Text>
+				</VStack>
+				<Button
+					label="Refresh"
+					variant="ghost"
+					size="sm"
+					icon={<Icon icon={RefreshCw} size="sm" />}
+					isLoading={refreshing}
+					onClick={handleRefresh}
+					tooltip="Download latest content"
+				/>
+			</HStack>
 
-			<CardContent className="space-y-4">
-				{hasContent ? (
-					<>
-						<div className="relative">
-							<Icon
-								icon="lucide:search"
-								className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-							/>
-							<Input
-								type="text"
-								placeholder={`Search ${library.items.length} items...`}
-								value={query}
-								onChange={(e) => setQuery(e.currentTarget.value)}
-								className={`pl-8 ${query ? "pr-8" : ""}`}
-								aria-label={`Search items in ${library.name}`}
-							/>
-							{query && (
-								<Button
-									type="button"
-									onClick={() => setQuery("")}
-									className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-muted-foreground hover:text-foreground transition-colors"
-									title="Clear search"
-									aria-label="Clear search"
-								>
-									<Icon icon="lucide:x" className="w-3.5 h-3.5" />
-								</Button>
-							)}
-						</div>
+			{hasContent ? (
+				<VStack gap={3}>
+					<TextInput
+						label={`Search ${library.items.length} items`}
+						isLabelHidden
+						placeholder={`Search ${library.items.length} items...`}
+						value={query}
+						onChange={setQuery}
+						startIcon={Search}
+						hasClear
+					/>
 
-						{items.length > 0 ? (
-							<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-								{items.map(({ item, name }, index) => (
-									<div
-										key={item.id || `${library.id}-${index}`}
-										className="group rounded-lg border bg-card p-2 transition-colors hover:border-primary/50"
-										title={name}
-									>
-										<div className="aspect-4/3 w-full rounded bg-accent/50 flex items-center justify-center overflow-hidden p-1">
-											<LibraryItemThumbnail
-												itemId={item.id || `${library.id}-${index}`}
-												elements={item.elements || []}
-											/>
-										</div>
-										<p className="mt-1.5 text-xs text-muted-foreground truncate">
+					{items.length > 0 ? (
+						<Grid columns={{ minWidth: 160, max: 4 }} gap={3}>
+							{items.map(({ item, name }, index) => (
+								<Card key={item.id || `${library.id}-${index}`} padding={2}>
+									<VStack gap={2}>
+										<Card variant="muted" height={110} padding={1}>
+											<Center>
+												<LibraryItemThumbnail
+													itemId={item.id || `${library.id}-${index}`}
+													elements={item.elements || []}
+												/>
+											</Center>
+										</Card>
+										<Text type="supporting" maxLines={1} justify="center">
 											{name}
-										</p>
-									</div>
-								))}
-							</div>
-						) : (
-							<div className="text-center py-8 text-muted-foreground">
-								No items match your search.
-							</div>
-						)}
-					</>
-				) : (
-					<div className="flex flex-col items-center gap-3 py-10 text-center">
-						<Icon
-							icon="lucide:download-cloud"
-							className="w-8 h-8 text-muted-foreground"
-						/>
-						<div>
-							<p className="text-sm font-medium">Content not downloaded yet</p>
-							<p className="text-xs text-muted-foreground mt-1">
+										</Text>
+									</VStack>
+								</Card>
+							))}
+						</Grid>
+					) : (
+						<Text type="supporting" justify="center">
+							No items match your search.
+						</Text>
+					)}
+				</VStack>
+			) : (
+				<Center>
+					<VStack gap={3} hAlign="center">
+						<Icon icon={CloudDownload} size="lg" />
+						<VStack gap={1} hAlign="center">
+							<Text weight="medium">Content not downloaded yet</Text>
+							<Text type="supporting">
 								Download this library to browse and use its items.
-							</p>
-						</div>
+							</Text>
+						</VStack>
 						<Button
-							variant="outline"
+							label="Download items"
+							variant="secondary"
 							size="sm"
+							icon={<Icon icon={Download} size="sm" />}
+							isLoading={refreshing}
 							onClick={handleRefresh}
-							disabled={refreshing}
-							className="gap-1"
-						>
-							{refreshing ? (
-								<Icon
-									icon="lucide:loader-2"
-									className="w-3.5 h-3.5 animate-spin"
-								/>
-							) : (
-								<Icon icon="lucide:download" className="w-3.5 h-3.5" />
-							)}
-							Download items
-						</Button>
-					</div>
-				)}
-			</CardContent>
-		</Card>
+						/>
+					</VStack>
+				</Center>
+			)}
+		</Section>
 	);
 }

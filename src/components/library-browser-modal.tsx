@@ -1,11 +1,14 @@
-import { Icon } from "@iconify/react";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { Icon } from "@astryxdesign/core/Icon";
+import { Layout, LayoutContent } from "@astryxdesign/core/Layout";
+import { Library } from "lucide-react";
 import { useEffect, useState } from "react";
-import { onLibraryBrowseRequested } from "../services/libraries.ts";
-import { LibraryBrowser } from "./library-browser.tsx";
-import { Button } from "./ui/button.tsx";
+
+import { onLibraryBrowseRequested } from "../services/libraries";
+import { LibraryBrowser } from "./library-browser";
 
 export function LibraryBrowserModal() {
-	const [showLibraries, setShowLibraries] = useState(false);
+	const [isOpen, setIsOpen] = useState(false);
 	const [librariesBrowseId, setLibrariesBrowseId] = useState<string | null>(
 		null,
 	);
@@ -13,29 +16,42 @@ export function LibraryBrowserModal() {
 	useEffect(() => {
 		return onLibraryBrowseRequested((libraryId) => {
 			setLibrariesBrowseId(libraryId);
-			setShowLibraries(true);
+			setIsOpen(true);
 		});
 	}, []);
 
-	if (!showLibraries) return null;
+	const handleOpenChange = (open: boolean) => {
+		setIsOpen(open);
+
+		if (!open) {
+			setLibrariesBrowseId(null);
+		}
+	};
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-			<div className="bg-background rounded-lg shadow-lg p-4 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-				<div className="flex justify-between items-center mb-4">
-					<h2 className="text-lg font-semibold">Libraries</h2>
-					<Button
-						onClick={() => {
-							setShowLibraries(false);
-							setLibrariesBrowseId(null);
-						}}
-						className="p-1 rounded hover:bg-accent"
-					>
-						<Icon icon="lucide:x" className="w-5 h-5" />
-					</Button>
-				</div>
-				<LibraryBrowser initialBrowseId={librariesBrowseId} />
-			</div>
-		</div>
+		<Dialog
+			isOpen={isOpen}
+			onOpenChange={handleOpenChange}
+			width={880}
+			maxHeight="85vh"
+		>
+			<Layout
+				header={
+					<DialogHeader
+						title="Libraries"
+						startContent={<Icon icon={Library} size="sm" />}
+						onOpenChange={handleOpenChange}
+					/>
+				}
+				content={
+					<LayoutContent isScrollable padding={4}>
+						<LibraryBrowser
+							initialBrowseId={librariesBrowseId}
+							source="sidebar"
+						/>
+					</LayoutContent>
+				}
+			/>
+		</Dialog>
 	);
 }

@@ -2,7 +2,7 @@ id: com.pmustafi.drawx
 runtime: org.freedesktop.Platform
 runtime-version: '23.08'
 sdk: org.freedesktop.Sdk
-# Provides the Rust toolchain inside the build sandbox.
+
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
 command: drawx
@@ -12,11 +12,8 @@ finish-args:
   - --socket=fallback-x11
   - --share=network
   - --device=dri
-  # The app stores its SQLite db / libraries under the user's home.
   - --filesystem=home
-  # Desktop notifications (tauri-plugin-notification).
   - --talk-name=org.freedesktop.Notifications
-  # File dialogs (tauri-plugin-dialog) via xdg-desktop-portal.
   - --talk-name=org.freedesktop.portal.*
 modules:
   - name: drawx
@@ -24,8 +21,6 @@ modules:
     build-options:
       append-path: /usr/lib/sdk/rust-stable/bin
       env:
-        # Tauri embeds the frontend from ../dist at compile time, so the
-        # web assets must already be built before `cargo build` runs.
         CARGO_TARGET_DIR: /run/build/drawx/target
     build-commands:
       - cargo build --release --manifest-path src-tauri/Cargo.toml

@@ -1,4 +1,29 @@
-import { Icon } from "@iconify/react";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Center } from "@astryxdesign/core/Center";
+import { Grid } from "@astryxdesign/core/Grid";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Icon } from "@astryxdesign/core/Icon";
+import { Section } from "@astryxdesign/core/Section";
+import { HStack, VStack } from "@astryxdesign/core/Stack";
+import {
+	Table,
+	TableCell,
+	TableHeaderCell,
+	TableRow,
+} from "@astryxdesign/core/Table";
+import { Text } from "@astryxdesign/core/Text";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import {
+	BookmarkCheck,
+	BookmarkPlus,
+	BookmarkX,
+	Eye,
+	Library,
+	Loader2,
+	RefreshCw,
+	Search,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import {
 	type ExcalidrawLibrary,
@@ -17,23 +42,6 @@ import {
 	toLibraryItems,
 } from "../services/libraries.ts";
 import { LibraryItemBrowser } from "./library-item-browser.tsx";
-import { Button } from "./ui/button.tsx";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "./ui/card.tsx";
-import { Input } from "./ui/input.tsx";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "./ui/table.tsx";
 
 interface LibraryBrowserProps {
 	onLibrarySelect?: (library: ExcalidrawLibrary) => void;
@@ -148,10 +156,6 @@ export function LibraryBrowser({
 				...prev.filter((lib) => lib.id !== library.id),
 				saved,
 			]);
-
-			// Download the content right away so the items are available
-			// offline. If this fails (e.g. no connection), the bookmark stays
-			// and can be downloaded later via the refresh action.
 			const content = await fetchLibraryContent(library);
 			if (content) {
 				const items = toLibraryItems(content, library.id);
@@ -212,9 +216,9 @@ export function LibraryBrowser({
 
 	if (loading || (pendingBrowseId != null && !savedLoaded)) {
 		return (
-			<div className="flex items-center justify-center p-8">
-				<Icon icon="lucide:loader-2" className="w-6 h-6 animate-spin" />
-			</div>
+			<Center>
+				<Icon icon={Loader2} size="lg" />
+			</Center>
 		);
 	}
 
@@ -230,244 +234,193 @@ export function LibraryBrowser({
 	}
 
 	return (
-		<Card className="w-full">
-			<CardHeader>
-				<CardTitle className="flex items-center gap-2">
-					<Icon icon="lucide:library" className="w-5 h-5" />
-					Excalidraw Libraries
-				</CardTitle>
-				<CardDescription>
-					Save a library to download its components into your library panel —
-					they stay available offline
-				</CardDescription>
-			</CardHeader>
-			<CardContent className="space-y-6">
-				{savedLibraries.length > 0 && (
-					<section>
-						<h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-							<Icon icon="lucide:bookmark-check" className="w-4 h-4" />
-							Saved libraries
-							<span className="text-xs font-normal text-muted-foreground">
-								({savedLibraries.length})
-							</span>
-						</h3>
-						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-							{savedLibraries.map((saved) => {
-								const refreshing = refreshingId === saved.id;
-								const removing = removingId === saved.id;
-								return (
-									<div
-										key={saved.id}
-										className="rounded-lg border bg-card p-3 space-y-2 group"
-									>
-										<div className="flex items-center gap-3">
+		<VStack gap={5}>
+			<VStack gap={1}>
+				<Heading level={2}>Excalidraw Libraries</Heading>
+				<Text type="supporting">
+					Save a library to download its components into your library panel
+					— they stay available offline
+				</Text>
+			</VStack>
+
+			{savedLibraries.length > 0 && (
+				<Section>
+					<HStack gap={2} vAlign="center">
+						<Heading level={3}>Saved libraries</Heading>
+						<Text type="supporting">({savedLibraries.length})</Text>
+					</HStack>
+					<Grid columns={{ minWidth: 260, max: 3 }} gap={3}>
+						{savedLibraries.map((saved) => {
+							const refreshing = refreshingId === saved.id;
+							const removing = removingId === saved.id;
+							return (
+								<Card key={saved.id} padding={3}>
+									<VStack gap={2}>
+										<HStack gap={3} align="center">
 											{saved.preview ? (
 												<img
 													src={getLibraryAssetUrl(saved.preview)}
 													alt={`${saved.name} preview`}
-													className="w-14 h-10 object-cover rounded shrink-0"
+													className="h-10 w-20 shrink-0 rounded object-cover"
 												/>
 											) : (
-												<div className="w-14 h-10 rounded bg-accent flex items-center justify-center shrink-0">
-													<Icon
-														icon="lucide:library"
-														className="w-4 h-4 text-muted-foreground"
-													/>
-												</div>
+												<Card
+													variant="muted"
+													width={80}
+													height={40}
+													padding={1}
+												>
+													<Center>
+														<Icon icon={Library} size="sm" />
+													</Center>
+												</Card>
 											)}
-											<div className="min-w-0 flex-1">
-												<p className="text-sm font-medium truncate">
+											<VStack gap={0} width="100%">
+												<Text weight="medium" maxLines={1}>
 													{saved.name}
-												</p>
-												<p className="text-xs text-muted-foreground truncate">
+												</Text>
+												<Text type="supporting">
 													{libraryItemCount(saved)} items ·{" "}
 													{formatFetchedAt(saved.fetched_at)}
-												</p>
-											</div>
-										</div>
-										<div className="flex items-center gap-1 pt-1 border-t">
+												</Text>
+											</VStack>
+										</HStack>
+										<HStack gap={1}>
 											<Button
+												label="Refresh"
 												variant="ghost"
 												size="sm"
-												className="h-7 px-2 text-xs gap-1"
+												icon={<Icon icon={RefreshCw} size="sm" />}
+												isLoading={refreshing}
+												isDisabled={removing}
 												onClick={() => handleRefreshLibrary(saved)}
-												disabled={refreshing || removing}
-												title="Download latest content"
-											>
-												{refreshing ? (
-													<Icon
-														icon="lucide:loader-2"
-														className="w-3.5 h-3.5 animate-spin"
-													/>
-												) : (
-													<Icon
-														icon="lucide:refresh-cw"
-														className="w-3.5 h-3.5"
-													/>
-												)}
-												Refresh
-											</Button>
+												tooltip="Download latest content"
+											/>
 											<Button
+												label="Browse"
 												variant="ghost"
 												size="sm"
-												className="h-7 px-2 text-xs gap-1"
+												icon={<Icon icon={Eye} size="sm" />}
+												isDisabled={refreshing || removing}
 												onClick={() => setBrowsingId(saved.id)}
-												disabled={refreshing || removing}
-												title={`Browse items in ${saved.name}`}
-											>
-												<Icon icon="lucide:eye" className="w-3.5 h-3.5" />
-												Browse
-											</Button>
+												tooltip={`Browse items in ${saved.name}`}
+											/>
 											<Button
-												variant="destructive"
+												label="Remove"
+												variant="ghost"
 												size="sm"
-												className="h-7 px-2 text-xs gap-1 ml-auto"
+												icon={<Icon icon={BookmarkX} size="sm" />}
+												isLoading={removing}
+												isDisabled={refreshing}
 												onClick={() => handleRemoveLibrary(saved)}
-												disabled={refreshing || removing}
-												title="Remove bookmark (items stay in your library panel)"
-											>
-												{removing ? (
-													<Icon
-														icon="lucide:loader-2"
-														className="w-3.5 h-3.5 animate-spin"
-													/>
-												) : (
-													<Icon
-														icon="lucide:bookmark-x"
-														className="w-3.5 h-3.5"
-													/>
-												)}
-												Remove
-											</Button>
-										</div>
-									</div>
-								);
-							})}
-						</div>
-					</section>
+												tooltip="Remove bookmark (items stay in your library panel)"
+											/>
+										</HStack>
+									</VStack>
+								</Card>
+							);
+						})}
+					</Grid>
+				</Section>
+			)}
+
+			<Section>
+				<Heading level={3}>Browse libraries</Heading>
+				<TextInput
+					label="Search libraries"
+					isLabelHidden
+					placeholder="Search libraries..."
+					value={searchQuery}
+					onChange={setSearchQuery}
+					startIcon={Search}
+					hasClear
+					width={320}
+				/>
+				<Table density="compact" hasHover dividers="rows">
+					<TableRow isHeaderRow>
+						<TableHeaderCell>Preview</TableHeaderCell>
+						<TableHeaderCell>Name</TableHeaderCell>
+						<TableHeaderCell>Description</TableHeaderCell>
+						<TableHeaderCell>Author</TableHeaderCell>
+						<TableHeaderCell>Status</TableHeaderCell>
+					</TableRow>
+					{filteredLibraries.map((library, index) => {
+						const saved = savedLibraries.find(
+							(lib) => lib.id === library.id,
+						);
+						const saving = savingId === library.id;
+						return (
+							<TableRow
+								key={library.id ?? `${library.source}-${index}`}
+								onClick={() => onLibrarySelect?.(library)}
+							>
+								<TableCell>
+									{library.preview && (
+										<img
+											src={getLibraryAssetUrl(library.preview)}
+											alt={`${library.name} preview`}
+											className="h-12 w-16 rounded object-cover"
+										/>
+									)}
+								</TableCell>
+								<TableCell>
+									<Text weight="medium" maxLines={1}>
+										{library.name}
+									</Text>
+								</TableCell>
+								<TableCell>
+									<Text type="supporting" maxLines={1}>
+										{library.description}
+									</Text>
+								</TableCell>
+								<TableCell>
+									<Text maxLines={1}>
+										{library.authors[0]?.name || "Unknown"}
+									</Text>
+								</TableCell>
+								<TableCell onClick={(e) => e.stopPropagation()}>
+									<Button
+										label={
+											saved
+												? `${libraryItemCount(saved)} items`
+												: "Save"
+										}
+										variant="ghost"
+										size="sm"
+										icon={
+											saving ? (
+												<Icon icon={Loader2} size="sm" />
+											) : saved ? (
+												<Icon icon={BookmarkCheck} size="sm" />
+											) : (
+												<Icon icon={BookmarkPlus} size="sm" />
+											)
+										}
+										isLoading={saving}
+										onClick={() => handleToggleSave(library)}
+										tooltip={
+											saved
+												? `Remove ${library.name}`
+												: `Save ${library.name}`
+										}
+									/>
+								</TableCell>
+							</TableRow>
+						);
+					})}
+				</Table>
+
+				{filteredLibraries.length === 0 && (
+					<Text type="supporting" justify="center">
+						No libraries found matching your search.
+					</Text>
 				)}
 
-				<section>
-					<h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-						<Icon icon="lucide:compass" className="w-4 h-4" />
-						Browse libraries
-					</h3>
-
-					<div className="relative mb-3">
-						<Icon
-							icon="lucide:search"
-							className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-						/>
-						<Input
-							type="text"
-							placeholder="Search libraries..."
-							value={searchQuery}
-							onChange={(e) => setSearchQuery(e.currentTarget.value)}
-							className="pl-8"
-						/>
-					</div>
-
-					<div className="max-h-90 overflow-y-auto">
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead>Name</TableHead>
-									<TableHead>Description</TableHead>
-									<TableHead>Author</TableHead>
-									<TableHead className="w-25">Preview</TableHead>
-									<TableHead className="w-22.5">Status</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{filteredLibraries.map((library, index) => {
-									const saved = savedLibraries.find(
-										(lib) => lib.id === library.id,
-									);
-									const saving = savingId === library.id;
-									return (
-										<TableRow
-											key={library.id ?? `${library.source}-${index}`}
-											onClick={() => onLibrarySelect?.(library)}
-											className="cursor-pointer"
-										>
-											<TableCell className="font-medium">
-												{library.name}
-											</TableCell>
-											<TableCell className="text-sm text-muted-foreground max-w-50 truncate">
-												{library.description}
-											</TableCell>
-											<TableCell className="text-sm">
-												{library.authors[0]?.name || "Unknown"}
-											</TableCell>
-											<TableCell>
-												{library.preview && (
-													<img
-														src={getLibraryAssetUrl(library.preview)}
-														alt={`${library.name} preview`}
-														className="w-16 h-12 object-cover rounded"
-													/>
-												)}
-											</TableCell>
-											<TableCell onClick={(e) => e.stopPropagation()}>
-												<Button
-													variant="ghost"
-													size="sm"
-													className="h-7 px-2 text-xs gap-1"
-													onClick={() => handleToggleSave(library)}
-													disabled={saving}
-													title={
-														saved
-															? `Remove ${library.name}`
-															: `Save ${library.name}`
-													}
-													aria-label={
-														saved
-															? `Remove ${library.name} from saved`
-															: `Save ${library.name}`
-													}
-												>
-													{saving ? (
-														<Icon
-															icon="lucide:loader-2"
-															className="w-3.5 h-3.5 animate-spin"
-														/>
-													) : saved ? (
-														<Icon
-															icon="lucide:bookmark-check"
-															className="w-3.5 h-3.5"
-														/>
-													) : (
-														<Icon
-															icon="lucide:bookmark-plus"
-															className="w-3.5 h-3.5"
-														/>
-													)}
-													<span className="max-w-16 truncate">
-														{saved
-															? `${libraryItemCount(saved)} items`
-															: "Save"}
-													</span>
-												</Button>
-											</TableCell>
-										</TableRow>
-									);
-								})}
-							</TableBody>
-						</Table>
-					</div>
-
-					{filteredLibraries.length === 0 && (
-						<div className="text-center py-8 text-muted-foreground">
-							No libraries found matching your search.
-						</div>
-					)}
-				</section>
-
-				<div className="text-sm text-muted-foreground">
+				<Text type="supporting">
 					{filteredLibraries.length} of {libraries.length} libraries ·{" "}
 					{savedLibraries.length} saved
-				</div>
-			</CardContent>
-		</Card>
+				</Text>
+			</Section>
+		</VStack>
 	);
 }

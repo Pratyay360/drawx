@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 export type Theme = "light" | "dark";
 
@@ -23,20 +23,44 @@ function applyTheme(theme: Theme) {
 	root.style.colorScheme = theme;
 }
 
-export function useTheme() {
-	const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+// Module-level store shared by every useTheme() consumer, so toggling the
+// theme from one place (e.g. the sidebar) re-renders all others (e.g. the
+// canvas) and keeps them in sync.
+let currentTheme: Theme = getInitialTheme();
+const listeners = new Set<() => void>();
 
-	useEffect(() => {
-		applyTheme(theme);
-		localStorage.setItem(STORAGE_KEY, theme);
-	}, [theme]);
+applyTheme(currentTheme);
+
+function subscribe(listener: () => void) {
+	listeners.add(listener);
+	return () => {
+		listeners.delete(listener);
+	};
+}
+
+function setThemeInternal(next: Theme) {
+	if (next === currentTheme) return;
+	currentTheme = next;
+	applyTheme(next);
+	try {
+		localStorage.setItem(STORAGE_KEY, next);
+	} catch {
+		// Ignore storage errors (e.g. private browsing).
+	}
+	for (const listener of listeners) {
+		listener();
+	}
+}
+
+export function useTheme() {
+	const theme = useSyncExternalStore(subscribe, () => currentTheme);
 
 	const setTheme = useCallback((next: Theme) => {
-		setThemeState(next);
+		setThemeInternal(next);
 	}, []);
 
 	const toggleTheme = useCallback(() => {
-		setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
+		setThemeInternal(currentTheme === "dark" ? "light" : "dark");
 	}, []);
 
 	return { theme, setTheme, toggleTheme };

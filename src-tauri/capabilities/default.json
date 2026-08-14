@@ -9,6 +9,7 @@
     "core:default",
     "opener:default",
     "fs:default",
-    "notification:default"
+    "notification:default",
+    "clipboard-manager:default"
   ]
 }

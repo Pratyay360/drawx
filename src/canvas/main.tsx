@@ -18,20 +18,37 @@ import type {
 	LibraryItem,
 	LibraryItems,
 } from "@excalidraw/excalidraw/types";
-import { Icon } from "@iconify/react";
-import { Loader2 } from "lucide-react";
+import { AppShell } from "@astryxdesign/core/AppShell";
+import { Button } from "@astryxdesign/core/Button";
+import { Center } from "@astryxdesign/core/Center";
+import { Divider } from "@astryxdesign/core/Divider";
+import { Icon } from "@astryxdesign/core/Icon";
+import { IconButton } from "@astryxdesign/core/IconButton";
+import {
+	Layout,
+	LayoutContent,
+	LayoutHeader,
+} from "@astryxdesign/core/Layout";
+import { HStack, VStack } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import {
+	ArrowLeft,
+	Download,
+	FileCode,
+	Image,
+	Loader2,
+	Pencil,
+	PenTool,
+	Save,
+	Shapes,
+	Upload,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { LibraryPanelTab } from "../components/library-panel-tab.tsx";
 import { Sidebar } from "../components/sidebar.tsx";
-import { Button } from "../components/ui/button.tsx";
-import { Input } from "../components/ui/input.tsx";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "../components/ui/tooltip.tsx";
+import { useTheme } from "../hooks/use-theme.ts";
 import {
 	getUserLibrary,
 	onLibraryItemsInstalled,
@@ -85,6 +102,8 @@ function getPersistentAppState(appState: Partial<AppState>): Partial<AppState> {
 
 export function Canvas() {
 	const { id } = useParams<{ id: string }>();
+	const navigate = useNavigate();
+	const { theme } = useTheme();
 	const [canvasData, setCanvasData] = useState<CanvasData | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [isChangingCanvas, setIsChangingCanvas] = useState(false);
@@ -425,188 +444,165 @@ export function Canvas() {
 	}, [excalidrawAPI, canvasData]);
 
 	if (loading) {
-		return (
-			<div className="flex h-screen font-sans bg-background text-foreground">
-				<Sidebar />
-				<main className="flex-1 flex items-center justify-center bg-card">
-					<div className="flex flex-col items-center gap-3">
-						<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-						<span className="text-xs text-muted-foreground">Loading...</span>
-					</div>
-				</main>
-			</div>
+		return (				<AppShell contentPadding={0} sideNav={<Sidebar />}>
+					<Center height="100%">
+						<VStack gap={2} hAlign="center">
+							<Icon icon={Loader2} size="lg" />
+							<Text type="supporting">Loading...</Text>
+						</VStack>
+					</Center>
+				</AppShell>
 		);
 	}
 
 	return (
-		<div className="flex h-screen font-sans overflow-hidden bg-background text-foreground">
-			<Sidebar />
-			<main className="flex-1 flex flex-col h-full overflow-hidden relative">
-				<div className="flex items-center justify-between px-3 py-1.5 z-20 shrink-0 border-b bg-card">
-					<div className="flex items-center gap-2 max-w-[60%]">
-						<TooltipProvider>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Link
-										to="/"
-										className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
-									>
-										<Icon icon="lucide:arrow-left" className="w-4 h-4" />
-									</Link>
-								</TooltipTrigger>
-								<TooltipContent>Back to workspace</TooltipContent>
-							</Tooltip>
-						</TooltipProvider>
-
-						<div className="w-px h-4 shrink-0 bg-border" />
-
-						{isEditingTitle ? (
-							<Input
-								type="text"
-								value={titleInput}
-								onChange={(e) => setTitleInput(e.currentTarget.value)}
-								onKeyDown={handleTitleKeyDown}
-								onBlur={handleTitleSave}
-								className="h-7 text-sm font-medium px-1.5 max-w-62.5"
-								autoFocus
-							/>
-						) : (
-							<Button
-								variant="ghost"
-								size="sm"
-								onClick={() => setIsEditingTitle(true)}
-								className="flex items-center gap-1.5 px-1.5 py-0.5 rounded text-sm font-medium truncate group h-auto"
-								title="Click to rename"
-							>
-								<span className="truncate">
-									{canvasData?.title || "Untitled"}
-								</span>
-								<Icon
-									icon="lucide:pencil"
-									className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 text-muted-foreground"
+		<AppShell contentPadding={0} sideNav={<Sidebar />}>
+			<Layout
+				height="fill"
+				header={
+					<LayoutHeader hasDivider padding={2}>
+						<HStack justify="between" align="center">
+							<HStack gap={2} align="center">
+								<IconButton
+									label="Back to workspace"
+									variant="ghost"
+									icon={<Icon icon={ArrowLeft} size="sm" />}
+									onClick={() => navigate("/")}
+									tooltip="Back to workspace"
 								/>
-							</Button>
-						)}
-					</div>
-
-					<div className="flex items-center gap-1.5 shrink-0">
-						<span className="text-xs mr-1 hidden sm:inline text-muted-foreground">
-							{saveStatus === "saving" && "Saving..."}
-							{saveStatus === "saved" && "Saved"}
-							{saveStatus === "unsaved" && "Unsaved"}
-						</span>
-
-						<TooltipProvider>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Button
-										variant="ghost"
-										size="icon"
-										className="h-7 w-7"
-										onClick={handleManualSave}
-										disabled={saveStatus === "saving" || saveStatus === "saved"}
-									>
-										{saveStatus === "saving" ? (
-											<Loader2 className="h-4 w-4 animate-spin" />
-										) : (
-											<Icon icon="lucide:save" className="h-4 w-4" />
-										)}
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent>Save</TooltipContent>
-							</Tooltip>
-						</TooltipProvider>
-					</div>
-				</div>
-
-				{/* Excalidraw Board */}
-				<div className="flex-1 w-full h-full min-h-0 relative z-10">
-					<Excalidraw
-						excalidrawAPI={(api) => setExcalidrawAPI(api)}
-						theme="dark"
-						initialData={{
-							elements: elements,
-							appState: appState,
-							libraryItems: initialLibraryItemsRef.current,
-						}}
-						onChange={handleExcalidrawChange}
-						onLibraryChange={handleLibraryChange}
-					>
-						<MainMenu>
-							<MainMenu.DefaultItems.ClearCanvas />
-							<MainMenu.Separator />
-							<MainMenu.Item
-								onSelect={handleExportToJSON}
-								icon={<Icon icon="lucide:download" className="w-4 h-4" />}
-							>
-								Export File (.excalidraw)
-							</MainMenu.Item>
-							<MainMenu.Item
-								onSelect={handleImportFromJSON}
-								icon={<Icon icon="lucide:upload" className="w-4 h-4" />}
-							>
-								Import File (.excalidraw)
-							</MainMenu.Item>
-							<MainMenu.Separator />
-							<MainMenu.Item
-								onSelect={handleExportToPNG}
-								icon={<Icon icon="lucide:image" className="w-4 h-4" />}
-							>
-								Export as PNG
-							</MainMenu.Item>
-							<MainMenu.Item
-								onSelect={handleExportToSVG}
-								icon={<Icon icon="lucide:file-code" className="w-4 h-4" />}
-							>
-								Export as SVG
-							</MainMenu.Item>
-							<MainMenu.Separator />
-							<MainMenu.DefaultItems.Help />
-						</MainMenu>
-						<WelcomeScreen>
-							<WelcomeScreen.Center>
-								<WelcomeScreen.Center.Logo>
-									<Icon
-										icon="lucide:pen-tool"
-										className="w-8 h-8 text-primary mx-auto mb-1"
+								<Divider orientation="vertical" />
+								{isEditingTitle ? (
+									<TextInput
+										label="Canvas title"
+										isLabelHidden
+										value={titleInput}
+										onChange={setTitleInput}
+										onKeyDown={handleTitleKeyDown}
+										hasAutoFocus
+										size="sm"
+										width={280}
 									/>
-								</WelcomeScreen.Center.Logo>
-								<WelcomeScreen.Center.Heading>
-									Drawx
-								</WelcomeScreen.Center.Heading>
-								<WelcomeScreen.Center.MenuItemHelp />
-								<div className="text-xs max-w-xs mx-auto mt-2 text-muted-foreground">
-									Sketch, add shapes, or use templates. Changes save
-									automatically.
-								</div>
-							</WelcomeScreen.Center>
-						</WelcomeScreen>
+								) : (
+									<Button
+										label={canvasData?.title || "Untitled"}
+										variant="ghost"
+										size="sm"
+										icon={<Icon icon={Pencil} size="sm" />}
+										onClick={() => setIsEditingTitle(true)}
+										tooltip="Click to rename"
+									/>
+								)}
+							</HStack>
 
-						{/* Custom tab next to the Library tab: browse saved libraries
-						    without leaving the canvas. */}
-						<DefaultSidebar>
-							<DefaultSidebar.TabTriggers>
-								<ExcalidrawSidebar.TabTrigger
-									tab="drawx-libraries"
-									title="Drawx libraries"
-									aria-label="Drawx libraries"
-								>
-									<Icon icon="lucide:shapes" className="w-4 h-4" />
-								</ExcalidrawSidebar.TabTrigger>
-							</DefaultSidebar.TabTriggers>
-							<ExcalidrawSidebar.Tab tab="drawx-libraries">
-								<LibraryPanelTab />
-							</ExcalidrawSidebar.Tab>
-						</DefaultSidebar>
-					</Excalidraw>
+							<HStack gap={2} align="center">
+								<Text type="supporting">
+									{saveStatus === "saving"
+										? "Saving..."
+										: saveStatus === "saved"
+											? "Saved"
+											: "Unsaved"}
+								</Text>
+								<IconButton
+									label="Save"
+									variant="ghost"
+									icon={<Icon icon={Save} size="sm" />}
+									tooltip="Save"
+									isLoading={saveStatus === "saving"}
+									isDisabled={saveStatus === "saved"}
+									onClick={handleManualSave}
+								/>
+							</HStack>
+						</HStack>
+					</LayoutHeader>
+				}
+				content={
+					<LayoutContent isScrollable={false} padding={0}>
+						<div className="relative h-full w-full min-h-0">
+							<Excalidraw
+								excalidrawAPI={(api) => setExcalidrawAPI(api)}
+								theme={theme}
+								initialData={{
+									elements: elements,
+									appState: appState,
+									libraryItems: initialLibraryItemsRef.current,
+								}}
+								onChange={handleExcalidrawChange}
+								onLibraryChange={handleLibraryChange}
+							>
+								<MainMenu>
+									<MainMenu.DefaultItems.ClearCanvas />
+									<MainMenu.Separator />
+									<MainMenu.Item
+										onSelect={handleExportToJSON}
+										icon={<Icon icon={Download} size="sm" />}
+									>
+										Export File (.excalidraw)
+									</MainMenu.Item>
+									<MainMenu.Item
+										onSelect={handleImportFromJSON}
+										icon={<Icon icon={Upload} size="sm" />}
+									>
+										Import File (.excalidraw)
+									</MainMenu.Item>
+									<MainMenu.Separator />
+									<MainMenu.Item
+										onSelect={handleExportToPNG}
+										icon={<Icon icon={Image} size="sm" />}
+									>
+										Export as PNG
+									</MainMenu.Item>
+									<MainMenu.Item
+										onSelect={handleExportToSVG}
+										icon={<Icon icon={FileCode} size="sm" />}
+									>
+										Export as SVG
+									</MainMenu.Item>
+									<MainMenu.Separator />
+									<MainMenu.DefaultItems.Help />
+								</MainMenu>
+								<WelcomeScreen>
+									<WelcomeScreen.Center>
+										<WelcomeScreen.Center.Logo>
+											<Icon icon={PenTool} size="lg" />
+										</WelcomeScreen.Center.Logo>
+										<WelcomeScreen.Center.Heading>
+											Drawx
+										</WelcomeScreen.Center.Heading>
+										<WelcomeScreen.Center.MenuItemHelp />
+										<Text type="supporting" justify="center">
+											Sketch, add shapes, or use templates. Changes
+											save automatically.
+										</Text>
+									</WelcomeScreen.Center>
+								</WelcomeScreen>
 
-					{isChangingCanvas && (
-						<div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80">
-							<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+								{/* Custom tab next to the Library tab: browse saved libraries
+								    without leaving the canvas. */}
+								<DefaultSidebar>
+									<DefaultSidebar.TabTriggers>
+										<ExcalidrawSidebar.TabTrigger
+											tab="drawx-libraries"
+											title="Drawx libraries"
+											aria-label="Drawx libraries"
+										>
+											<Icon icon={Shapes} size="sm" />
+										</ExcalidrawSidebar.TabTrigger>
+									</DefaultSidebar.TabTriggers>
+									<ExcalidrawSidebar.Tab tab="drawx-libraries">
+										<LibraryPanelTab />
+									</ExcalidrawSidebar.Tab>
+								</DefaultSidebar>
+							</Excalidraw>
+
+							{isChangingCanvas && (
+								<Center height="100%">
+									<Icon icon={Loader2} size="lg" />
+								</Center>
+							)}
 						</div>
-					)}
-				</div>
-			</main>
-		</div>
+					</LayoutContent>
+				}
+			/>
+		</AppShell>
 	);
 }
