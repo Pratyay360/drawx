@@ -5,7 +5,6 @@ on:
       - main
   workflow_dispatch:
 
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -17,11 +16,49 @@ env:
   CN_APPLICATION: "pratyay/drawx"
 
 jobs:
+  # Every push to main gets a fresh patch version so the CrabNebula release
+  # never collides with an existing one. The bump is committed back to main
+  # with a "[skip ci]" marker; the marker check below is a belt-and-braces
+  # guard in case GitHub's skip mechanism is bypassed.
+  bump-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Check if last commit is a release bump
+        id: skip
+        run: |
+          if git log -1 --format='%s' | grep -qE '^chore\(release\):'; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Last commit is a release bump - not creating another release."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Auto-bump patch version
+        id: bump
+        if: steps.skip.outputs.skip == 'false'
+        run: |
+          VERSION="$(node scripts/bump-version.mjs)"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B main origin/main
+          git add package.json src-tauri/Cargo.toml src-tauri/Cargo.lock src-tauri/tauri.conf.json
+          git commit -m "chore(release): bump version to v$VERSION [skip ci]"
+          git push origin main
+
   draft:
+    needs: bump-version
+    if: needs.bump-version.outputs.version != ''
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v4
       - name: create draft release
         uses: crabnebula-dev/cloud-release@v0
         with:
@@ -42,7 +79,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v4
       - uses: nubjs/setup-nub@v0
 
       - name: Install stable toolchain
@@ -56,7 +93,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev patchelf libxdo-dev libfuse2
-          
 
       - name: build Tauri app for Windows, Linux
         if: matrix.os != 'macos-latest'
@@ -87,7 +123,7 @@ jobs:
           path: ./src-tauri
 
       - name: upload build artifacts for GitHub release
-        uses: actions/upload-artifact@main
+        uses: actions/upload-artifact@v4
         with:
           name: release-assets-${{ matrix.os }}-${{ github.run_number }}
 
@@ -97,12 +133,13 @@ jobs:
           if-no-files-found: ignore
 
   publish:
-    needs: build
+    needs: [build, bump-version]
+    if: needs.bump-version.outputs.version != ''
 
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v4
 
       - name: publish release
         uses: crabnebula-dev/cloud-release@v0
@@ -110,23 +147,22 @@ jobs:
           command: release publish ${{ env.CN_APPLICATION }} --framework tauri
           api-key: ${{ secrets.CN_API_KEY }}
 
+      # The steps below only mirror assets to GitHub Releases. The CrabNebula
+      # release is already published at this point, so never let a cosmetic
+      # failure (e.g. an existing tag) fail the run.
       - name: download all artifacts
-        uses: actions/download-artifact@main
+        uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           path: ./release-assets
           pattern: release-assets-*
           merge-multiple: true
 
-      - name: extract version
-        id: get_version
-        run: |
-          VERSION=${{ github.run_number }}
-          echo "version=v$VERSION" >> $GITHUB_OUTPUT
-
       - name: publish to gh releases
         uses: softprops/action-gh-release@v2
+        continue-on-error: true
         with:
           files: ./release-assets/*
-          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || steps.get_version.outputs.version }}
+          tag_name: v${{ needs.bump-version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ github.token }}

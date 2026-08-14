@@ -40,9 +40,20 @@ import {
 	type Canvas,
 	createCanvas,
 	deleteCanvas,
+	isTauri,
 	listCanvases,
 	updateCanvasTitle,
 } from "./services/tauri.ts";
+import { checkForAppUpdates } from "./updater.ts";
+
+// Run the update check once per session; it is a no-op outside Tauri.
+let updateCheckStarted = false;
+
+function maybeCheckForUpdates() {
+	if (updateCheckStarted || !isTauri()) return;
+	updateCheckStarted = true;
+	void checkForAppUpdates();
+}
 
 function Dashboard() {
 	const [name, setName] = useState("");
@@ -393,6 +404,10 @@ function Dashboard() {
 }
 
 function App() {
+	useEffect(() => {
+		maybeCheckForUpdates();
+	}, []);
+
 	return (
 		<BrowserRouter>
 			<LinkProvider component={Link}>

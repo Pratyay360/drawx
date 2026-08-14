@@ -8,7 +8,9 @@
   "permissions": [
     "core:default",
     "opener:default",
+    "dialog:default",
     "fs:default",
+    "process:default",
     "notification:default",
     "clipboard-manager:default"
   ]
