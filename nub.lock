@@ -9,14 +9,14 @@ importers:
   .:
     dependencies:
       '@astryxdesign/cli':
-        specifier: ^0.3.0
-        version: 0.3.0(@astryxdesign/core@0.3.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8)))(@astryxdesign/theme-neutral@0.3.0(@astryxdesign/core@0.3.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8)))(react@19.2.8))(gpt-tokenizer@3.4.0)
+        specifier: ^0.4.0
+        version: 0.4.0(@astryxdesign/core@0.4.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8)))(@astryxdesign/theme-neutral@0.4.0(@astryxdesign/core@0.4.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8)))(react@19.2.8))(gpt-tokenizer@3.4.0)
       '@astryxdesign/core':
-        specifier: ^0.3.0
-        version: 0.3.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8))
+        specifier: ^0.4.0
+        version: 0.4.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8))
       '@astryxdesign/theme-neutral':
-        specifier: ^0.3.0
-        version: 0.3.0(@astryxdesign/core@0.3.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8)))(react@19.2.8)
+        specifier: ^0.4.0
+        version: 0.4.0(@astryxdesign/core@0.4.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8)))(react@19.2.8)
       '@excalidraw/excalidraw':
         specifier: ^0.18.1
         version: 0.18.1(@types/react@19.2.18)(@types/react-dom@19.2.4(@types/react@19.2.18))(react@19.2.8)(react-dom@19.2.8(react@19.2.8))
@@ -126,8 +126,8 @@ packages:
   '@antfu/install-pkg@1.1.0':
     resolution: {integrity: sha512-MGQsmw10ZyI+EJo45CdSER4zEb+p31LpDAFp2Z3gkSd1yqVZGi0Ebx++YTEMonJy4oChEMLsxZ64j8FH6sSqtQ==}
 
-  '@astryxdesign/cli@0.3.0':
-    resolution: {integrity: sha512-iLFJsBlZUb66GskA1r3AmuodW72yu0PhCRAorcGPMuwHbGYn54pXGb/EnnWSdHf3Yuw4E3OuN7r4dY0TYJuYmQ==}
+  '@astryxdesign/cli@0.4.0':
+    resolution: {integrity: sha512-yTzXYVXuk4a8iThYQwmWYXhE7LoX/dIQktFl6h0mBQiQOkS/bkHrndBZ3sNvRqrgrjIFsgG3Lob3Jw1ShH3Ohw==}
     hasBin: true
     peerDependencies:
       '@astryxdesign/charts': '*'
@@ -145,17 +145,17 @@ packages:
       '@astryxdesign/theme-neutral':
         optional: true
 
-  '@astryxdesign/core@0.3.0':
-    resolution: {integrity: sha512-t2hHvR7AcwW0oKrnxCwbdEEE5Ytgy0Ug61DcYAl9BxAuV5z4XL0/kMo5DiPvX9jbDxzysmOa8ClnXqzxouRUVQ==}
+  '@astryxdesign/core@0.4.0':
+    resolution: {integrity: sha512-1sInF5AjnzKlRMaE/Gvcd2a+6AGqKJeU2tg7XmnntjDzAEHwnqECoMcaBWAXkuP73PemwGgD+sKiqodlmreymg==}
     peerDependencies:
       '@stylexjs/stylex': ^0.19.0
       react: '>=19.0.0'
       react-dom: '>=19.0.0'
 
-  '@astryxdesign/theme-neutral@0.3.0':
-    resolution: {integrity: sha512-CeKRfmTEtww60WZK4pSlW7bheBNyVPpgEliiXXUHRStXgcXOhwiUA3D/cXhMJlEx+VRgVxnzl0hMbWIr42RaVQ==}
+  '@astryxdesign/theme-neutral@0.4.0':
+    resolution: {integrity: sha512-67mupNAxF9mq6HUVjvUX9fk6eFCULTgB5nCweKEigbLtTrqL9MrZlOYyLE7PKQ67EO0zXOmPIKOmGgjeMaubLw==}
     peerDependencies:
-      '@astryxdesign/core': 0.3.0
+      '@astryxdesign/core': 0.4.0
       react: '>=19'
 
   '@babel/code-frame@7.29.7':
@@ -3406,10 +3406,10 @@ snapshots:
       package-manager-detector: 1.8.0
       tinyexec: 1.3.0
 
-  '@astryxdesign/cli@0.3.0(@astryxdesign/core@0.3.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8)))(@astryxdesign/theme-neutral@0.3.0(@astryxdesign/core@0.3.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8)))(react@19.2.8))(gpt-tokenizer@3.4.0)':
+  '@astryxdesign/cli@0.4.0(@astryxdesign/core@0.4.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8)))(@astryxdesign/theme-neutral@0.4.0(@astryxdesign/core@0.4.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8)))(react@19.2.8))(gpt-tokenizer@3.4.0)':
     dependencies:
-      '@astryxdesign/core': 0.3.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8))
-      '@astryxdesign/theme-neutral': 0.3.0(@astryxdesign/core@0.3.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8)))(react@19.2.8)
+      '@astryxdesign/core': 0.4.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8))
+      '@astryxdesign/theme-neutral': 0.4.0(@astryxdesign/core@0.4.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8)))(react@19.2.8)
       commander: 12.1.0
       gpt-tokenizer: 3.4.0
       jiti: 2.7.0
@@ -3419,16 +3419,16 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@astryxdesign/core@0.3.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8))':
+  '@astryxdesign/core@0.4.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8))':
     dependencies:
       '@stylexjs/stylex': 0.19.0
       intl-messageformat: 11.2.13
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@astryxdesign/theme-neutral@0.3.0(@astryxdesign/core@0.3.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8)))(react@19.2.8)':
+  '@astryxdesign/theme-neutral@0.4.0(@astryxdesign/core@0.4.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8)))(react@19.2.8)':
     dependencies:
-      '@astryxdesign/core': 0.3.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8))
+      '@astryxdesign/core': 0.4.0(@stylexjs/stylex@0.19.0)(react@19.2.8)(react-dom@19.2.8(react@19.2.8))
       lucide-react: 1.31.0(react@19.2.8)
       react: 19.2.8
 
