@@ -25,7 +25,7 @@ jobs:
     outputs:
       version: ${{ steps.bump.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
         with:
           ref: ${{ github.ref }}
 
@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: create draft release
         uses: crabnebula-dev/cloud-release@v0
         with:
@@ -79,7 +79,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - uses: nubjs/setup-nub@v0
 
       - name: Install stable toolchain
@@ -123,7 +123,7 @@ jobs:
           path: ./src-tauri
 
       - name: upload build artifacts for GitHub release
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@main
         with:
           name: release-assets-${{ matrix.os }}-${{ github.run_number }}
 
@@ -139,7 +139,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
 
       - name: publish release
         uses: crabnebula-dev/cloud-release@v0
@@ -151,7 +151,7 @@ jobs:
       # release is already published at this point, so never let a cosmetic
       # failure (e.g. an existing tag) fail the run.
       - name: download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@main
         continue-on-error: true
         with:
           path: ./release-assets
