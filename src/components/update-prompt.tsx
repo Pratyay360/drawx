@@ -13,7 +13,6 @@ import {
 	type UpdateInfo,
 } from "../updater.ts";
 
-
 export function UpdatePrompt() {
 	const [update, setUpdate] = useState<UpdateInfo | null>(null);
 	const [installing, setInstalling] = useState(false);
