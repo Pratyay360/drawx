@@ -1,13 +1,10 @@
 [tools]
-deno = "latest"
 rust = "latest"
 cargo-make = "latest"
 rust-analyzer = "latest"
 node = "22"
 biome = "latest"
 nub = "latest"
-ghalint = "latest"
-act = "latest"
 cargo-binstall = "latest"
 minisign = "latest"
 
@@ -17,3 +14,12 @@ update = { run = "nub update" }
 build = { run = "nub run tauri build" }
 lint = { run = "nub run lint ." }
 format = { run = "nub run format ." }
+tauri = { run = "cargo tauri build" }
+ci = [
+    "mise run install",
+    "mise run build",
+    "mise run tauri"
+]
+
+[settings]
+auto_install = true

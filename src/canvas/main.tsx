@@ -1,3 +1,13 @@
+import { AppShell } from "@astryxdesign/core/AppShell";
+import { Button } from "@astryxdesign/core/Button";
+import { Center } from "@astryxdesign/core/Center";
+import { Divider } from "@astryxdesign/core/Divider";
+import { Icon } from "@astryxdesign/core/Icon";
+import { IconButton } from "@astryxdesign/core/IconButton";
+import { Layout, LayoutContent, LayoutHeader } from "@astryxdesign/core/Layout";
+import { HStack, VStack } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
+import { TextInput } from "@astryxdesign/core/TextInput";
 import {
 	DefaultSidebar,
 	Excalidraw,
@@ -18,20 +28,6 @@ import type {
 	LibraryItem,
 	LibraryItems,
 } from "@excalidraw/excalidraw/types";
-import { AppShell } from "@astryxdesign/core/AppShell";
-import { Button } from "@astryxdesign/core/Button";
-import { Center } from "@astryxdesign/core/Center";
-import { Divider } from "@astryxdesign/core/Divider";
-import { Icon } from "@astryxdesign/core/Icon";
-import { IconButton } from "@astryxdesign/core/IconButton";
-import {
-	Layout,
-	LayoutContent,
-	LayoutHeader,
-} from "@astryxdesign/core/Layout";
-import { HStack, VStack } from "@astryxdesign/core/Stack";
-import { Text } from "@astryxdesign/core/Text";
-import { TextInput } from "@astryxdesign/core/TextInput";
 import {
 	ArrowLeft,
 	Download,
@@ -444,14 +440,15 @@ export function Canvas() {
 	}, [excalidrawAPI, canvasData]);
 
 	if (loading) {
-		return (				<AppShell contentPadding={0} sideNav={<Sidebar />}>
-					<Center height="100%">
-						<VStack gap={2} hAlign="center">
-							<Icon icon={Loader2} size="lg" />
-							<Text type="supporting">Loading...</Text>
-						</VStack>
-					</Center>
-				</AppShell>
+		return (
+			<AppShell contentPadding={0} sideNav={<Sidebar />}>
+				<Center height="100%">
+					<VStack gap={2} hAlign="center">
+						<Icon icon={Loader2} size="lg" />
+						<Text type="supporting">Loading...</Text>
+					</VStack>
+				</Center>
+			</AppShell>
 		);
 	}
 
@@ -570,8 +567,8 @@ export function Canvas() {
 										</WelcomeScreen.Center.Heading>
 										<WelcomeScreen.Center.MenuItemHelp />
 										<Text type="supporting" justify="center">
-											Sketch, add shapes, or use templates. Changes
-											save automatically.
+											Sketch, add shapes, or use templates. Changes save
+											automatically.
 										</Text>
 									</WelcomeScreen.Center>
 								</WelcomeScreen>

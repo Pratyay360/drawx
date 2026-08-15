@@ -11,7 +11,14 @@ import {
 } from "@astryxdesign/core/SideNav";
 import { VStack } from "@astryxdesign/core/Stack";
 import { Text } from "@astryxdesign/core/Text";
-import { Database, Library, Loader2, PenTool, Plus, Trash2 } from "lucide-react";
+import {
+	Database,
+	Library,
+	Loader2,
+	PenTool,
+	Plus,
+	Trash2,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { requestLibraryBrowse } from "../services/libraries.ts";
@@ -190,9 +197,7 @@ export function Sidebar() {
 											variant="ghost"
 											size="sm"
 											icon={<Icon icon={Trash2} size="sm" />}
-											onClick={(e) =>
-												handleDeleteCanvas(canvas.id, e)
-											}
+											onClick={(e) => handleDeleteCanvas(canvas.id, e)}
 										/>
 									)
 								}
@@ -219,9 +224,7 @@ export function Sidebar() {
 											variant="ghost"
 											size="sm"
 											icon={<Icon icon={Trash2} size="sm" />}
-											onClick={(e) =>
-												handleDeleteCanvas(canvas.id, e)
-											}
+											onClick={(e) => handleDeleteCanvas(canvas.id, e)}
 										/>
 									)
 								}

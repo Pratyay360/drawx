@@ -154,18 +154,57 @@ fn prepare_data_dir(app: &tauri::AppHandle) -> std::path::PathBuf {
     }
 }
 
-fn init_db(app: &tauri::AppHandle, custom_path: Option<&str>) -> Connection {
-    let db_path = if let Some(path) = custom_path {
-        let path = std::path::PathBuf::from(path);
-        if let Some(parent) = path.parent() {
-            let _ = std::fs::create_dir_all(parent);
-        }
-        path
-    } else {
-        prepare_data_dir(app).join("drawx.db")
-    };
+/// Open (and if needed create) the database. If a configured custom path
+/// can't be used (unmounted drive, missing permission, corrupt file, dead
+/// network share, ...), fall back to the default app data dir instead of
+/// aborting — or hanging — startup, so a stale `db_config.json` can never
+/// silently kill the app. `prepare_data_dir` itself never fails (it falls
+/// back to a writable temp dir), so the default candidate always succeeds.
+/// Returns the connection and the path that was actually used.
+fn init_db(app: &tauri::AppHandle, custom_path: Option<&str>) -> (Connection, std::path::PathBuf) {
+    // Ignore empty paths: `sqlite` treats `""` as a throwaway temp database,
+    // which would "work" while writing to no file at all.
+    let custom_path = custom_path.map(str::trim).filter(|p| !p.is_empty());
 
-    let conn = Connection::open(&db_path).expect("failed to open database");
+    if let Some(path) = custom_path {
+        match open_custom_db(path) {
+            Ok(conn) => {
+                migrate_legacy_saved_libraries(app, &conn);
+                return (conn, std::path::PathBuf::from(path));
+            }
+            Err(err) => {
+                eprintln!(
+                    "warning: configured database at {path:?} is unavailable ({err}); \
+                     falling back to the default location"
+                );
+                // The configured location can't be used, so clear it —
+                // otherwise we'd stall on (or fail with) it on every launch.
+                clear_stale_db_config(app);
+            }
+        }
+    }
+
+    let db_path = prepare_data_dir(app).join("drawx.db");
+    let conn = open_db_at(&db_path).unwrap_or_else(|err| {
+        panic!(
+            "failed to open database in default location {:?}: {err}",
+            db_path
+        )
+    });
+    migrate_legacy_saved_libraries(app, &conn);
+    (conn, db_path)
+}
+
+/// Open (creating if needed) the database at `db_path`: parent dir, file,
+/// schema. Returns a descriptive error instead of panicking so callers can
+/// fall back to another location.
+fn open_db_at(db_path: &std::path::Path) -> Result<Connection, String> {
+    if let Some(parent) = db_path.parent() {
+        std::fs::create_dir_all(parent)
+            .map_err(|err| format!("could not create dir {parent:?}: {err}"))?;
+    }
+
+    let conn = Connection::open(db_path).map_err(|err| format!("could not open file: {err}"))?;
 
     conn.execute_batch(
         "PRAGMA journal_mode=WAL;
@@ -200,11 +239,49 @@ fn init_db(app: &tauri::AppHandle, custom_path: Option<&str>) -> Connection {
          );
 ",
     )
-    .expect("failed to initialize database");
+    .map_err(|err| format!("could not initialize schema: {err}"))?;
 
-    migrate_legacy_saved_libraries(app, &conn);
+    Ok(conn)
+}
 
-    conn
+/// Try to open the database at `path` on a worker thread with a short timeout
+/// so a stale or slow location (unmounted drive, dead network share, ...)
+/// can't hang app startup — it just falls back to the default data dir.
+fn open_custom_db(path: &str) -> Result<Connection, String> {
+    let (tx, rx) = std::sync::mpsc::channel();
+    let target = path.to_string();
+    let spawned = std::thread::Builder::new().spawn(move || {
+        let _ = tx.send(open_db_at(std::path::Path::new(&target)));
+    });
+    if spawned.is_err() {
+        return Err("could not spawn worker thread".into());
+    }
+    match rx.recv_timeout(std::time::Duration::from_secs(5)) {
+        Ok(result) => result,
+        Err(_) => Err("timed out".into()),
+    }
+}
+
+/// The configured custom location couldn't be used — clear it so we don't
+/// stall on it every launch and the settings UI shows the real location.
+fn clear_stale_db_config(app: &tauri::AppHandle) {
+    let config_path = resolve_config_dir(app).join("db_config.json");
+    let content = match std::fs::read_to_string(&config_path) {
+        Ok(content) => content,
+        Err(_) => return,
+    };
+    let mut config: DbConfig = match serde_json::from_str(&content) {
+        Ok(config) => config,
+        Err(_) => return,
+    };
+    if config.local_path.is_none() {
+        return;
+    }
+    config.local_path = None;
+    let _ = std::fs::write(
+        &config_path,
+        serde_json::to_string_pretty(&config).unwrap_or_else(|_| "{\"local_path\": null}".into()),
+    );
 }
 
 /// Import the old `saved_libraries.json` config file into the database (once),
@@ -603,13 +680,10 @@ pub fn run() {
                 None
             };
 
-            let default_db_path = prepare_data_dir(app.handle()).join("drawx.db");
-            let conn = init_db(app.handle(), custom_path.as_deref());
+            let (conn, db_path) = init_db(app.handle(), custom_path.as_deref());
             app.manage(DbState {
                 conn: Mutex::new(conn),
-                db_path: Mutex::new(
-                    custom_path.unwrap_or_else(|| default_db_path.to_string_lossy().to_string()),
-                ),
+                db_path: Mutex::new(db_path.to_string_lossy().to_string()),
             });
             Ok(())
         })

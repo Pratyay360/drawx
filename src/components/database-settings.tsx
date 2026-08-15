@@ -66,10 +66,7 @@ export function DatabaseSettings({ onClose }: DatabaseSettingsProps) {
 		return (
 			<Layout
 				header={
-					<DialogHeader
-						title="Database Settings"
-						onOpenChange={onClose}
-					/>
+					<DialogHeader title="Database Settings" onOpenChange={onClose} />
 				}
 				content={
 					<LayoutContent isScrollable={false}>
@@ -94,9 +91,7 @@ export function DatabaseSettings({ onClose }: DatabaseSettingsProps) {
 			content={
 				<LayoutContent padding={4}>
 					<VStack gap={3}>
-						{error && (
-							<Banner status="error" title={error} />
-						)}
+						{error && <Banner status="error" title={error} />}
 
 						<VStack gap={2}>
 							<Text type="label" weight="medium">

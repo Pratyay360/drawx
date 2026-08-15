@@ -238,8 +238,8 @@ export function LibraryBrowser({
 			<VStack gap={1}>
 				<Heading level={2}>Excalidraw Libraries</Heading>
 				<Text type="supporting">
-					Save a library to download its components into your library panel
-					— they stay available offline
+					Save a library to download its components into your library panel —
+					they stay available offline
 				</Text>
 			</VStack>
 
@@ -345,9 +345,7 @@ export function LibraryBrowser({
 						<TableHeaderCell>Status</TableHeaderCell>
 					</TableRow>
 					{filteredLibraries.map((library, index) => {
-						const saved = savedLibraries.find(
-							(lib) => lib.id === library.id,
-						);
+						const saved = savedLibraries.find((lib) => lib.id === library.id);
 						const saving = savingId === library.id;
 						return (
 							<TableRow
@@ -380,11 +378,7 @@ export function LibraryBrowser({
 								</TableCell>
 								<TableCell onClick={(e) => e.stopPropagation()}>
 									<Button
-										label={
-											saved
-												? `${libraryItemCount(saved)} items`
-												: "Save"
-										}
+										label={saved ? `${libraryItemCount(saved)} items` : "Save"}
 										variant="ghost"
 										size="sm"
 										icon={
@@ -399,9 +393,7 @@ export function LibraryBrowser({
 										isLoading={saving}
 										onClick={() => handleToggleSave(library)}
 										tooltip={
-											saved
-												? `Remove ${library.name}`
-												: `Save ${library.name}`
+											saved ? `Remove ${library.name}` : `Save ${library.name}`
 										}
 									/>
 								</TableCell>

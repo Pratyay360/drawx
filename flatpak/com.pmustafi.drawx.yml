@@ -1,38 +1,54 @@
 id: com.pmustafi.drawx
+
 runtime: org.gnome.Platform
-runtime-version: '48'
+runtime-version: "50"
 sdk: org.gnome.Sdk
 
 sdk-extensions:
-  - org.freedesktop.Sdk.Extension.rust-stable
-  - org.freedesktop.Sdk.Extension.node22
+  - org.freedesktop.Sdk.Extension.mise
+
 command: drawx
+
 finish-args:
   - --share=ipc
   - --socket=wayland
   - --socket=fallback-x11
-  - --share=network
   - --device=dri
   - --filesystem=home
-  - --talk-name=org.freedesktop.Notifications
-  - --talk-name=org.freedesktop.portal.*
+
 modules:
   - name: drawx
     buildsystem: simple
+
     build-options:
-      append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node22/bin
+      append-path: /usr/lib/sdk/mise/bin
       env:
+        MISE_YES: "1"
         CARGO_TARGET_DIR: /run/build/drawx/target
+
     build-commands:
-      - npx --yes @nubjs/nub install
-      - npx --yes @nubjs/nub run build
+      - mise deps
+      - nub install
+      - nub run build
       - cargo build --release --manifest-path src-tauri/Cargo.toml
-      - install -Dm755 target/release/drawx /app/bin/drawx
-      - install -Dm644 flatpak/com.pmustafi.drawx.desktop /app/share/applications/com.pmustafi.drawx.desktop
-      - install -Dm644 flatpak/com.pmustafi.drawx.metainfo.xml /app/share/metainfo/com.pmustafi.drawx.metainfo.xml
-      - install -Dm644 src-tauri/icons/32x32.png /app/share/icons/hicolor/32x32/apps/com.pmustafi.drawx.png
-      - install -Dm644 src-tauri/icons/128x128.png /app/share/icons/hicolor/128x128/apps/com.pmustafi.drawx.png
-      - install -Dm644 src-tauri/icons/icon.png /app/share/icons/hicolor/256x256/apps/com.pmustafi.drawx.png
+
+      - install -Dm755 "$CARGO_TARGET_DIR/release/drawx" /app/bin/drawx
+
+      - install -Dm644 flatpak/com.pmustafi.drawx.desktop \
+          /app/share/applications/com.pmustafi.drawx.desktop
+
+      - install -Dm644 flatpak/com.pmustafi.drawx.metainfo.xml \
+          /app/share/metainfo/com.pmustafi.drawx.metainfo.xml
+
+      - install -Dm644 src-tauri/icons/32x32.png \
+          /app/share/icons/hicolor/32x32/apps/com.pmustafi.drawx.png
+
+      - install -Dm644 src-tauri/icons/128x128.png \
+          /app/share/icons/hicolor/128x128/apps/com.pmustafi.drawx.png
+
+      - install -Dm644 src-tauri/icons/icon.png \
+          /app/share/icons/hicolor/256x256/apps/com.pmustafi.drawx.png
+
     sources:
       - type: dir
         path: ../

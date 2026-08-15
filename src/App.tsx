@@ -32,10 +32,17 @@ import {
 	X,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { BrowserRouter, Link, Route, Routes, useNavigate } from "react-router-dom";
+import {
+	BrowserRouter,
+	Link,
+	Route,
+	Routes,
+	useNavigate,
+} from "react-router-dom";
 import { Canvas as CanvasComponent } from "./canvas/main.tsx";
 import { LibraryBrowserModal } from "./components/library-browser-modal.tsx";
 import { Sidebar } from "./components/sidebar.tsx";
+import { UpdatePrompt } from "./components/update-prompt.tsx";
 import {
 	type Canvas,
 	createCanvas,
@@ -232,11 +239,7 @@ function Dashboard() {
 													size="sm"
 													icon={<Icon icon={Pencil} size="sm" />}
 													onClick={(e) =>
-														startEditing(
-															canvas.id,
-															canvas.title,
-															e,
-														)
+														startEditing(canvas.id, canvas.title, e)
 													}
 												/>
 												<IconButton
@@ -244,9 +247,7 @@ function Dashboard() {
 													variant="ghost"
 													size="sm"
 													icon={<Icon icon={Trash2} size="sm" />}
-													onClick={(e) =>
-														handleDeleteCanvas(canvas.id, e)
-													}
+													onClick={(e) => handleDeleteCanvas(canvas.id, e)}
 												/>
 											</HStack>
 										</HStack>
@@ -257,9 +258,7 @@ function Dashboard() {
 													isLabelHidden
 													value={editTitle}
 													onChange={setEditTitle}
-													onKeyDown={(e) =>
-														handleTitleKeyDown(canvas.id, e)
-													}
+													onKeyDown={(e) => handleTitleKeyDown(canvas.id, e)}
 													hasAutoFocus
 													size="sm"
 													width="100%"
@@ -312,9 +311,7 @@ function Dashboard() {
 														isLabelHidden
 														value={editTitle}
 														onChange={setEditTitle}
-														onKeyDown={(e) =>
-															handleTitleKeyDown(canvas.id, e)
-														}
+														onKeyDown={(e) => handleTitleKeyDown(canvas.id, e)}
 														hasAutoFocus
 														size="sm"
 														width="100%"
@@ -335,9 +332,7 @@ function Dashboard() {
 													/>
 												</HStack>
 											) : (
-												<Text weight="medium">
-													{canvas.title}
-												</Text>
+												<Text weight="medium">{canvas.title}</Text>
 											)}
 										</TableCell>
 										<TableCell>
@@ -345,9 +340,7 @@ function Dashboard() {
 												{formatDate(canvas.updatedAt)}
 											</Text>
 										</TableCell>
-										<TableCell
-											onClick={(e) => e.stopPropagation()}
-										>
+										<TableCell onClick={(e) => e.stopPropagation()}>
 											<HStack justify="end" gap={1}>
 												<IconButton
 													label={`Rename ${canvas.title}`}
@@ -355,11 +348,7 @@ function Dashboard() {
 													size="sm"
 													icon={<Icon icon={Pencil} size="sm" />}
 													onClick={(e) =>
-														startEditing(
-															canvas.id,
-															canvas.title,
-															e,
-														)
+														startEditing(canvas.id, canvas.title, e)
 													}
 												/>
 												<IconButton
@@ -367,9 +356,7 @@ function Dashboard() {
 													variant="ghost"
 													size="sm"
 													icon={<Icon icon={Trash2} size="sm" />}
-													onClick={(e) =>
-														handleDeleteCanvas(canvas.id, e)
-													}
+													onClick={(e) => handleDeleteCanvas(canvas.id, e)}
 												/>
 											</HStack>
 										</TableCell>
@@ -416,6 +403,7 @@ function App() {
 					<Route path="/canvas/:id" element={<CanvasComponent />} />
 				</Routes>
 				<LibraryBrowserModal />
+				<UpdatePrompt />
 			</LinkProvider>
 		</BrowserRouter>
 	);

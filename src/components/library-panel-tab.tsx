@@ -66,8 +66,8 @@ export function LibraryPanelTab() {
 					</List>
 				) : (
 					<Text type="supporting">
-						No saved libraries yet. Save one to browse and use its items
-						on your canvas.
+						No saved libraries yet. Save one to browse and use its items on your
+						canvas.
 					</Text>
 				)}
 			</StackItem>

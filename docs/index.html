@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>DrawX — a drawing app</title>
+    <meta name="description" content="A lightweight drawing app for Windows, Linux and macOS.">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ["system-ui", "sans-serif"]
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+
+<body class="min-h-screen bg-zinc-950 text-zinc-300 antialiased">
+
+    <!-- Nav -->
+    <header class="border-b border-zinc-800">
+        <nav class="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
+            <a href="#" class="text-lg font-bold text-white tracking-tight">DrawX</a>
+            <div class="flex items-center gap-6 text-sm">
+                <a href="#why" class="text-zinc-500 hover:text-white transition">Why</a>
+                <a href="#downloads" class="text-zinc-500 hover:text-white transition">Download</a>
+                <a href="https://github.com/Pratyay360" target="_blank" rel="noopener noreferrer" class="text-zinc-500 hover:text-white transition">GitHub</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="mx-auto max-w-3xl px-6">
+        <section class="pt-24 pb-16">
+            <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                Just a drawing app.
+            </h1>
+            <div class="mt-8 flex flex-col sm:flex-row gap-3">
+                <a
+                    data-primary-download
+                    href="#downloads"
+                    class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 transition"
+                    rel="noopener"
+                >
+                    Download
+                </a>
+                <a
+                    href="https://github.com/Pratyay360/drawx"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center justify-center rounded-lg border border-zinc-800 px-5 py-2.5 text-sm font-medium text-zinc-400 hover:border-zinc-600 hover:text-white transition"
+                >
+                    View source
+                </a>
+            </div>
+            <p class="mt-4 text-xs text-zinc-600">Free · </p>
+        </section>
+
+        <!-- Why -->
+        <section id="why" class="border-t border-zinc-800 py-16">
+
+            <ul class="space-y-4 text-sm">
+                <li class="flex gap-3">
+                    <span class="text-zinc-600 mt-0.5">—</span>
+                    <div>
+                        <span class="font-medium text-zinc-200">Fast.</span>
+                        <span class="text-zinc-500">Native app.</span>
+                    </div>
+                </li>
+                <li class="flex gap-3">
+                    <div>
+                    <span class="text-zinc-600 mt-0.5">—</span>
+                        <span class="font-medium text-zinc-200">Private.</span>
+                        <span class="text-zinc-500">Nothing gets uploaded. </span>
+                    </div>
+                </li>
+                <li class="flex gap-3">
+                    <span class="text-zinc-600 mt-0.5">—</span>
+                    <div>
+                        <span class="font-medium text-zinc-200">Cross-platform.</span>
+                    </div>
+                </li>
+            </ul>
+        </section>
+        <section id="downloads" class="border-t border-zinc-800 py-16 pb-24">
+            <h2 class="text-xl font-semibold text-white mb-2">Download</h2>
+            <p class="text-sm text-zinc-500 mb-8">v0.3.1 — pick the package for your system.</p>
+
+            <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div data-os-group="windows" class="border border-zinc-800 p-5 rounded-lg">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <div class="font-medium text-white">Windows</div>
+                            <div class="text-xs text-zinc-600">x86_64 · 10+</div>
+                        </div>
+                        <span data-detected-badge class="hidden text-[10px] font-medium text-indigo-400 border border-indigo-400/30 rounded-full px-2 py-0.5">This one</span>
+                    </div>
+                    <div class="space-y-2">
+                        <a data-download="windows-nsis" class="flex items-center justify-between rounded-md border border-zinc-800 p-3 hover:border-zinc-600 transition" rel="noopener">
+                            <div>
+                                <div class="text-sm font-medium text-zinc-300">NSIS <span class="text-zinc-600 font-normal">.exe</span></div>
+                                <div class="text-xs text-zinc-600 mt-0.5">5.26 MB</div>
+                            </div>
+                            <span class="text-zinc-600">→</span>
+                        </a>
+                        <a data-download="windows-msi" class="flex items-center justify-between rounded-md border border-zinc-800 p-3 hover:border-zinc-600 transition" rel="noopener">
+                            <div>
+                                <div class="text-sm font-medium text-zinc-300">Windows <span class="text-zinc-600 font-normal">.msi</span></div>
+                                <div class="text-xs text-zinc-600 mt-0.5">6.19 MB</div>
+                            </div>
+                            <span class="text-zinc-600">→</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Linux -->
+                <div data-os-group="linux" class="border border-zinc-800 p-5 rounded-lg">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <div class="font-medium text-white">Linux</div>
+                            <div class="text-xs text-zinc-600">x86_64</div>
+                        </div>
+                        <span data-detected-badge class="hidden text-[10px] font-medium text-indigo-400 border border-indigo-400/30 rounded-full px-2 py-0.5">This one</span>
+                    </div>
+                    <div class="space-y-2">
+                        <a data-download="linux-appimage" class="flex items-center justify-between rounded-md border border-zinc-800 p-3 hover:border-zinc-600 transition" rel="noopener">
+                            <div>
+                                <div class="text-sm font-medium text-zinc-300">AppImage</div>
+                                <div class="text-xs text-zinc-600 mt-0.5">95.2 MB</div>
+                            </div>
+                            <span class="text-zinc-600">→</span>
+                        </a>
+                        <a data-download="linux-deb" class="flex items-center justify-between rounded-md border border-zinc-800 p-3 hover:border-zinc-600 transition" rel="noopener">
+                            <div>
+                                <div class="text-sm font-medium text-zinc-300">Deb <span class="text-zinc-600 font-normal">.deb</span></div>
+                                <div class="text-xs text-zinc-600 mt-0.5">6.53 MB</div>
+                            </div>
+                            <span class="text-zinc-600">→</span>
+                        </a>
+                        <a data-download="linux-rpm" class="flex items-center justify-between rounded-md border border-zinc-800 p-3 hover:border-zinc-600 transition" rel="noopener">
+                            <div>
+                                <div class="text-sm font-medium text-zinc-300">RPM <span class="text-zinc-600 font-normal">.rpm</span></div>
+                                <div class="text-xs text-zinc-600 mt-0.5">6.53 MB</div>
+                            </div>
+                            <span class="text-zinc-600">→</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- macOS -->
+                <div data-os-group="macos" class="border border-zinc-800 p-5 rounded-lg md:col-span-2 lg:col-span-1">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <div class="font-medium text-white">macOS</div>
+                            <div class="text-xs text-zinc-600">Intel & Apple Silicon</div>
+                        </div>
+                        <span data-detected-badge class="hidden text-[10px] font-medium text-indigo-400 border border-indigo-400/30 rounded-full px-2 py-0.5">This one</span>
+                    </div>
+                    <div class="space-y-2">
+                        <a data-download="macos-arm-dmg" class="flex items-center justify-between rounded-md border border-zinc-800 p-3 hover:border-zinc-600 transition" rel="noopener">
+                            <div>
+                                <div class="text-sm font-medium text-zinc-300">DMG <span class="text-zinc-600 font-normal">Apple Silicon</span></div>
+                                <div class="text-xs text-zinc-600 mt-0.5">9.7 MB</div>
+                            </div>
+                            <span class="text-zinc-600">→</span>
+                        </a>
+                        <a data-download="macos-intel-dmg" class="flex items-center justify-between rounded-md border border-zinc-800 p-3 hover:border-zinc-600 transition" rel="noopener">
+                            <div>
+                                <div class="text-sm font-medium text-zinc-300">DMG <span class="text-zinc-600 font-normal">Intel</span></div>
+                                <div class="text-xs text-zinc-600 mt-0.5">9.9 MB</div>
+                            </div>
+                            <span class="text-zinc-600">→</span>
+                        </a>
+                        <a data-download="macos-arm-app" class="flex items-center justify-between rounded-md border border-zinc-800 p-3 hover:border-zinc-600 transition" rel="noopener">
+                            <div>
+                                <div class="text-sm font-medium text-zinc-300">.app <span class="text-zinc-600 font-normal">Apple Silicon</span></div>
+                                <div class="text-xs text-zinc-600 mt-0.5">7.76 MB</div>
+                            </div>
+                            <span class="text-zinc-600">→</span>
+                        </a>
+                        <a data-download="macos-intel-app" class="flex items-center justify-between rounded-md border border-zinc-800 p-3 hover:border-zinc-600 transition" rel="noopener">
+                            <div>
+                                <div class="text-sm font-medium text-zinc-300">.app <span class="text-zinc-600 font-normal">Intel</span></div>
+                                <div class="text-xs text-zinc-600 mt-0.5">7.93 MB</div>
+                            </div>
+                            <span class="text-zinc-600">→</span>
+                        </a>
+                    </div>
+                    <p class="mt-4 text-[11px] text-zinc-600 leading-relaxed">
+                        The .app.tar.gz files are what the in-app updater uses. Unless you have a reason, grab the DMG.
+                    </p>
+                </div>
+
+            </div>
+
+            <p class="mt-6 text-xs text-zinc-600">
+                This page auto-detects your OS and highlights the right column.
+            </p>
+        </section>
+
+    </main>
+    <script>
+        const CDN_BASE =
+            "https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/";
+
+        const downloads = {
+            "windows-nsis":    { platform: "nsis-x86_64" },
+            "windows-msi":     { platform: "wix-x86_64" },
+            "linux-appimage":  { platform: "appimage-x86_64" },
+            "linux-deb":       { platform: "debian-x86_64" },
+            "linux-rpm":       { platform: "rpm-x86_64" },
+            "macos-arm-dmg":   { platform: "dmg-aarch64" },
+            "macos-intel-dmg": { platform: "dmg-x86_64" },
+            "macos-arm-app":   { platform: "darwin-aarch64" },
+            "macos-intel-app": { platform: "darwin-x86_64" }
+        };
+
+        const primaryByOs = {
+            windows: "windows-nsis",
+            linux: "linux-appimage",
+            "macos-intel": "macos-intel-dmg",
+            "macos-arm": "macos-arm-dmg"
+        };
+
+        const groupByOs = {
+            windows: "windows",
+            linux: "linux",
+            "macos-intel": "macos",
+            "macos-arm": "macos"
+        };
+
+        function getOs() {
+            const ua = navigator.userAgent;
+
+            if (/Windows/i.test(ua)) return "windows";
+            if (/Linux/i.test(ua)) return "linux";
+
+            if (/Macintosh/i.test(ua)) {
+                try {
+                    const canvas = document.createElement("canvas");
+                    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+                    if (gl) {
+                        const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+                        if (debugInfo) {
+                            const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                            if (/Apple GPU|Apple M[1-9]/i.test(renderer)) return "macos-arm";
+                        }
+                    }
+                } catch {}
+                return "macos-intel";
+            }
+
+            return "linux";
+        }
+
+        function setupDownloads() {
+            const os = getOs();
+            const primaryKey = primaryByOs[os];
+            const primary = downloads[primaryKey];
+
+            document.querySelectorAll("[data-primary-download]").forEach(link => {
+                link.href = CDN_BASE + primary.platform;
+                link.target = "_blank";
+            });
+
+            document.querySelectorAll("[data-download]").forEach(link => {
+                const key = link.dataset.download;
+                const download = downloads[key];
+                if (!download) return link.hidden = true;
+
+                link.href = CDN_BASE + download.platform;
+                link.target = "_blank";
+
+                if (key === primaryKey) {
+                    link.classList.add("border-indigo-500/50", "bg-indigo-500/5");
+                }
+            });
+
+            document.querySelectorAll("[data-os-group]").forEach(group => {
+                if (group.dataset.osGroup === groupByOs[os]) {
+                    group.classList.add("border-zinc-600");
+                    const badge = group.querySelector("[data-detected-badge]");
+                    if (badge) badge.classList.remove("hidden");
+                }
+            });
+        }
+
+        setupDownloads();
+    </script>
+
+</body>
+</html>

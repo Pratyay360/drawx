@@ -1,8 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import '@astryxdesign/core/reset.css';
-@import '@astryxdesign/core/astryx.css';
-@import '@astryxdesign/theme-neutral/theme.css';
+@import "@astryxdesign/core/reset.css";
+@import "@astryxdesign/core/astryx.css";
+@import "@astryxdesign/theme-neutral/theme.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -89,9 +89,11 @@
 	--color-text-primary: var(--foreground);
 	--color-text-secondary: var(--muted-foreground);
 	--color-text-muted: var(--muted-foreground);
-	--color-text-disabled: color-mix(in oklch,
-			var(--muted-foreground),
-			transparent 25%);
+	--color-text-disabled: color-mix(
+		in oklch,
+		var(--muted-foreground),
+		transparent 25%
+	);
 	--color-primary: var(--primary);
 	--color-danger: var(--destructive);
 }

@@ -1,0 +1,11 @@
+name: drawx-docs
+app_id: da_2dAIdtrU8ppp
+owner: dudec2175
+package: .
+kind: wasmer.io/App.v0
+annotations:
+  anybuild.run/config:
+    name: out
+  anybuild.run/provider: staticfile
+  anybuild.run/version: 0.27.2
+  wasmer.io/version: 7.2.1

@@ -1,5 +1,5 @@
-import { IconButton } from "@astryxdesign/core/IconButton";
 import { Icon } from "@astryxdesign/core/Icon";
+import { IconButton } from "@astryxdesign/core/IconButton";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "../hooks/use-theme.ts";
 

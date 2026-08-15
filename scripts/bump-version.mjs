@@ -30,7 +30,8 @@ writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
 const cargoPath = "src-tauri/Cargo.toml";
 const cargo = readFileSync(cargoPath, "utf8");
 const nextCargo = cargo.replace(/^version = "[^"]*"$/m, `version = "${next}"`);
-if (nextCargo === cargo) throw new Error("Could not bump version in Cargo.toml");
+if (nextCargo === cargo)
+	throw new Error("Could not bump version in Cargo.toml");
 writeFileSync(cargoPath, nextCargo);
 
 const lockPath = "src-tauri/Cargo.lock";
