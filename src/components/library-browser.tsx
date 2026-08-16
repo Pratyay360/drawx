@@ -8,7 +8,9 @@ import { Section } from "@astryxdesign/core/Section";
 import { HStack, VStack } from "@astryxdesign/core/Stack";
 import {
 	Table,
+	TableBody,
 	TableCell,
+	TableHeader,
 	TableHeaderCell,
 	TableRow,
 } from "@astryxdesign/core/Table";
@@ -337,69 +339,77 @@ export function LibraryBrowser({
 					width={320}
 				/>
 				<Table density="compact" hasHover dividers="rows">
-					<TableRow isHeaderRow>
-						<TableHeaderCell>Preview</TableHeaderCell>
-						<TableHeaderCell>Name</TableHeaderCell>
-						<TableHeaderCell>Description</TableHeaderCell>
-						<TableHeaderCell>Author</TableHeaderCell>
-						<TableHeaderCell>Status</TableHeaderCell>
-					</TableRow>
-					{filteredLibraries.map((library, index) => {
-						const saved = savedLibraries.find((lib) => lib.id === library.id);
-						const saving = savingId === library.id;
-						return (
-							<TableRow
-								key={library.id ?? `${library.source}-${index}`}
-								onClick={() => onLibrarySelect?.(library)}
-							>
-								<TableCell>
-									{library.preview && (
-										<img
-											src={getLibraryAssetUrl(library.preview)}
-											alt={`${library.name} preview`}
-											className="h-12 w-16 rounded object-cover"
+					<TableHeader>
+						<TableRow isHeaderRow>
+							<TableHeaderCell>Preview</TableHeaderCell>
+							<TableHeaderCell>Name</TableHeaderCell>
+							<TableHeaderCell>Description</TableHeaderCell>
+							<TableHeaderCell>Author</TableHeaderCell>
+							<TableHeaderCell>Status</TableHeaderCell>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{filteredLibraries.map((library, index) => {
+							const saved = savedLibraries.find((lib) => lib.id === library.id);
+							const saving = savingId === library.id;
+							return (
+								<TableRow
+									key={library.id ?? `${library.source}-${index}`}
+									onClick={() => onLibrarySelect?.(library)}
+								>
+									<TableCell>
+										{library.preview && (
+											<img
+												src={getLibraryAssetUrl(library.preview)}
+												alt={`${library.name} preview`}
+												className="h-12 w-16 rounded object-cover"
+											/>
+										)}
+									</TableCell>
+									<TableCell>
+										<Text weight="medium" maxLines={1}>
+											{library.name}
+										</Text>
+									</TableCell>
+									<TableCell>
+										<Text type="supporting" maxLines={1}>
+											{library.description}
+										</Text>
+									</TableCell>
+									<TableCell>
+										<Text maxLines={1}>
+											{library.authors[0]?.name || "Unknown"}
+										</Text>
+									</TableCell>
+									<TableCell onClick={(e) => e.stopPropagation()}>
+										<Button
+											label={
+												saved ? `${libraryItemCount(saved)} items` : "Save"
+											}
+											variant="ghost"
+											size="sm"
+											icon={
+												saving ? (
+													<Icon icon={Loader2} size="sm" />
+												) : saved ? (
+													<Icon icon={BookmarkCheck} size="sm" />
+												) : (
+													<Icon icon={BookmarkPlus} size="sm" />
+												)
+											}
+											isLoading={saving}
+											onClick={() => handleToggleSave(library)}
+											tooltip={
+												saved
+													? `Remove ${library.name}`
+													: `Save ${library.name}`
+											}
 										/>
-									)}
-								</TableCell>
-								<TableCell>
-									<Text weight="medium" maxLines={1}>
-										{library.name}
-									</Text>
-								</TableCell>
-								<TableCell>
-									<Text type="supporting" maxLines={1}>
-										{library.description}
-									</Text>
-								</TableCell>
-								<TableCell>
-									<Text maxLines={1}>
-										{library.authors[0]?.name || "Unknown"}
-									</Text>
-								</TableCell>
-								<TableCell onClick={(e) => e.stopPropagation()}>
-									<Button
-										label={saved ? `${libraryItemCount(saved)} items` : "Save"}
-										variant="ghost"
-										size="sm"
-										icon={
-											saving ? (
-												<Icon icon={Loader2} size="sm" />
-											) : saved ? (
-												<Icon icon={BookmarkCheck} size="sm" />
-											) : (
-												<Icon icon={BookmarkPlus} size="sm" />
-											)
-										}
-										isLoading={saving}
-										onClick={() => handleToggleSave(library)}
-										tooltip={
-											saved ? `Remove ${library.name}` : `Save ${library.name}`
-										}
-									/>
-								</TableCell>
-							</TableRow>
-						);
-					})}
+									</TableCell>
+								</TableRow>
+							);
+						})}
+					</TableBody>
 				</Table>
 
 				{filteredLibraries.length === 0 && (

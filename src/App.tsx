@@ -15,7 +15,9 @@ import {
 import { HStack, VStack } from "@astryxdesign/core/Stack";
 import {
 	Table,
+	TableBody,
 	TableCell,
+	TableHeader,
 	TableHeaderCell,
 	TableRow,
 } from "@astryxdesign/core/Table";
@@ -290,78 +292,84 @@ function Dashboard() {
 					) : (
 						<Card padding={0}>
 							<Table density="compact" hasHover>
-								<TableRow isHeaderRow>
-									<TableHeaderCell>Title</TableHeaderCell>
-									<TableHeaderCell>Updated</TableHeaderCell>
-									<TableHeaderCell>Actions</TableHeaderCell>
-								</TableRow>
-								{filteredCanvases.map((canvas) => (
-									<TableRow
-										key={canvas.id}
-										onClick={() => {
-											if (editingId !== canvas.id)
-												navigate(`/canvas/${canvas.id}`);
-										}}
-									>
-										<TableCell>
-											{editingId === canvas.id ? (
-												<HStack gap={1}>
-													<TextInput
-														label="Rename drawing"
-														isLabelHidden
-														value={editTitle}
-														onChange={setEditTitle}
-														onKeyDown={(e) => handleTitleKeyDown(canvas.id, e)}
-														hasAutoFocus
-														size="sm"
-														width="100%"
-													/>
+								<TableHeader>
+									<TableRow isHeaderRow>
+										<TableHeaderCell>Title</TableHeaderCell>
+										<TableHeaderCell>Updated</TableHeaderCell>
+										<TableHeaderCell>Actions</TableHeaderCell>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{filteredCanvases.map((canvas) => (
+										<TableRow
+											key={canvas.id}
+											onClick={() => {
+												if (editingId !== canvas.id)
+													navigate(`/canvas/${canvas.id}`);
+											}}
+										>
+											<TableCell>
+												{editingId === canvas.id ? (
+													<HStack gap={1}>
+														<TextInput
+															label="Rename drawing"
+															isLabelHidden
+															value={editTitle}
+															onChange={setEditTitle}
+															onKeyDown={(e) =>
+																handleTitleKeyDown(canvas.id, e)
+															}
+															hasAutoFocus
+															size="sm"
+															width="100%"
+														/>
+														<IconButton
+															label="Save name"
+															variant="ghost"
+															size="sm"
+															icon={<Icon icon={Check} size="sm" />}
+															onClick={() => handleRename(canvas.id)}
+														/>
+														<IconButton
+															label="Cancel rename"
+															variant="ghost"
+															size="sm"
+															icon={<Icon icon={X} size="sm" />}
+															onClick={handleCancelEdit}
+														/>
+													</HStack>
+												) : (
+													<Text weight="medium">{canvas.title}</Text>
+												)}
+											</TableCell>
+											<TableCell>
+												<Text type="supporting">
+													{formatDate(canvas.updatedAt)}
+												</Text>
+											</TableCell>
+											<TableCell onClick={(e) => e.stopPropagation()}>
+												<HStack justify="end" gap={1}>
 													<IconButton
-														label="Save name"
+														label={`Rename ${canvas.title}`}
 														variant="ghost"
 														size="sm"
-														icon={<Icon icon={Check} size="sm" />}
-														onClick={() => handleRename(canvas.id)}
+														icon={<Icon icon={Pencil} size="sm" />}
+														onClick={(e) =>
+															startEditing(canvas.id, canvas.title, e)
+														}
 													/>
 													<IconButton
-														label="Cancel rename"
+														label={`Delete ${canvas.title}`}
 														variant="ghost"
 														size="sm"
-														icon={<Icon icon={X} size="sm" />}
-														onClick={handleCancelEdit}
+														icon={<Icon icon={Trash2} size="sm" />}
+														onClick={(e) => handleDeleteCanvas(canvas.id, e)}
 													/>
 												</HStack>
-											) : (
-												<Text weight="medium">{canvas.title}</Text>
-											)}
-										</TableCell>
-										<TableCell>
-											<Text type="supporting">
-												{formatDate(canvas.updatedAt)}
-											</Text>
-										</TableCell>
-										<TableCell onClick={(e) => e.stopPropagation()}>
-											<HStack justify="end" gap={1}>
-												<IconButton
-													label={`Rename ${canvas.title}`}
-													variant="ghost"
-													size="sm"
-													icon={<Icon icon={Pencil} size="sm" />}
-													onClick={(e) =>
-														startEditing(canvas.id, canvas.title, e)
-													}
-												/>
-												<IconButton
-													label={`Delete ${canvas.title}`}
-													variant="ghost"
-													size="sm"
-													icon={<Icon icon={Trash2} size="sm" />}
-													onClick={(e) => handleDeleteCanvas(canvas.id, e)}
-												/>
-											</HStack>
-										</TableCell>
-									</TableRow>
-								))}
+											</TableCell>
+										</TableRow>
+									))}
+								</TableBody>
 							</Table>
 						</Card>
 					)
