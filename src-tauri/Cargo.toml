@@ -2,7 +2,7 @@
 
 [package]
 name = "drawx"
-version = "0.3.8"
+version = "0.3.9"
 description = "Offline first brainstorming app"
 authors = ["Pratyay360"]
 edition = "2021"
