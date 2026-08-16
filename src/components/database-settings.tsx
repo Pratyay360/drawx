@@ -13,6 +13,7 @@ import {
 	selectLocalDbPath,
 	setDbConfig,
 } from "../services/db.ts";
+import { isTauri } from "../services/tauri.ts";
 
 interface DatabaseSettingsProps {
 	onClose: () => void;
@@ -105,7 +106,7 @@ export function DatabaseSettings({ onClose }: DatabaseSettingsProps) {
 									label="Browse…"
 									variant="secondary"
 									icon={<Icon icon={FolderOpen} size="sm" />}
-									onClick={handleSelectPath}
+									onClick={handleSelectPath} isDisabled={!isTauri()}
 								/>
 							</HStack>
 							<Text type="supporting">

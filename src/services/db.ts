@@ -1,10 +1,14 @@
 import { invoke } from "@tauri-apps/api/core";
+import { isTauri } from "./tauri";
 
 export interface DbConfig {
 	local_path: string;
 }
 
 export async function getDbConfig(): Promise<DbConfig> {
+	if (!isTauri()) {
+		return { local_path: "" };
+	}
 	try {
 		return await invoke<DbConfig>("get_db_config");
 	} catch (error) {
@@ -16,6 +20,9 @@ export async function getDbConfig(): Promise<DbConfig> {
 }
 
 export async function setDbConfig(config: DbConfig): Promise<void> {
+	if (!isTauri()) {
+		return;
+	}
 	try {
 		await invoke("set_db_config", { config });
 	} catch (error) {
@@ -25,6 +32,9 @@ export async function setDbConfig(config: DbConfig): Promise<void> {
 }
 
 export async function selectLocalDbPath(): Promise<string> {
+	if (!isTauri()) {
+		return "";
+	}
 	try {
 		return await invoke<string>("select_local_db_path");
 	} catch (error) {
