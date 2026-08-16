@@ -1,54 +1,54 @@
 {
-  "$schema": "https://schema.tauri.app/config/2",
-  "productName": "drawx",
-  "version": "0.3.8",
-  "identifier": "com.pmustafi.drawx",
-  "build": {
-    "beforeDevCommand": "nub run dev",
-    "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "nub run build",
-    "frontendDist": "../dist"
-  },
-  "plugins": {
-    "updater": {
-      "endpoints": [
-        "https://cdn.crabnebula.app/update/pratyay/drawx/{{target}}-{{arch}}/{{current_version}}"
-      ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE0QjMzRjIyOUQzMTBFMDkKUldRSkRqR2RJait6cEgzRkw0R3pPQ3JkcXRKZUdLUXR3SXQ1dmhYcjI1ejdzSlNOWlNHTS80N0sK"
-    }
-  },
-  "app": {
-    "windows": [
-      {
-        "title": "drawx",
-        "width": 800,
-        "height": 600
-      }
-    ],
-    "security": {
-      "csp": null
-    }
-  },
-  "bundle": {
-    "createUpdaterArtifacts": true,
-    "active": true,
-    "targets": "all",
-    "windows": {
-      "wix": {
-        "upgradeCode": "c1ca73de-0489-520c-8e19-35d21478f7be"
-      }
-    },
-    "linux": {
-      "appimage": {
-        "bundleMediaFramework": true
-      }
-    },
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ]
-  }
+	"$schema": "https://schema.tauri.app/config/2",
+	"productName": "drawx",
+	"version": "0.3.9",
+	"identifier": "com.pmustafi.drawx",
+	"build": {
+		"beforeDevCommand": "nub run dev",
+		"devUrl": "http://localhost:1420",
+		"beforeBuildCommand": "nub run build",
+		"frontendDist": "../dist"
+	},
+	"plugins": {
+		"updater": {
+			"endpoints": [
+				"https://cdn.crabnebula.app/update/pratyay/drawx/{{target}}-{{arch}}/{{current_version}}"
+			],
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE0QjMzRjIyOUQzMTBFMDkKUldRSkRqR2RJait6cEgzRkw0R3pPQ3JkcXRKZUdLUXR3SXQ1dmhYcjI1ejdzSlNOWlNHTS80N0sK"
+		}
+	},
+	"app": {
+		"windows": [
+			{
+				"title": "drawx",
+				"width": 800,
+				"height": 600
+			}
+		],
+		"security": {
+			"csp": null
+		}
+	},
+	"bundle": {
+		"createUpdaterArtifacts": true,
+		"active": true,
+		"targets": "all",
+		"windows": {
+			"wix": {
+				"upgradeCode": "c1ca73de-0489-520c-8e19-35d21478f7be"
+			}
+		},
+		"linux": {
+			"appimage": {
+				"bundleMediaFramework": true
+			}
+		},
+		"icon": [
+			"icons/32x32.png",
+			"icons/128x128.png",
+			"icons/128x128@2x.png",
+			"icons/icon.icns",
+			"icons/icon.ico"
+		]
+	}
 }
