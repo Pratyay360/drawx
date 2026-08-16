@@ -15,11 +15,7 @@ build = { run = "nub run tauri build" }
 lint = { run = "nub run lint ." }
 format = { run = "nub run format ." }
 tauri = { run = "cargo tauri build" }
-ci = [
-    "mise run install",
-    "mise run build",
-    "mise run tauri"
-]
+ci = ["mise run install", "mise run build", "mise run tauri"]
 
 [settings]
 auto_install = true

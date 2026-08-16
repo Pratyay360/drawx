@@ -1,10 +1,10 @@
 # [drawx](https://drawx-docs.surge.sh)
+
 or [drawx](https://drawx-docs.wasmer.app)
 
 # download binaries
+
 [Download](https://drawx-docs.surge.sh)
-
-
 
 [debian](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/debian-x86_64)
 [rpm](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/rpm-x86_64)

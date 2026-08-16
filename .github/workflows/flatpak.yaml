@@ -11,9 +11,9 @@ jobs:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-48
       options: --privileged
     steps:
-    - uses: actions/checkout@main
-    - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
-      with:
-        bundle: drawx.flatpak
-        manifest-path: flatpak/com.pmustafi.drawx.yml
-        cache-key: flatpak-builder-${{ github.sha }}
+      - uses: actions/checkout@main
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: drawx.flatpak
+          manifest-path: flatpak/com.pmustafi.drawx.yml
+          cache-key: flatpak-builder-${{ github.sha }}

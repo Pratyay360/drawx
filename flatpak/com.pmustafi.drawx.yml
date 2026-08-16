@@ -35,19 +35,19 @@ modules:
       - install -Dm755 "$CARGO_TARGET_DIR/release/drawx" /app/bin/drawx
 
       - install -Dm644 flatpak/com.pmustafi.drawx.desktop \
-          /app/share/applications/com.pmustafi.drawx.desktop
+        /app/share/applications/com.pmustafi.drawx.desktop
 
       - install -Dm644 flatpak/com.pmustafi.drawx.metainfo.xml \
-          /app/share/metainfo/com.pmustafi.drawx.metainfo.xml
+        /app/share/metainfo/com.pmustafi.drawx.metainfo.xml
 
       - install -Dm644 src-tauri/icons/32x32.png \
-          /app/share/icons/hicolor/32x32/apps/com.pmustafi.drawx.png
+        /app/share/icons/hicolor/32x32/apps/com.pmustafi.drawx.png
 
       - install -Dm644 src-tauri/icons/128x128.png \
-          /app/share/icons/hicolor/128x128/apps/com.pmustafi.drawx.png
+        /app/share/icons/hicolor/128x128/apps/com.pmustafi.drawx.png
 
       - install -Dm644 src-tauri/icons/icon.png \
-          /app/share/icons/hicolor/256x256/apps/com.pmustafi.drawx.png
+        /app/share/icons/hicolor/256x256/apps/com.pmustafi.drawx.png
 
     sources:
       - type: dir
