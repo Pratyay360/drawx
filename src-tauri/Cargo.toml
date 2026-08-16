@@ -2,14 +2,14 @@
 
 [package]
 name = "drawx"
-version = "0.3.2"
+version = "0.3.5"
 description = "Offline first brainstorming app"
 authors = ["Pratyay360"]
 edition = "2021"
 
 
 [profile.dev]
-incremental = true 
+incremental = true
 
 [profile.release]
 codegen-units = 1 # Allows LLVM to perform better optimization.
