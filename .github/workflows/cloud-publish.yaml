@@ -39,18 +39,18 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Auto-bump patch version
-        id: bump
-        if: steps.skip.outputs.skip == 'false'
-        run: |
-          VERSION="$(node scripts/bump-version.mjs)"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -B main origin/main
-          git add package.json src-tauri/Cargo.toml src-tauri/Cargo.lock src-tauri/tauri.conf.json
-          git commit -m "chore(release): bump version to v$VERSION [skip ci]"
-          git push origin main
+      # - name: Auto-bump patch version
+      #   id: bump
+      #   if: steps.skip.outputs.skip == 'false'
+      #   run: |
+      #     VERSION="$(node scripts/bump-version.mjs)"
+      #     echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      #     # git config user.name "github-actions[bot]"
+      #     # git config user.email "github-actions[bot]@users.noreply.github.com"
+      #     # git checkout -B main origin/main
+      #     # git add package.json src-tauri/Cargo.toml src-tauri/Cargo.lock src-tauri/tauri.conf.json
+      #     # git commit -m "chore(release): bump version to v$VERSION [skip ci]"
+      #     # git push origin main
 
   draft:
     needs: bump-version

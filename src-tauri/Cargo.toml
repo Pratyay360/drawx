@@ -43,6 +43,8 @@ tauri-plugin-updater = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-notification = "2"
 tauri-plugin-clipboard-manager = "2"
+tauri-plugin-log = "2"
+cargo-audit = "0.22.2"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2"

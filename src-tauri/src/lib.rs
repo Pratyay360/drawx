@@ -15,6 +15,13 @@ struct DbConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+struct DbInfo {
+    local_path: Option<String>,
+    current_path: String,
+    is_default: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct SavedLibrary {
     id: String,
     name: String,
@@ -99,16 +106,6 @@ fn home_dir() -> Option<std::path::PathBuf> {
         .map(std::path::PathBuf::from)
 }
 
-fn data_dir_base() -> std::path::PathBuf {
-    match std::env::var("XDG_DATA_HOME") {
-        Ok(dir) if !dir.trim().is_empty() => std::path::PathBuf::from(dir),
-        _ => match home_dir() {
-            Some(home) => home.join(".local/share"),
-            None => std::env::temp_dir(),
-        },
-    }
-}
-
 fn config_dir_base() -> std::path::PathBuf {
     match std::env::var("XDG_CONFIG_HOME") {
         Ok(dir) if !dir.trim().is_empty() => std::path::PathBuf::from(dir),
@@ -119,16 +116,7 @@ fn config_dir_base() -> std::path::PathBuf {
     }
 }
 
-/// Best-effort app data dir. Never fails: falls back to `$XDG_DATA_HOME` /
-/// `~/.local/share`, then a temp dir, each keyed by the app identifier.
-fn resolve_data_dir(app: &tauri::AppHandle) -> std::path::PathBuf {
-    match app.path().app_data_dir() {
-        Ok(dir) => dir,
-        Err(_) => data_dir_base().join(&app.config().identifier),
-    }
-}
-
-/// Best-effort app config dir. Never fails (mirrors `resolve_data_dir`).
+/// Best-effort app config dir. Never fails (mirrors the data dir approach).
 fn resolve_config_dir(app: &tauri::AppHandle) -> std::path::PathBuf {
     match app.path().app_config_dir() {
         Ok(dir) => dir,
@@ -136,10 +124,8 @@ fn resolve_config_dir(app: &tauri::AppHandle) -> std::path::PathBuf {
     }
 }
 
-/// Create and return a writable data dir, falling back to a temp dir if the
-/// preferred location can't be created so DB setup never aborts startup.
 fn prepare_data_dir(app: &tauri::AppHandle) -> std::path::PathBuf {
-    let preferred = resolve_data_dir(app);
+    let preferred = resolve_config_dir(app);
     match std::fs::create_dir_all(&preferred) {
         Ok(_) => preferred,
         Err(err) => {
@@ -153,17 +139,7 @@ fn prepare_data_dir(app: &tauri::AppHandle) -> std::path::PathBuf {
         }
     }
 }
-
-/// Open (and if needed create) the database. If a configured custom path
-/// can't be used (unmounted drive, missing permission, corrupt file, dead
-/// network share, ...), fall back to the default app data dir instead of
-/// aborting — or hanging — startup, so a stale `db_config.json` can never
-/// silently kill the app. `prepare_data_dir` itself never fails (it falls
-/// back to a writable temp dir), so the default candidate always succeeds.
-/// Returns the connection and the path that was actually used.
 fn init_db(app: &tauri::AppHandle, custom_path: Option<&str>) -> (Connection, std::path::PathBuf) {
-    // Ignore empty paths: `sqlite` treats `""` as a throwaway temp database,
-    // which would "work" while writing to no file at all.
     let custom_path = custom_path.map(str::trim).filter(|p| !p.is_empty());
 
     if let Some(path) = custom_path {
@@ -177,8 +153,6 @@ fn init_db(app: &tauri::AppHandle, custom_path: Option<&str>) -> (Connection, st
                     "warning: configured database at {path:?} is unavailable ({err}); \
                      falling back to the default location"
                 );
-                // The configured location can't be used, so clear it —
-                // otherwise we'd stall on (or fail with) it on every launch.
                 clear_stale_db_config(app);
             }
         }
@@ -195,9 +169,6 @@ fn init_db(app: &tauri::AppHandle, custom_path: Option<&str>) -> (Connection, st
     (conn, db_path)
 }
 
-/// Open (creating if needed) the database at `db_path`: parent dir, file,
-/// schema. Returns a descriptive error instead of panicking so callers can
-/// fall back to another location.
 fn open_db_at(db_path: &std::path::Path) -> Result<Connection, String> {
     if let Some(parent) = db_path.parent() {
         std::fs::create_dir_all(parent)
@@ -476,12 +447,34 @@ fn update_canvas_title(
 }
 
 #[tauri::command]
+fn get_db_info(app: tauri::AppHandle, state: tauri::State<'_, DbState>) -> Result<DbInfo, String> {
+    let config_path = resolve_config_dir(&app).join("db_config.json");
+    let local_path = if config_path.exists() {
+        let content = std::fs::read_to_string(&config_path).unwrap_or_default();
+        let config: DbConfig =
+            serde_json::from_str(&content).unwrap_or(DbConfig { local_path: None });
+        config.local_path
+    } else {
+        None
+    };
+
+    let current_path = state.db_path.lock().map_err(|e| e.to_string())?.clone();
+    let default_path = prepare_data_dir(&app)
+        .join("drawx.db")
+        .to_string_lossy()
+        .to_string();
+    let is_default = local_path.is_none() || current_path == default_path;
+
+    Ok(DbInfo {
+        local_path,
+        current_path,
+        is_default,
+    })
+}
+
+#[tauri::command]
 fn get_db_config(app: tauri::AppHandle) -> Result<DbConfig, String> {
-    let config_path = app
-        .path()
-        .app_config_dir()
-        .expect("failed to resolve app config dir")
-        .join("db_config.json");
+    let config_path = resolve_config_dir(&app).join("db_config.json");
 
     if config_path.exists() {
         let content = std::fs::read_to_string(&config_path).map_err(|e| e.to_string())?;
@@ -493,18 +486,57 @@ fn get_db_config(app: tauri::AppHandle) -> Result<DbConfig, String> {
 }
 
 #[tauri::command]
-fn set_db_config(app: tauri::AppHandle, config: DbConfig) -> Result<(), String> {
-    let config_dir = app
-        .path()
-        .app_config_dir()
-        .expect("failed to resolve app config dir");
+fn set_db_config(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, DbState>,
+    config: DbConfig,
+) -> Result<DbInfo, String> {
+    let custom_path = config
+        .local_path
+        .as_deref()
+        .map(str::trim)
+        .filter(|p| !p.is_empty());
+
+    let (conn, db_path) = match custom_path {
+        Some(path) => {
+            let p = std::path::Path::new(path);
+            // Use the timeout-guarded open so a stale/slow path (unmounted drive,
+            // dead network share) returns an error within 5 s instead of hanging.
+            let conn = open_custom_db(path)?;
+            migrate_legacy_saved_libraries(&app, &conn);
+            (conn, p.to_path_buf())
+        }
+        None => {
+            let default_path = prepare_data_dir(&app).join("drawx.db");
+            let conn = open_db_at(&default_path)?;
+            migrate_legacy_saved_libraries(&app, &conn);
+            (conn, default_path)
+        }
+    };
+
+    let config_dir = resolve_config_dir(&app);
     std::fs::create_dir_all(&config_dir).map_err(|e| e.to_string())?;
 
     let config_path = config_dir.join("db_config.json");
     let content = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
     std::fs::write(&config_path, content).map_err(|e| e.to_string())?;
 
-    Ok(())
+    let mut conn_guard = state.conn.lock().map_err(|e| e.to_string())?;
+    *conn_guard = conn;
+    let mut db_path_guard = state.db_path.lock().map_err(|e| e.to_string())?;
+    *db_path_guard = db_path.to_string_lossy().to_string();
+
+    let default_path_str = prepare_data_dir(&app)
+        .join("drawx.db")
+        .to_string_lossy()
+        .to_string();
+    let is_default = custom_path.is_none() || *db_path_guard == default_path_str;
+
+    Ok(DbInfo {
+        local_path: config.local_path,
+        current_path: db_path_guard.clone(),
+        is_default,
+    })
 }
 
 fn read_library_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<SavedLibrary> {
@@ -647,8 +679,25 @@ async fn select_local_db_path(app: tauri::AppHandle) -> Result<Option<String>, S
     let file_path = app
         .dialog()
         .file()
-        .set_title("Select database file location")
-        .add_filter("SQLite Database", &["db", "sqlite"])
+        .set_title("Choose Existing SQLite Database")
+        .add_filter("SQLite Database", &["db", "sqlite", "sqlite3"])
+        .blocking_pick_file();
+
+    Ok(file_path
+        .map(|path| path.into_path().map_err(|e| e.to_string()))
+        .transpose()?
+        .map(|path| path.to_string_lossy().to_string()))
+}
+
+#[tauri::command]
+async fn create_new_db_path(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let file_path = app
+        .dialog()
+        .file()
+        .set_title("Create New SQLite Database")
+        .add_filter("SQLite Database", &["db", "sqlite", "sqlite3"])
         .set_file_name("drawx.db")
         .blocking_save_file();
 
@@ -659,6 +708,7 @@ async fn select_local_db_path(app: tauri::AppHandle) -> Result<Option<String>, S
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
@@ -668,6 +718,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_log::Builder::new().build())
         .setup(|app| {
             let config_path = resolve_config_dir(app.handle()).join("db_config.json");
 
@@ -695,8 +746,10 @@ pub fn run() {
             save_canvas,
             update_canvas_title,
             get_db_config,
+            get_db_info,
             set_db_config,
             select_local_db_path,
+            create_new_db_path,
             get_saved_libraries,
             save_library,
             save_library_content,

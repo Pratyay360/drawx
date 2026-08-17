@@ -7,6 +7,8 @@ biome = "latest"
 nub = "latest"
 cargo-binstall = "latest"
 minisign = "latest"
+"go:github.com/yieldray/surgecli" = "latest"
+wasmer = "latest"
 
 [tasks]
 install = { run = "nub install" }
@@ -15,7 +17,10 @@ build = { run = "nub run tauri build" }
 lint = { run = "nub run lint ." }
 format = { run = "nub run format ." }
 tauri = { run = "cargo tauri build" }
-ci = ["mise run install", "mise run build", "mise run tauri"]
+ci = ["mise run install", "mise run build", "mise run tauri build"]
+static = ["mise run static_deploy", "mise run static_deploy1"]
+static_deploy = { run = "cd docs && wasmer deploy" }
+static_deploy1 = { run = "surgecli deploy docs/ drawx-docs.surge.sh" }
 
 [settings]
 auto_install = true

@@ -5,22 +5,22 @@ export type Theme = "light" | "dark";
 const STORAGE_KEY = "drawx-theme";
 
 function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "light";
+	if (typeof window === "undefined") return "light";
 
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === "light" || stored === "dark") {
-    return stored;
-  }
+	const stored = localStorage.getItem(STORAGE_KEY);
+	if (stored === "light" || stored === "dark") {
+		return stored;
+	}
 
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  return prefersDark ? "dark" : "light";
+	const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+	return prefersDark ? "dark" : "light";
 }
 
 function applyTheme(theme: Theme) {
-  const root = document.documentElement;
-  root.classList.toggle("dark", theme === "dark");
-  root.dataset.theme = theme;
-  root.style.colorScheme = theme;
+	const root = document.documentElement;
+	root.classList.toggle("dark", theme === "dark");
+	root.dataset.theme = theme;
+	root.style.colorScheme = theme;
 }
 
 // Module-level store shared by every useTheme() consumer, so toggling the
@@ -32,36 +32,36 @@ const listeners = new Set<() => void>();
 applyTheme(currentTheme);
 
 function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
+	listeners.add(listener);
+	return () => {
+		listeners.delete(listener);
+	};
 }
 
 function setThemeInternal(next: Theme) {
-  if (next === currentTheme) return;
-  currentTheme = next;
-  applyTheme(next);
-  try {
-    localStorage.setItem(STORAGE_KEY, next);
-  } catch {
-    // Ignore storage errors (e.g. private browsing).
-  }
-  for (const listener of listeners) {
-    listener();
-  }
+	if (next === currentTheme) return;
+	currentTheme = next;
+	applyTheme(next);
+	try {
+		localStorage.setItem(STORAGE_KEY, next);
+	} catch {
+		// Ignore storage errors (e.g. private browsing).
+	}
+	for (const listener of listeners) {
+		listener();
+	}
 }
 
 export function useTheme() {
-  const theme = useSyncExternalStore(subscribe, () => currentTheme);
+	const theme = useSyncExternalStore(subscribe, () => currentTheme);
 
-  const setTheme = useCallback((next: Theme) => {
-    setThemeInternal(next);
-  }, []);
+	const setTheme = useCallback((next: Theme) => {
+		setThemeInternal(next);
+	}, []);
 
-  const toggleTheme = useCallback(() => {
-    setThemeInternal(currentTheme === "dark" ? "light" : "dark");
-  }, []);
+	const toggleTheme = useCallback(() => {
+		setThemeInternal(currentTheme === "dark" ? "light" : "dark");
+	}, []);
 
-  return { theme, setTheme, toggleTheme };
+	return { theme, setTheme, toggleTheme };
 }
