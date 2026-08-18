@@ -1,4 +1,3 @@
-
 name: Tauri v2 Release Process
 on:
   push:

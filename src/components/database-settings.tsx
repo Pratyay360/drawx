@@ -11,8 +11,8 @@ import { relaunch } from "@tauri-apps/plugin-process";
 import { FilePlus, FolderOpen, Loader2, RotateCcw, Save } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import {
-	type DbInfo,
 	createNewDbPath,
+	type DbInfo,
 	getDbInfo,
 	selectExistingDbPath,
 	setDbConfig,

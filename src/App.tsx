@@ -3,6 +3,7 @@ import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { Center } from "@astryxdesign/core/Center";
 import { ClickableCard } from "@astryxdesign/core/ClickableCard";
+import { FileInput } from "@astryxdesign/core/FileInput";
 import { Grid } from "@astryxdesign/core/Grid";
 import { Heading } from "@astryxdesign/core/Heading";
 import { Icon } from "@astryxdesign/core/Icon";
@@ -22,7 +23,6 @@ import {
 	TableRow,
 } from "@astryxdesign/core/Table";
 import { Text } from "@astryxdesign/core/Text";
-import { FileInput } from "@astryxdesign/core/FileInput";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import {
 	Check,

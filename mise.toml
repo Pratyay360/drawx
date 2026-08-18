@@ -9,6 +9,7 @@ cargo-binstall = "latest"
 minisign = "latest"
 "go:github.com/yieldray/surgecli" = "latest"
 wasmer = "latest"
+prettier = "latest"
 
 [tasks]
 install = { run = "nub install" }
