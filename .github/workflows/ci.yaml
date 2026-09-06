@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CN_APPLICATION: "YOUR_ORG_NAME/YOUR_APP_NAME"
+  CN_APPLICATION: "pratyay/drawx"
 
 jobs:
   draft:
