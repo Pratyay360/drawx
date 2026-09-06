@@ -99,7 +99,7 @@ jobs:
           cp -r src-tauri/target/release/bundle ../artifacts/ 2>/dev/null || true
           cp -r src-tauri/target/aarch64-apple-darwin/release/bundle ../artifacts/ 2>/dev/null || true
           cp -r src-tauri/target/x86_64-apple-darwin/release/bundle ../artifacts/ 2>/dev/null || true
-          find ../artifacts -type f | head -n 50
+          find ../artifacts -type f | head -n 50 || true
 
       - uses: actions/upload-artifact@v4
         with:
