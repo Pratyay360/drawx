@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/tauri.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (() => {
+        try {
+          var names = ["butter", "neutral", "matcha", "stone", "y2k", "gothic"];
+          var n = localStorage.getItem("drawx-theme");
+          if (!n || names.indexOf(n) < 0) n = "butter";
+          var darkOnly = { gothic: 1 };
+          var p = localStorage.getItem("drawx-theme-mode") || "system";
+          var m;
+          if (darkOnly[n]) m = "dark";
+          else if (p === "light" || p === "dark") m = p;
+          else
+            m = window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+          var r = document.documentElement;
+          r.classList.toggle("dark", m === "dark");
+          r.dataset.theme = m;
+          r.dataset.appTheme = n;
+          r.style.colorScheme = m;
+        } catch (_e) {}
+      })();
+    </script>
+    <title>Drawx</title>
+  </head>
+
+  <body>
+    <div id="root">
+      <script type="module" src="/src/main.tsx"></script>
+    </div>
+  </body>
+</html>

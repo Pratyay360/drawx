@@ -1,0 +1,86 @@
+id: com.pmustafi.drawx
+runtime: org.gnome.Platform
+runtime-version: "50"
+sdk: org.gnome.Sdk
+
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+  - org.freedesktop.Sdk.Extension.node24
+
+command: drawx
+
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+
+modules:
+  - name: drawx
+    buildsystem: simple
+
+    build-options:
+      # Keep --share=network for local `flatpak-builder` testing.
+      # For Flathub offline builds, vendored cargo sources are injected via
+      # cargo-sources.json (generated from src-tauri/Cargo.lock):
+      #   python3 flatpak-builder-tools/cargo/flatpak-cargo-generator.py src-tauri/Cargo.lock -o cargo-sources.json
+      # For fully offline bun builds on Flathub, also run:
+      #   flatpak-builder-tools/node/flatpak-node-generator bun bun.lockb -o flatpak/generated-sources.json
+      # and add it as an extra source (see README).
+      build-args:
+        - --share=network
+      append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin
+      env:
+        CARGO_HOME: /run/build/drawx/cargo
+        XDG_CACHE_HOME: /run/build/drawx/flatpak-node/cache
+        npm_config_cache: /run/build/drawx/flatpak-node/npm-cache
+
+    build-commands:
+      - |
+        if [ -f cargo/config ]; then
+          mkdir -p .cargo
+          cp -f cargo/config .cargo/config.toml
+        fi
+      # Use vendored cargo if present, otherwise network
+      - |
+        if [ -d cargo/vendor ]; then
+          export CARGO_NET_OFFLINE=true
+          echo "Using vendored cargo (offline)"
+        else
+          echo "No cargo/vendor found, using network"
+        fi
+        curl -fsSL https://bun.sh/install | bash
+        export PATH="$HOME/.bun/bin:$PATH"
+        bun install --frozen-lockfile
+        bunx tauri build --no-bundle
+
+      - install -Dm755 src-tauri/target/release/drawx /app/bin/drawx
+
+      - install -Dm644 flatpak/com.pmustafi.drawx.desktop
+        /app/share/applications/com.pmustafi.drawx.desktop
+
+      - install -Dm644 flatpak/com.pmustafi.drawx.metainfo.xml
+        /app/share/metainfo/com.pmustafi.drawx.metainfo.xml
+
+      - install -Dm644 src-tauri/icons/32x32.png
+        /app/share/icons/hicolor/32x32/apps/com.pmustafi.drawx.png
+      - install -Dm644 src-tauri/icons/64x64.png
+        /app/share/icons/hicolor/64x64/apps/com.pmustafi.drawx.png
+      - install -Dm644 src-tauri/icons/128x128.png
+        /app/share/icons/hicolor/128x128/apps/com.pmustafi.drawx.png
+      - install -Dm644 src-tauri/icons/128x128@2x.png
+        /app/share/icons/hicolor/256x256/apps/com.pmustafi.drawx.png
+
+    sources:
+      - type: dir
+        path: ../
+      # For Flathub submission, replace the `type: dir` above with:
+      #   - type: git
+      #     url: https://github.com/pratyay360/drawx.git
+      #     tag: v0.6.9
+      #     commit: <full-commit-hash>
+      # and add the vendored sources:
+      #   - cargo-sources.json
+      #   - generated-sources.json  # if you generated bun offline sources
+      # The bare filenames are parsed by flatpak-builder as lists of sources.
+      # Regenerate cargo-sources.json on each Cargo.lock bump.
