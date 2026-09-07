@@ -18,7 +18,9 @@ on:
 
 permissions:
   actions: write
-  contents: read
+  contents: write
+  attestations: write
+  packages: write
 
 jobs:
   clean-runs:
