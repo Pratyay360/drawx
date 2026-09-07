@@ -31,3 +31,19 @@ jobs:
           repository: ${{ github.repository }}
           retain_days: ${{ inputs.retain_days || '0' }}
           keep_minimum_runs: ${{ inputs.keep_minimum_runs || '0' }}
+      
+      - name: Delete All Git Tags
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api \
+            --paginate \
+            "repos/${{ github.repository }}/git/refs/tags" \
+            --jq '.[].ref' |
+          while read -r ref; do
+            tag="${ref#refs/tags/}"
+            echo "Deleting tag: $tag"
+            gh api \
+              --method DELETE \
+              "repos/${{ github.repository }}/git/refs/tags/$tag"
+          done
