@@ -31,10 +31,11 @@ modules:
       # (see the sources section below).  Regenerate both on every lockfile bump.
       build-args:
         - --share=network
-      append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin
+      append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin:/run/build/drawx/bin
       env:
         CARGO_HOME: /run/build/drawx/cargo
         XDG_CACHE_HOME: /run/build/drawx/flatpak-node/cache
+        COREPACK_HOME: /run/build/drawx/flatpak-node/corepack
         npm_config_cache: /run/build/drawx/flatpak-node/npm-cache
         PNPM_HOME: /run/build/drawx/pnpm
 
@@ -54,8 +55,9 @@ modules:
           echo "pnpm found on PATH: $(pnpm --version)"
         else
           echo "pnpm not found — downloading (requires --share=network)"
-          corepack enable pnpm
-          export PATH="$(npm config get prefix)/bin:$PATH"
+          mkdir -p /run/build/drawx/bin
+          corepack enable --install-directory /run/build/drawx/bin pnpm
+          export PATH="/run/build/drawx/bin:$PATH"
           echo "pnpm installed: $(pnpm --version)"
         fi
         pnpm install --frozen-lockfile
