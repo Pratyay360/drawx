@@ -1,44 +1,26 @@
-name: Flatpak
+name: flatpak
+
 on:
   push:
-    paths:
-      - "flatpak/**"
-      - "src-tauri/**"
-      - "src/**"
-      - "package.json"
-      - "bun.lockb"
-      - ".github/workflows/flatpak.yaml"
   pull_request:
-    paths:
-      - "flatpak/**"
-      - "src-tauri/**"
-      - "src/**"
   workflow_dispatch:
 
 jobs:
-  flatpak:
-    name: "Flatpak"
-    runs-on: ubuntu-latest
+  build-flatpak:
+    name: Flatpak (x86_64)
+    runs-on: ubuntu-24.04
     container:
-      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-48
       options: --privileged
     steps:
-      - uses: actions/checkout@v4
-      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+      - uses: actions/checkout@main
         with:
-          bundle: drawx.flatpak
+          submodules: recursive
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@401fe28a8384095fc1531b9d320b292f0ee45adb # v6.7
+        with:
+          bundle: drawx_x86_64.flatpak
           manifest-path: flatpak/com.pmustafi.drawx.yml
-          cache-key: flatpak-builder-${{ hashFiles('flatpak/com.pmustafi.drawx.yml', 'bun.lockb', 'src-tauri/Cargo.lock') }}
-      - name: upload flatpak artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: drawx-flatpak-${{ github.sha }}
-          path: drawx.flatpak
-          if-no-files-found: error
-      - name: publish flatpak to GitHub Release (tags only)
-        uses: softprops/action-gh-release@v2
-        with:
-          files: drawx.flatpak
-          generate_release_notes: false
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+          branch: stable
+          cache-key: drawx-flatpak-${{ github.sha }}
+          arch: x86_64
+          verbose: true
