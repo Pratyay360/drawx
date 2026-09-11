@@ -56,7 +56,7 @@ jobs:
         if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev
+          sudo apt-get install -y libwebkit2gtk-4.1-dev squashfs-tools
 
       - name: build Tauri app for Windows, Linux
         if: matrix.os != 'macos-latest'
@@ -77,6 +77,66 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+      - name: audit and fix AppImage permissions
+        # tauri-bundler/linuxdeploy can bake files without "other" read+exec
+        # bits (e.g. AppRun.wrapped at 0770). FUSE ignores those, but strict
+        # mounts (firejail --appimage, kernel squashfs) then fail with
+        # "Permission denied" on launch. Normalize, repack and re-sign so the
+        # updater signatures stay valid. Skipped when the audit is clean.
+        if: matrix.os == 'ubuntu-22.04'
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          BUNDLE_DIR="src-tauri/target/release/bundle/appimage"
+          for appimage in "$BUNDLE_DIR"/*.AppImage; do
+            case "$appimage" in
+              *.sig|*.tar.gz|*.zsync) continue ;;
+            esac
+            echo "Auditing $appimage ..."
+            chmod +x "$appimage"
+            work="$(mktemp -d)"
+            trap 'rm -rf "$work"' EXIT
+            offset="$("$appimage" --appimage-offset)"
+            dd if="$appimage" of="$work/runtime" bs="$offset" count=1 status=none
+            dd if="$appimage" of="$work/payload.squashfs" bs="$offset" skip=1 status=none
+            unsquashfs -d "$work/AppDir" "$work/payload.squashfs" > /dev/null
+            offenders="$(find "$work/AppDir" \( \( -type f ! -perm -o+r \) -o \( -type d ! -perm -o+rx \) -o \( -type f -perm /111 ! -perm -o+x \) \) -print || true)"
+            if [ -z "$offenders" ]; then
+              echo "Permissions OK, leaving $appimage untouched."
+              rm -rf "$work"
+              trap - EXIT
+              continue
+            fi
+            echo "Fixing world-readable/executable bits on:"
+            echo "$offenders"
+            chmod -R a+rX "$work/AppDir"
+            comp="$(unsquashfs -s "$work/payload.squashfs" | sed -n 's/^Compression //p')"
+            block="$(unsquashfs -s "$work/payload.squashfs" | sed -n 's/^Block size //p')"
+            mksquashfs "$work/AppDir" "$work/payload.fixed.squashfs" -root-owned -noappend -comp "${comp:-zstd}" -b "${block:-131072}"
+            cat "$work/runtime" "$work/payload.fixed.squashfs" > "$appimage"
+            chmod +x "$appimage"
+            # The bytes changed, so the build-time updater tarball and all
+            # signatures are stale: regenerate and re-sign them.
+            tar -czf "$appimage.tar.gz" -C "$BUNDLE_DIR" "$(basename "$appimage")"
+            bun run tauri signer sign "$appimage"
+            bun run tauri signer sign "$appimage.tar.gz"
+            # Re-audit the final artifact; fail loudly instead of shipping broken.
+            "$appimage" --appimage-extract > /dev/null
+            remaining="$(find squashfs-root \( \( -type f ! -perm -o+r \) -o \( -type d ! -perm -o+rx \) -o \( -type f -perm /111 ! -perm -o+x \) \) -print || true)"
+            rm -rf squashfs-root
+            if [ -n "$remaining" ]; then
+              echo "AppImage permission fix failed:"
+              echo "$remaining"
+              exit 1
+            fi
+            echo "Repacked and re-signed $appimage."
+            rm -rf "$work"
+            trap - EXIT
+          done
 
       - name: upload assets
         uses: crabnebula-dev/cloud-release@v0

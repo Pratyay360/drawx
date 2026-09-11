@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.pmustafi.drawx</id>
+  <id>io.github.drawx</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
   <name>DrawX</name>
@@ -15,9 +15,9 @@
       <li>Light and dark themes</li>
     </ul>
   </description>
-  <launchable type="desktop-id">com.pmustafi.drawx.desktop</launchable>
+  <launchable type="desktop-id">io.github.drawx.desktop</launchable>
   <provides>
-    <id>com.pmustafi.drawx.desktop</id>
+    <id>io.github.drawx.desktop</id>
   </provides>
   <!-- TODO: replace placeholder screenshot with real 16:9 screenshots hosted in repo -->
   <screenshots>
@@ -29,7 +29,7 @@
   <url type="homepage">https://github.com/pratyay360/drawx</url>
   <url type="bugtracker">https://github.com/pratyay360/drawx/issues</url>
   <url type="help">https://github.com/pratyay360/drawx#readme</url>
-  <developer id="com.pmustafi">
+  <developer id="io.github">
     <name>Pratyay360</name>
     <email>pratyaymusafi@outlook.com</email>
   </developer>

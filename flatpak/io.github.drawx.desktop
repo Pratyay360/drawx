@@ -1,9 +1,9 @@
 [Desktop Entry]
-Name=DrawX
+Name=Drawx
 GenericName=Whiteboard
-Comment=Offline-first brainstorming and whiteboard app
+Comment=Offline first brainstorming and whiteboard app
 Exec=drawx
-Icon=com.pmustafi.drawx
+Icon=io.github.drawx
 Terminal=false
 Type=Application
 Categories=Graphics;Utility;

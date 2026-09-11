@@ -15,11 +15,8 @@
           var m;
           if (darkOnly[n]) m = "dark";
           else if (p === "light" || p === "dark") m = p;
-          else
-            m = window.matchMedia("(prefers-color-scheme: dark)").matches
-              ? "dark"
-              : "light";
-          var r = document.documentElement;
+          else m = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          const r = document.documentElement;
           r.classList.toggle("dark", m === "dark");
           r.dataset.theme = m;
           r.dataset.appTheme = n;

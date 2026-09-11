@@ -4,11 +4,12 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+
 permissions:
   contents: write
   id-token: write
   packages: write
-  artifact-metadata: write
+  actions: write # required for cache writes by flatpak-builder action
 
 jobs:
   build-flatpak:
@@ -17,27 +18,35 @@ jobs:
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-48
       options: --privileged
+
     steps:
       - uses: actions/checkout@main
         with:
           submodules: recursive
+
       - uses: flatpak/flatpak-github-actions/flatpak-builder@401fe28a8384095fc1531b9d320b292f0ee45adb # v6.7
         with:
           bundle: drawx_x86_64.flatpak
-          manifest-path: flatpak/com.pmustafi.drawx.yml
+          manifest-path: flatpak/io.github.drawx.yml
           branch: stable
           cache-key: drawx-flatpak-${{ github.sha }}
           arch: x86_64
           verbose: true
-      - name: upload flatpak
-        uses: actions/upload-artifact@v7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload flatpak bundle
+        uses: actions/upload-artifact@main
         with:
           name: flatpak-x86_64
           path: drawx_x86_64.flatpak
-      - name: attach flatpak to release
+
+      - name: Attach flatpak to release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@main
         with:
           tag_name: ${{ github.ref_name }}
           files: drawx_x86_64.flatpak
           fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
