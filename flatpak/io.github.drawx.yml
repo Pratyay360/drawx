@@ -1,6 +1,6 @@
 id: io.github.drawx
 runtime: org.gnome.Platform
-runtime-version: "48"
+runtime-version: "49"
 sdk: org.gnome.Sdk
 
 sdk-extensions:
@@ -20,53 +20,46 @@ modules:
     buildsystem: simple
 
     build-options:
-      # Uncomment the line below for local `flatpak-builder` testing (requires network).
-      # For Flathub offline builds, vendored sources must be pre-generated instead:
+      # For GitHub Actions CI (flatpak-github-actions) we need network to fetch pnpm + npm deps.
+      # For Flathub offline builds, remove --share=network and rely on vendored sources instead:
       #   Cargo: python3 flatpak-builder-tools/cargo/flatpak-cargo-generator.py \
       #              src-tauri/Cargo.lock -o cargo-sources.json
-      #   Bun:   flatpak-builder-tools/node/flatpak-node-generator bun bun.lock \
-      #              -o flatpak/generated-sources.json
-      # Then add cargo-sources.json and generated-sources.json as extra sources
+      #          then: cp cargo-sources.json flatpak/cargo-sources.json
+      #   pnpm:  pnpm install --frozen-lockfile; vendor node_modules manually
+      #          or generate via pnpm and add flatpak/generated-sources.json
+      # Then add cargo-sources.json (+ generated-sources.json when available) as extra sources
       # (see the sources section below).  Regenerate both on every lockfile bump.
-      #
-      # build-args:
-      #   - --share=network
+      build-args:
+        - --share=network
       append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin
       env:
         CARGO_HOME: /run/build/drawx/cargo
         XDG_CACHE_HOME: /run/build/drawx/flatpak-node/cache
         npm_config_cache: /run/build/drawx/flatpak-node/npm-cache
-        BUN_INSTALL: /run/build/drawx/bun
+        PNPM_HOME: /run/build/drawx/pnpm
 
     build-commands:
-      # --- Cargo vendor setup ---
+      # --- Cargo vendor setup + pnpm install + Tauri build (single shell so CARGO_NET_OFFLINE persists) ---
       - |
+        set -e
         if [ -f cargo/config ]; then
           mkdir -p .cargo
           cp -f cargo/config .cargo/config.toml
           export CARGO_NET_OFFLINE=true
           echo "Using vendored cargo (offline)"
         else
-          echo "No cargo/vendor found — network access required (enable --share=network)"
+          echo "No cargo/vendor found — building with network (requires --share=network)"
         fi
-
-      # --- Bun install + build ---
-      # Offline path: flatpak-node-generator pre-populates the cache at
-      # $XDG_CACHE_HOME so `bun install --frozen-lockfile` works without network.
-      # Local/network path: downloads bun on the fly when --share=network is set.
-      - |
-        if command -v bun &>/dev/null; then
-          echo "bun found on PATH: $(bun --version)"
-        elif [ -x "$BUN_INSTALL/bin/bun" ]; then
-          export PATH="$BUN_INSTALL/bin:$PATH"
-          echo "bun found at BUN_INSTALL: $(bun --version)"
+        if command -v pnpm &>/dev/null; then
+          echo "pnpm found on PATH: $(pnpm --version)"
         else
-          echo "bun not found — downloading (requires --share=network)"
-          curl -fsSL https://bun.sh/install | bash -s -- --no-profile
-          export PATH="$BUN_INSTALL/bin:$PATH"
+          echo "pnpm not found — downloading (requires --share=network)"
+          corepack enable pnpm
+          export PATH="$(npm config get prefix)/bin:$PATH"
+          echo "pnpm installed: $(pnpm --version)"
         fi
-        bun install --frozen-lockfile
-        bun run tauri build --no-bundle
+        pnpm install --frozen-lockfile
+        pnpm exec tauri build --no-bundle
 
       # --- Install artifacts ---
       - install -Dm755 src-tauri/target/release/drawx /app/bin/drawx
@@ -89,16 +82,21 @@ modules:
     sources:
       - type: dir
         path: ../
+      # Vendored Rust crates — generated via flatpak-builder-tools/cargo.
+      # For local builds this is optional when --share=network is enabled, but it
+      # allows fully offline builds and is required for Flathub submission.
+      # Keep the file at flatpak/cargo-sources.json (copied from ../cargo-sources.json)
+      # so flatpak-builder can expand it as a list of sources.
+      - cargo-sources.json
       # --- For Flathub submission, replace the `type: dir` source above with: ---
       #
       # - type: git
       #   url: https://github.com/pratyay360/drawx.git
-      #   tag: v0.6.9
+      #   tag: v0.7.1
       #   commit: <full-commit-hash>
       #
-      # Then add the vendored offline sources (generated per the instructions above):
+      # Then keep the vendored offline sources below (regenerate on every lockfile bump):
       # - cargo-sources.json
-      # - generated-sources.json
+      # - generated-sources.json  # when available (npm/pnpm)
       #
       # Bare filenames are interpreted by flatpak-builder as lists of sources.
-      # Regenerate both files on every Cargo.lock / bun.lock bump.
