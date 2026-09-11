@@ -1,7 +1,10 @@
 name: Tauri v2 Release Process
+
 on:
   push:
-  pull_request:
+    tags:
+      - "v*"
+      - "*.*.*"
   workflow_dispatch:
 
 concurrency:
@@ -16,9 +19,9 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: create draft release
-        uses: crabnebula-dev/cloud-release@v0
+        uses: crabnebula-dev/cloud-release@main
         with:
           command: release draft ${{ env.CN_APPLICATION }} --framework tauri
           api-key: ${{ secrets.CN_API_KEY }}
@@ -81,6 +84,17 @@ jobs:
           command: release upload ${{ env.CN_APPLICATION }} --framework tauri
           api-key: ${{ secrets.CN_API_KEY }}
 
+      - name: collect bundles
+        uses: actions/upload-artifact@v7
+        with:
+          name: bundles-${{ matrix.os }}
+          path: |
+            src-tauri/target/**/release/bundle/deb/**
+            src-tauri/target/**/release/bundle/rpm/**
+            src-tauri/target/**/release/bundle/appimage/**
+            src-tauri/target/**/release/bundle/msi/**
+            src-tauri/target/**/release/bundle/nsis/**
+            src-tauri/target/**/release/bundle/dmg/**
 
   publish:
     needs: build_desktop
@@ -95,3 +109,39 @@ jobs:
         with:
           command: release publish ${{ env.CN_APPLICATION }} --framework tauri
           api-key: ${{ secrets.CN_API_KEY }}
+
+  github_release:
+    needs: build_desktop
+    if: startsWith(github.ref, 'refs/tags/')
+
+    runs-on: ubuntu-22.04
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: download bundles
+        uses: actions/download-artifact@v8
+        with:
+          path: bundles
+          pattern: bundles-*
+          merge-multiple: true
+
+      - name: publish GitHub release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: drawx ${{ github.ref_name }}
+          draft: false
+          generate_release_notes: true
+          fail_on_unmatched_files: false
+          files: |
+            bundles/**/*.deb
+            bundles/**/*.rpm
+            bundles/**/*.AppImage
+            bundles/**/*.AppImage.tar.gz
+            bundles/**/*.msi
+            bundles/**/*.exe
+            bundles/**/*.dmg
+            bundles/**/*.zip
+            bundles/**/*.sig

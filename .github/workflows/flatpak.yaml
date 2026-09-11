@@ -4,6 +4,11 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+permissions:
+  contents: write
+  id-token: write
+  packages: write
+  artifact-metadata: write
 
 jobs:
   build-flatpak:
@@ -24,3 +29,15 @@ jobs:
           cache-key: drawx-flatpak-${{ github.sha }}
           arch: x86_64
           verbose: true
+      - name: upload flatpak
+        uses: actions/upload-artifact@v7
+        with:
+          name: flatpak-x86_64
+          path: drawx_x86_64.flatpak
+      - name: attach flatpak to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: drawx_x86_64.flatpak
+          fail_on_unmatched_files: true

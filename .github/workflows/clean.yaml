@@ -33,7 +33,7 @@ jobs:
           repository: ${{ github.repository }}
           retain_days: ${{ inputs.retain_days || '0' }}
           keep_minimum_runs: ${{ inputs.keep_minimum_runs || '0' }}
-      
+
       - name: Delete All Git Tags
         env:
           GH_TOKEN: ${{ github.token }}
