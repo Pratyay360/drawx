@@ -63,11 +63,7 @@ jobs:
         run: |
           mise --version
           rustc --version
-          cargo --version
-          node --version
-          pnpm --version
-          biome --version
-          shellcheck --version
+
 
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-22.04'
@@ -78,7 +74,7 @@ jobs:
             squashfs-tools
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: mise install
 
       - name: Build Tauri app for Linux/Windows
         if: matrix.os != 'macos-latest'
@@ -96,8 +92,8 @@ jobs:
       - name: Build Tauri app for macOS
         if: matrix.os == 'macos-latest'
         run: |
-          pnpm exec tauri build --target x86_64-apple-darwin
-          pnpm exec tauri build --target aarch64-apple-darwin
+          mise run tauri:build --target x86_64-apple-darwin
+          mise run tauri:build --target aarch64-apple-darwin
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
@@ -198,8 +194,8 @@ jobs:
               -C "$BUNDLE_DIR" \
               "$(basename "$appimage")"
 
-            pnpm exec tauri signer sign "$appimage"
-            pnpm exec tauri signer sign "$appimage.tar.gz"
+            mise run tauri signer sign "$appimage"
+            mise run tauri signer sign "$appimage.tar.gz"
 
             "$appimage" --appimage-extract > /dev/null
 
