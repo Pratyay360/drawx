@@ -736,7 +736,7 @@ fn normalize_element(el: &serde_json::Value, index_offset: usize) -> serde_json:
         obj.insert("locked".to_string(), serde_json::json!(false));
     }
 
-    let el_type = obj.get("type").and_then(|t| t.as_str()).unwrap_or("");
+    let el_type = obj.get("type").and_then(|t| t.as_str()).unwrap_or("").to_string();
     if el_type == "text" {
         if !obj.contains_key("fontSize") {
             obj.insert("fontSize".to_string(), serde_json::json!(20));
