@@ -29,7 +29,7 @@
 	},
 	"bundle": {
 		"publisher": "Pratyay Mustafi",
-		"category": "Graphics",
+		"category": "Graphics and Design",
 		"shortDescription": "Offline first brainstorming and whiteboard app",
 		"createUpdaterArtifacts": true,
 		"active": true,
