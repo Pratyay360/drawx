@@ -1,13 +1,13 @@
 {
-  "identifier": "desktop-capability",
-  "platforms": ["macOS", "windows", "linux"],
-  "windows": ["main"],
-  "permissions": [
-    "updater:default",
-    "dialog:default",
-    "fs:default",
-    "process:default",
-    "notification:default",
-    "clipboard-manager:default"
-  ]
+	"identifier": "desktop-capability",
+	"platforms": ["macOS", "windows", "linux"],
+	"windows": ["main"],
+	"permissions": [
+		"updater:default",
+		"dialog:default",
+		"fs:default",
+		"process:default",
+		"notification:default",
+		"clipboard-manager:default"
+	]
 }

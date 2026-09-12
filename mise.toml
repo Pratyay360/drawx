@@ -17,8 +17,6 @@ _.file = { path = ".env" }
 auto_install = true
 
 [tasks.install]
-description = "Install JS dependencies"
-run = "pnpm install"
 
 [tasks.update]
 description = "Update JS dependencies"
@@ -44,22 +42,21 @@ run = "pnpm preview"
 description = "Run TypeScript typecheck (no emit)"
 run = "pnpm exec tsc --noEmit"
 
-# ── Lint / Format (Biome) ────────────────────────────────────────
 [tasks.lint]
 description = "Lint with Biome"
-run = "pnpm lint"
+run = "biome lint"
 
 [tasks."lint:fix"]
 description = "Lint and auto-fix with Biome"
-run = "pnpm lint:fix"
+run = "biome lint --fix"
 
 [tasks.format]
 description = "Format with Biome"
-run = "pnpm format"
+run = "biome format --write"
 
 [tasks."format:check"]
 description = "Check formatting with Biome (no write)"
-run = "pnpm exec biome format ."
+run = "biome format . --check"
 
 [tasks.check]
 description = "Run lint + typecheck"
