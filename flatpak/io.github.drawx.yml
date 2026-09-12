@@ -41,7 +41,7 @@ modules:
 
     build-commands:
       - npm ci
-      - npm run tauri build --no-bundle
+      - npm run tauri build -- --no-bundle
       # --- Install artifacts ---
       - install -Dm755 src-tauri/target/release/drawx /app/bin/drawx
 
