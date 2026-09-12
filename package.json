@@ -1,6 +1,6 @@
 {
   "name": "drawx",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "type": "module",
   "imports": {
     "#components/*": "./src/components/*.tsx",
@@ -68,11 +68,11 @@
   "devEngines": {
     "packageManager": {
       "name": "npm",
-      "version": "^12.0.2",
+      "version": ">=11.19.0",
       "onFail": "warn"
     }
   },
-  "packageManager": "npm@12.0.2+sha512.b885e890b9418fa1693544d05f53e64f9a73ec194837d4258b15fecdd692347b1dd2a517b1b0cbaf9d31cd8e92c3b70956bd2ecc72833a57b4b3098f5bfa7943",
+  "packageManager": "npm@11.19.0",
   "trustedDependencies": [
     "@astryxdesign/cli",
     "@astryxdesign/core"
