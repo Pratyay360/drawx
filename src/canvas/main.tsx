@@ -33,6 +33,7 @@ import { CanvasHeader } from "./components/CanvasHeader.tsx";
 import { useCanvasData } from "./hooks/useCanvasData.ts";
 import { useCanvasExports } from "./hooks/useCanvasExports.ts";
 import { useLibraryPersistence } from "./hooks/useLibraryPersistence.ts";
+import { useMcpSync } from "./hooks/useMcpSync.ts";
 
 export function Canvas() {
 	const { id } = useParams<{ id: string }>();
@@ -56,6 +57,8 @@ export function Canvas() {
 		handleExcalidrawChange,
 		save,
 	} = useCanvasData(id);
+
+	useMcpSync(id, canvasData?.title, elements, appState);
 
 	const { handleLibraryChange, initialLibraryItems } = useLibraryPersistence();
 
@@ -161,7 +164,11 @@ export function Canvas() {
 								theme={mode}
 								initialData={{
 									elements,
-									appState,
+									appState: {
+										...appState,
+										viewBackgroundColor:
+											appState.viewBackgroundColor ?? "transparent",
+									},
 									libraryItems: initialLibraryItems,
 								}}
 								onChange={handleExcalidrawChange}

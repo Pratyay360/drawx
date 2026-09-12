@@ -34,40 +34,57 @@ jobs:
           - windows-latest
 
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - uses: actions/checkout@main
+
       - name: Install bun
         uses: oven-sh/setup-bun@v2
+
       - uses: actions/setup-node@v4
         with:
           node-version: "lts/*"
+
       - name: Install stable toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
           cache: true
 
-      - name: install Linux dependencies
+      - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            libxdo-dev \
+            patchelf \
+            file \
+            squashfs-tools
 
-      - name: build Tauri app for Windows, Linux
-        if: matrix.os != 'macos-latest'
+      - name: Install dependencies
         run: |
+          rm -f package-lock.json
           bun install
-          bun run tauri build
+
+      - name: Build Tauri app for Windows and Linux
+        if: matrix.os != 'macos-latest'
+        run: bun run tauri build
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
-      - name: Install x86_64-apple-darwin for mac and build Tauri binaries
+      - name: Build Tauri app for macOS
         if: matrix.os == 'macos-latest'
         run: |
           rustup target add x86_64-apple-darwin
-          bun install
+          rustup target add aarch64-apple-darwin
           bun run tauri build --target x86_64-apple-darwin
           bun run tauri build --target aarch64-apple-darwin
         env:

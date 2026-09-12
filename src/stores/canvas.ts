@@ -64,7 +64,7 @@ let isSaving = false;
 const initialState = {
 	canvasData: null,
 	elements: [] as ExcalidrawElement[],
-	appState: {} as Partial<AppState>,
+	appState: { viewBackgroundColor: "transparent" } as Partial<AppState>,
 	loading: true,
 	loadError: null as string | null,
 	isChangingCanvas: false,
@@ -92,6 +92,9 @@ export const useCanvasStore = create<CanvasStore>()((set, get) => ({
 
 			if (data) {
 				const sanitizedAppState = sanitizeExcalidrawAppState(data.appState);
+				if (!sanitizedAppState.viewBackgroundColor) {
+					sanitizedAppState.viewBackgroundColor = "transparent";
+				}
 				const resolvedElements = data.elements || [];
 
 				set({

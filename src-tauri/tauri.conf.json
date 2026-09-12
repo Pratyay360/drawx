@@ -28,7 +28,9 @@
 		]
 	},
 	"bundle": {
-	    "publisher": "Pratyay Mustafi",
+		"publisher": "Pratyay Mustafi",
+		"category": "Graphics",
+		"shortDescription": "Offline first brainstorming and whiteboard app",
 		"createUpdaterArtifacts": true,
 		"active": true,
 		"targets": "all",
@@ -38,14 +40,19 @@
 			}
 		},
 		"linux": {
-			"appimage": {
-				"bundleMediaFramework": true
+			"deb": {
+				"depends": [
+					"libwebkit2gtk-4.1-0",
+					"libayatana-appindicator3-1"
+				]
 			}
 		},
 		"icon": [
 			"icons/32x32.png",
+			"icons/64x64.png",
 			"icons/128x128.png",
 			"icons/128x128@2x.png",
+			"icons/icon.png",
 			"icons/icon.icns",
 			"icons/icon.ico"
 		]

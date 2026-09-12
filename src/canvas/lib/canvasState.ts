@@ -23,6 +23,7 @@ export function areAppStatesEqual(
 	b: Partial<AppState>,
 ): boolean {
 	return (
+		a.viewBackgroundColor === b.viewBackgroundColor &&
 		a.gridSize === b.gridSize &&
 		a.zenModeEnabled === b.zenModeEnabled &&
 		a.gridModeEnabled === b.gridModeEnabled &&
@@ -39,7 +40,7 @@ export function getPersistentAppState(
 	)
 		return {};
 	return {
-		viewBackgroundColor: appState.viewBackgroundColor,
+		viewBackgroundColor: appState.viewBackgroundColor ?? "transparent",
 		gridSize: appState.gridSize,
 		zenModeEnabled: appState.zenModeEnabled,
 		gridModeEnabled: appState.gridModeEnabled,

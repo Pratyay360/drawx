@@ -170,9 +170,17 @@ export function useCanvasExports(): UseCanvasExportsReturn {
 		try {
 			const currentElements = excalidrawAPI.getSceneElements();
 			const currentAppState = excalidrawAPI.getAppState();
+			const isTransparent =
+				currentAppState.viewBackgroundColor === "transparent" ||
+				!currentAppState.viewBackgroundColor;
 			const blob = await exportToBlob({
 				elements: currentElements,
-				appState: currentAppState,
+				appState: {
+					...currentAppState,
+					exportBackground: currentAppState.exportBackground ?? !isTransparent,
+					viewBackgroundColor:
+						currentAppState.viewBackgroundColor || "transparent",
+				},
 				mimeType: "image/png",
 				exportPadding: 15,
 			});
@@ -211,9 +219,17 @@ export function useCanvasExports(): UseCanvasExportsReturn {
 		try {
 			const currentElements = excalidrawAPI.getSceneElements();
 			const currentAppState = excalidrawAPI.getAppState();
+			const isTransparent =
+				currentAppState.viewBackgroundColor === "transparent" ||
+				!currentAppState.viewBackgroundColor;
 			const svg = await exportToSvg({
 				elements: currentElements,
-				appState: currentAppState,
+				appState: {
+					...currentAppState,
+					exportBackground: currentAppState.exportBackground ?? !isTransparent,
+					viewBackgroundColor:
+						currentAppState.viewBackgroundColor || "transparent",
+				},
 				exportPadding: 15,
 			});
 			const svgString = new XMLSerializer().serializeToString(svg);

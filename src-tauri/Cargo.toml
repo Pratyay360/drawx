@@ -14,8 +14,10 @@ identifier = "io.github.drawx"
 resources = [ "icons/**" ]
 icons = [
   "icons/32x32.png",
+  "icons/64x64.png",
   "icons/128x128.png",
   "icons/128x128@2x.png",
+  "icons/icon.png",
   "icons/icon.icns",
   "icons/icon.ico",
 ]
@@ -23,9 +25,6 @@ icons = [
 [package.metadata.packager.appimage]
 bins = ["/usr/bin/xdg-open"]
 libs = [
-  "WebKitNetworkProcess",
-  "WebKitWebProcess",
-  "libwebkit2gtkinjectedbundle.so",
   "libayatana-appindicator3.so.1",
 ]
 
