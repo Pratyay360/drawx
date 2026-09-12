@@ -1,10 +1,6 @@
 name: Tauri v2 Release Process
-
 on:
   push:
-    tags:
-      - "v*"
-      - "*.*.*"
   workflow_dispatch:
 
 concurrency:
@@ -20,15 +16,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@main
-
-      - name: Setup mise
-        uses: jdx/mise-action@v4
-        with:
-          version: latest
-          cache: true
-
-      - name: Create draft release
-        uses: crabnebula-dev/cloud-release@main
+      - name: create draft release
+        uses: crabnebula-dev/cloud-release@v0
         with:
           command: release draft ${{ env.CN_APPLICATION }} --framework tauri
           api-key: ${{ secrets.CN_API_KEY }}
@@ -48,247 +37,60 @@ jobs:
 
     steps:
       - uses: actions/checkout@main
-
-      # mise.toml is the single source of truth.
-      - name: Setup mise
-        uses: jdx/mise-action@v4
+      - name: Install bun
+        uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          version: latest
+          node-version: "lts/*"
+      - name: Install stable toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
           cache: true
 
-      - name: Install project tools
-        run: mise install
-
-      - name: Verify toolchain
-        run: |
-          mise --version
-          rustc --version
-
-
-      - name: Install Linux dependencies
+      - name: install Linux dependencies
         if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            squashfs-tools
+          sudo apt-get install -y libwebkit2gtk-4.1-dev
 
-      - name: Install dependencies
-        run: mise install
-
-      - name: Build Tauri app for Linux/Windows
+      - name: build Tauri app for Windows, Linux
         if: matrix.os != 'macos-latest'
-        run: mise run tauri:build
+        run: |
+          bun install
+          bun run tauri build
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
-      - name: Install Apple targets
+      - name: Install x86_64-apple-darwin for mac and build Tauri binaries
         if: matrix.os == 'macos-latest'
         run: |
           rustup target add x86_64-apple-darwin
-          rustup target add aarch64-apple-darwin
-
-      - name: Build Tauri app for macOS
-        if: matrix.os == 'macos-latest'
-        run: |
-          mise run tauri:build --target x86_64-apple-darwin
-          mise run tauri:build --target aarch64-apple-darwin
+          bun install
+          bun run tauri build --target x86_64-apple-darwin
+          bun run tauri build --target aarch64-apple-darwin
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
-      - name: Audit and fix AppImage permissions
-        if: matrix.os == 'ubuntu-22.04'
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-
-          BUNDLE_DIR="src-tauri/target/release/bundle/appimage"
-
-          for appimage in "$BUNDLE_DIR"/*.AppImage; do
-            case "$appimage" in
-              *.sig|*.tar.gz|*.zsync)
-                continue
-                ;;
-            esac
-
-            echo "Auditing $appimage ..."
-
-            chmod +x "$appimage"
-
-            work="$(mktemp -d)"
-            trap 'rm -rf "$work"' EXIT
-
-            offset="$("$appimage" --appimage-offset)"
-
-            dd \
-              if="$appimage" \
-              of="$work/runtime" \
-              bs="$offset" \
-              count=1 \
-              status=none
-
-            dd \
-              if="$appimage" \
-              of="$work/payload.squashfs" \
-              bs="$offset" \
-              skip=1 \
-              status=none
-
-            unsquashfs \
-              -d "$work/AppDir" \
-              "$work/payload.squashfs" > /dev/null
-
-            offenders="$(
-              find "$work/AppDir" \
-                \( \
-                  \( -type f ! -perm -o+r \) \
-                  -o \
-                  \( -type d ! -perm -o+rx \) \
-                  -o \
-                  \( -type f -perm /111 ! -perm -o+x \) \
-                \) \
-                -print || true
-            )"
-
-            if [ -z "$offenders" ]; then
-              echo "Permissions OK, leaving $appimage untouched."
-              rm -rf "$work"
-              trap - EXIT
-              continue
-            fi
-
-            echo "Fixing permissions:"
-            echo "$offenders"
-
-            chmod -R a+rX "$work/AppDir"
-
-            comp="$(
-              unsquashfs -s "$work/payload.squashfs" |
-                sed -n 's/^Compression //p'
-            )"
-
-            block="$(
-              unsquashfs -s "$work/payload.squashfs" |
-                sed -n 's/^Block size //p'
-            )"
-
-            mksquashfs \
-              "$work/AppDir" \
-              "$work/payload.fixed.squashfs" \
-              -root-owned \
-              -noappend \
-              -comp "${comp:-zstd}" \
-              -b "${block:-131072}"
-
-            cat \
-              "$work/runtime" \
-              "$work/payload.fixed.squashfs" \
-              > "$appimage"
-
-            chmod +x "$appimage"
-
-            tar \
-              -czf "$appimage.tar.gz" \
-              -C "$BUNDLE_DIR" \
-              "$(basename "$appimage")"
-
-            mise run tauri signer sign "$appimage"
-            mise run tauri signer sign "$appimage.tar.gz"
-
-            "$appimage" --appimage-extract > /dev/null
-
-            remaining="$(
-              find squashfs-root \
-                \( \
-                  \( -type f ! -perm -o+r \) \
-                  -o \
-                  \( -type d ! -perm -o+rx \) \
-                  -o \
-                  \( -type f -perm /111 ! -perm -o+x \) \
-                \) \
-                -print || true
-            )"
-
-            rm -rf squashfs-root
-
-            if [ -n "$remaining" ]; then
-              echo "AppImage permission fix failed:"
-              echo "$remaining"
-              exit 1
-            fi
-
-            echo "Repacked and re-signed $appimage."
-
-            rm -rf "$work"
-            trap - EXIT
-          done
-
-      - name: Upload assets
+      - name: upload assets
         uses: crabnebula-dev/cloud-release@v0
         with:
           command: release upload ${{ env.CN_APPLICATION }} --framework tauri
           api-key: ${{ secrets.CN_API_KEY }}
 
-      - name: Collect bundles
-        uses: actions/upload-artifact@v7
-        with:
-          name: bundles-${{ matrix.os }}
-          path: |
-            src-tauri/target/**/release/bundle/deb/**
-            src-tauri/target/**/release/bundle/rpm/**
-            src-tauri/target/**/release/bundle/appimage/**
-            src-tauri/target/**/release/bundle/msi/**
-            src-tauri/target/**/release/bundle/nsis/**
-            src-tauri/target/**/release/bundle/dmg/**
 
   publish:
-    needs: build_desktop
+    needs: [build_desktop]
 
     runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@main
 
-      - name: Publish release
+      - name: publish release
         uses: crabnebula-dev/cloud-release@v0
         with:
           command: release publish ${{ env.CN_APPLICATION }} --framework tauri
           api-key: ${{ secrets.CN_API_KEY }}
-
-  github_release:
-    needs: build_desktop
-    if: startsWith(github.ref, 'refs/tags/')
-
-    runs-on: ubuntu-22.04
-
-    permissions:
-      contents: write
-
-    steps:
-      - name: Download bundles
-        uses: actions/download-artifact@main
-        with:
-          path: bundles
-          pattern: bundles-*
-          merge-multiple: true
-
-      - name: Publish GitHub release
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: drawx ${{ github.ref_name }}
-          draft: false
-          generate_release_notes: true
-          fail_on_unmatched_files: false
-          files: |
-            bundles/**/*.deb
-            bundles/**/*.rpm
-            bundles/**/*.AppImage
-            bundles/**/*.AppImage.tar.gz
-            bundles/**/*.msi
-            bundles/**/*.exe
-            bundles/**/*.dmg
-            bundles/**/*.zip
-            bundles/**/*.sig

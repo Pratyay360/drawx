@@ -3,6 +3,7 @@
 	"productName": "drawx",
 	"version": "0.7.2",
 	"identifier": "io.github.drawx",
+
 	"build": {
 		"beforeDevCommand": "npm run dev",
 		"devUrl": "http://localhost:1420",
@@ -27,6 +28,7 @@
 		]
 	},
 	"bundle": {
+	    "publisher": "Pratyay Mustafi",
 		"createUpdaterArtifacts": true,
 		"active": true,
 		"targets": "all",

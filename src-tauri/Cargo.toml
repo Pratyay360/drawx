@@ -7,6 +7,31 @@ description = "Offline first brainstorming app"
 authors = ["Pratyay360"]
 edition = "2021"
 
+[package.metadata.packager]
+before-packaging-command = "cargo tauri build"
+product-name = "drawx"
+identifier = "io.github.drawx"
+resources = [ "icons/**" ]
+icons = [
+  "icons/32x32.png",
+  "icons/128x128.png",
+  "icons/128x128@2x.png",
+  "icons/icon.icns",
+  "icons/icon.ico",
+]
+
+[package.metadata.packager.appimage]
+bins = ["/usr/bin/xdg-open"]
+libs = [
+  "WebKitNetworkProcess",
+  "WebKitWebProcess",
+  "libwebkit2gtkinjectedbundle.so",
+  "libayatana-appindicator3.so.1",
+]
+
+
+[package.metadata.packager.appimage.linuxdeploy-plugins]
+"gtk" = "https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh"
 
 [profile.dev]
 incremental = true
