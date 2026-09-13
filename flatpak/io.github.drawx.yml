@@ -14,7 +14,10 @@ finish-args:
   - --share=network
   - --socket=wayland
   - --socket=fallback-x11
-  - --share=home
+  - --filesystem=xdg-Documents
+  - --filesystem=xdg-Pictures
+  - --filesystem=xdg-Download
+  - --filesystem=xdg-Desktop
   - --device=dri
 
 modules:
@@ -33,7 +36,6 @@ modules:
       # (see the sources section below).  Regenerate both on every lockfile bump.
       build-args:
         - --share=network
-        - --share=home
       append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin:/run/build/drawx/bin
       env:
         CARGO_HOME: /run/build/drawx/cargo
