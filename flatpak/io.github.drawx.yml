@@ -14,10 +14,7 @@ finish-args:
   - --share=network
   - --socket=wayland
   - --socket=fallback-x11
-  - --filesystem=xdg-Documents
-  - --filesystem=xdg-Pictures
-  - --filesystem=xdg-Download
-  - --filesystem=xdg-Desktop
+  - --filesystem=home
   - --device=dri
 
 modules:
