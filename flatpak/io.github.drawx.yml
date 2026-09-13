@@ -1,6 +1,6 @@
 id: io.github.drawx
 runtime: org.gnome.Platform
-runtime-version: "49"
+runtime-version: "50"
 sdk: org.gnome.Sdk
 
 sdk-extensions:
@@ -14,6 +14,7 @@ finish-args:
   - --share=network
   - --socket=wayland
   - --socket=fallback-x11
+  - --share=home
   - --device=dri
 
 modules:
@@ -32,6 +33,7 @@ modules:
       # (see the sources section below).  Regenerate both on every lockfile bump.
       build-args:
         - --share=network
+        - --share=home
       append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin:/run/build/drawx/bin
       env:
         CARGO_HOME: /run/build/drawx/cargo

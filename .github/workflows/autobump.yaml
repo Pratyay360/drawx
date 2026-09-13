@@ -1,0 +1,65 @@
+name: Autobump
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: autobump-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bump:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Skip if HEAD already tagged at current version
+        id: check
+        run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          TAGGED=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1 | sed 's/^v//')
+          if [ -n "$TAGGED" ] && [ "$TAGGED" = "$CURRENT" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "HEAD (v${CURRENT}) already tagged, nothing to bump."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "Current: v${CURRENT}, latest tag at HEAD: ${TAGGED:-none}"
+          fi
+
+      - name: Compute next patch version
+        if: steps.check.outputs.skip != 'true'
+        id: bump
+        run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          NEW="$MAJOR.$MINOR.$((PATCH + 1))"
+          echo "NEW=$NEW" >> "$GITHUB_OUTPUT"
+          echo "Bumping $CURRENT -> $NEW"
+
+      - name: Update package.json and Packager.toml
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          NEW="${{ steps.bump.outputs.NEW }}"
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));p.version='$NEW';fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
+          sed -i "s/^version = \".*\"/version = \"$NEW\"/" Packager.toml
+
+      - name: Commit and tag
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          NEW="${{ steps.bump.outputs.NEW }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json Packager.toml
+          git commit -m "chore(release): v$NEW"
+          git tag -a "v$NEW" -m "v$NEW"
+          git push
+          git push origin "v$NEW"
