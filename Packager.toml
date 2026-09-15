@@ -1,6 +1,6 @@
 name = "drawx"
 product-name = "drawx"
 identifier = "io.github.drawx"
-version = "0.7.4"
+version = "0.7.6"
 out-dir = "./dist"
 before-packaging-command = "cargo build --release"
