@@ -1,8 +1,6 @@
 name: Clean Workflow Runs
 
 on:
-  schedule:
-    - cron: "0 0 * * 0"
   workflow_dispatch:
     inputs:
       retain_days:
