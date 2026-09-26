@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="DrawX — offline-first brainstorming and whiteboard app. Infinite canvas powered by Excalidraw, built with Tauri."
+    />
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>DrawX </title>
+  </head>
+  <body>
+    <header class="nav">
+      <a class="brand" href="./">
+        <img src="./icon.png" alt="DrawX logo" width="32" height="32" />
+        <span>DrawX</span>
+      </a>
+      <nav>
+        <a href="#features">Features</a>
+        <a href="#downloads">Downloads</a>
+        <a href="https://github.com/pratyay360/drawx">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <img
+          class="hero-logo"
+          src="./icon.png"
+          alt="DrawX logo"
+          width="128"
+          height="128"
+        />
+        <h1>DrawX</h1>
+        <p class="tagline">
+          Offline-first brainstorming and whiteboard app. Infinite canvas
+          powered by <a href="https://excalidraw.com">Excalidraw</a>, built
+          with <a href="https://tauri.app">Tauri v2</a>, React, and SQLite.
+        </p>
+        <p class="badges">
+          <a href="https://github.com/pratyay360/drawx"
+            ><img
+              alt="GitHub Stars"
+              src="https://img.shields.io/github/stars/pratyay360/drawx?style=flat-square&logo=github"
+          /></a>
+          <a href="https://github.com/pratyay360/drawx/blob/main/LICENSE"
+            ><img
+              alt="License"
+              src="https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square"
+          /></a>
+          <a href="https://github.com/pratyay360/drawx/releases"
+            ><img
+              alt="Version"
+              src="https://img.shields.io/github/v/release/pratyay360/drawx?style=flat-square"
+          /></a>
+          <a href="https://tauri.app"
+            ><img
+              alt="Built with Tauri"
+              src="https://img.shields.io/badge/built_with-Tauri-004b3f?style=flat-square&logo=tauri"
+          /></a>
+        </p>
+        <p class="cta">
+          <a class="btn primary" href="#downloads">Download</a>
+          <a
+            class="btn"
+            href="https://github.com/pratyay360/drawx"
+            >View on GitHub</a
+          >
+        </p>
+        <figure class="shot">
+          <img
+            src="https://iili.io/nC6FrCb.png"
+            alt="DrawX canvas screenshot"
+            loading="lazy"
+          />
+        </figure>
+      </section>
+
+      <section id="features" class="features">
+        <h2>Features</h2>
+        <ul>
+          <li>
+            <strong>Offline-First</strong>
+            <span
+              >All your sketches and notes are stored locally. No internet
+              required.</span
+            >
+          </li>
+          <li>
+            <strong>Infinite Canvas</strong>
+            <span>Powered by Excalidraw for unlimited drawing space.</span>
+          </li>
+          <li>
+            <strong>Cross-Platform</strong>
+            <span>Available on Windows, macOS, and Linux.</span>
+          </li>
+          <li>
+            <strong>Fast &amp; Lightweight</strong>
+            <span>Built with Tauri for minimal resource usage.</span>
+          </li>
+          <li>
+            <strong>Theme Support</strong>
+            <span
+              >Multiple built-in themes including Matcha, Neutral, Stone, and
+              Y2K.</span
+            >
+          </li>
+          <li>
+            <strong>Auto-Updates</strong>
+            <span>Seamless updates through Tauri's updater.</span>
+          </li>
+        </ul>
+      </section>
+
+      <section id="downloads" class="downloads">
+        <h2>Downloads</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th>Download</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Debian (x86_64)</td>
+              <td>
+                <a
+                  href="https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/debian-x86_64"
+                  >debian-x86_64</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>RPM (x86_64)</td>
+              <td>
+                <a
+                  href="https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/rpm-x86_64"
+                  >rpm-x86_64</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>Arch (x86_64)</td>
+              <td>
+                <a
+                  href="https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/arch-x86_64"
+                  >arch-x86_64</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>macOS (x86_64/arm64)</td>
+              <td>
+                <a
+                  href="https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/macos-x86_64"
+                  >macos-x86_64</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>Windows (NSIS)</td>
+              <td>
+                <a
+                  href="https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/nsis-x86_64"
+                  >nsis-x86_64</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>Windows (MSI)</td>
+              <td>
+                <a
+                  href="https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/windows-x86_64"
+                  >windows-x86_64</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>Linux (Flatpak)</td>
+              <td>
+                <a href="https://github.com/pratyay360/drawx/releases"
+                  >GitHub releases</a
+                >
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        <a href="https://github.com/pratyay360/drawx">Repository</a> ·
+        <a href="https://github.com/pratyay360/drawx/issues">Issues</a> ·
+        <a href="https://github.com/pratyay360/drawx/releases">Releases</a>
+      </p>
+      <p>DrawX is licensed under Apache 2.0.</p>
+    </footer>
+  </body>
+</html>

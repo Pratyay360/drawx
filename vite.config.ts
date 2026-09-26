@@ -5,6 +5,9 @@ import { defineConfig } from "vite";
 const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig(async () => ({
+	// GitHub Pages project site lives under /drawx/. Tauri (tauri://localhost)
+	// and local dev need "/". The Pages workflow sets GITHUB_PAGES=true.
+	base: process.env.GITHUB_PAGES === "true" ? "/drawx/" : "/",
 	plugins: [react(), tailwindcss()],
 
 	clearScreen: false,
