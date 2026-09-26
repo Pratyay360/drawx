@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>io.github.drawx</id>
+  <id>io.github.pratyay360.drawx</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>Apache 2.0</project_license>
   <name>DrawX</name>
@@ -13,9 +13,9 @@
       <li>Works fully offline your data stays on device</li>
     </ul>
   </description>
-  <launchable type="desktop-id">io.github.drawx.desktop</launchable>
+  <launchable type="desktop-id">io.github.pratyay360.drawx.desktop</launchable>
   <provides>
-    <id>io.github.drawx.desktop</id>
+    <id>io.github.pratyay360.drawx.desktop</id>
   </provides>
   <!-- TODO: replace placeholder screenshot with real 16:9 screenshots hosted in repo -->
   <screenshots>

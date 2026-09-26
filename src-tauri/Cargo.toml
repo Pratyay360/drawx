@@ -10,7 +10,7 @@ edition = "2021"
 [package.metadata.packager]
 before-packaging-command = "cargo tauri build"
 product-name = "drawx"
-identifier = "io.github.drawx"
+identifier = "io.github.pratyay360.drawx"
 resources = [ "icons/**" ]
 icons = [
   "icons/32x32.png",
