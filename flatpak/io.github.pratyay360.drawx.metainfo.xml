@@ -6,7 +6,7 @@
   <name>DrawX</name>
   <summary>Offline-first brainstorming and whiteboard</summary>
   <description>
-    <p>DrawX is an offline-first brainstorming and whiteboard application built with Excalidraw.</p>
+    <p>DrawX is an offline first brainstorming and whiteboard application built with Excalidraw.</p>
     <p>Features:</p>
     <ul>
       <li>Infinite canvas powered by Excalidraw</li>
@@ -17,11 +17,11 @@
   <provides>
     <id>io.github.pratyay360.drawx.desktop</id>
   </provides>
-  <!-- TODO: replace placeholder screenshot with real 16:9 screenshots hosted in repo -->
   <screenshots>
     <screenshot type="default">
-      <caption>DrawX canvas</caption>
-      <image type="source" width="1280" height="720">https://raw.githubusercontent.com/pratyay360/drawx/main/public/vite.svg</image>
+      <caption>Draw</caption>
+      <image type="source" width="1280" height="720">https://ibb.co/ZRPL5xnt</image>
+      <image type="source" width="1280" height="720">https://ibb.co/20ctd68T</image>
     </screenshot>
   </screenshots>
   <url type="homepage">https://github.com/pratyay360/drawx</url>
