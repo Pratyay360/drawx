@@ -206,4 +206,3 @@ export async function getMcpStatus(): Promise<McpStatus | null> {
 		return null;
 	}
 }
-
