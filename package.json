@@ -73,7 +73,7 @@
       "onFail": "warn"
     }
   },
-  "packageManager": "npm@11.19.0",
+  "packageManager": "npm@12.2.0",
   "trustedDependencies": [
     "@astryxdesign/cli",
     "@astryxdesign/core"
