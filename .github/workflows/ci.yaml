@@ -1,4 +1,4 @@
-name: Tauri v2 Release Process
+name: ci
 on:
   workflow_dispatch:
   push:
