@@ -14,7 +14,7 @@ permissions:
 jobs:
   build-flatpak:
     name: Flatpak (x86_64)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
       options: --privileged
