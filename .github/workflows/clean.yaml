@@ -6,19 +6,17 @@ on:
       retain_days:
         description: "Number of days to keep runs (0 to delete all)"
         required: false
-        default: "0"
+        default: "30"
         type: string
       keep_minimum_runs:
         description: "Minimum number of runs to keep per workflow"
         required: false
-        default: "0"
+        default: "5"
         type: string
 
 permissions:
   actions: write
-  contents: write
-  attestations: write
-  packages: write
+  contents: read
 
 jobs:
   clean-runs:
@@ -29,21 +27,9 @@ jobs:
         with:
           token: ${{ github.token }}
           repository: ${{ github.repository }}
-          retain_days: ${{ inputs.retain_days || '0' }}
-          keep_minimum_runs: ${{ inputs.keep_minimum_runs || '0' }}
+          retain_days: ${{ inputs.retain_days || '30' }}
+          keep_minimum_runs: ${{ inputs.keep_minimum_runs || '5' }}
 
-      - name: Delete All Git Tags
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh api \
-            --paginate \
-            "repos/${{ github.repository }}/git/refs/tags" \
-            --jq '.[].ref' |
-          while read -r ref; do
-            tag="${ref#refs/tags/}"
-            echo "Deleting tag: $tag"
-            gh api \
-              --method DELETE \
-              "repos/${{ github.repository }}/git/refs/tags/$tag"
-          done
+      # Tag deletion is intentionally NOT done here. Deleting refs/tags/*
+      # destroys the vX.Y.Z release tags, which makes releases unpinnable and
+      # breaks updater version resolution. Tags are removed individually.

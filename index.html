@@ -6,13 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script>
       (() => {
+        const names = ["butter", "neutral", "matcha", "stone", "y2k", "gothic"];
+        const darkOnly = { gothic: 1 };
+        let n = "butter";
+        let m;
         try {
-          var names = ["butter", "neutral", "matcha", "stone", "y2k", "gothic"];
-          var n = localStorage.getItem("drawx-theme");
-          if (!n || names.indexOf(n) < 0) n = "butter";
-          var darkOnly = { gothic: 1 };
-          var p = localStorage.getItem("drawx-theme-mode") || "system";
-          var m;
+          const stored = localStorage.getItem("drawx-theme");
+          if (stored && names.indexOf(stored) >= 0) n = stored;
+          const p = localStorage.getItem("drawx-theme-mode") || "system";
           if (darkOnly[n]) m = "dark";
           else if (p === "light" || p === "dark") m = p;
           else m = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";

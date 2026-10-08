@@ -7,11 +7,11 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/jdx/mise:2026.8.16
@@ -21,8 +21,26 @@ jobs:
 
     steps:
       - uses: actions/checkout@main
-      - name: check
+
+      - name: cache rust build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: tauri-pr-${{ runner.os }}-${{ hashFiles('src-tauri/Cargo.lock', 'bun.lock') }}
+          restore-keys: tauri-pr-${{ runner.os }}-
+
+      - name: install
         run: |
-            mise deps
-            mise install
-            mise run tauri:build
+          mise deps
+          mise install
+
+      - name: lint and typecheck
+        run: mise run check
+
+      # Full Tauri bundle only on main — PRs stop at the cheap gate above.
+      - name: build
+        if: github.event_name != 'pull_request'
+        run: mise run tauri:build

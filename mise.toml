@@ -39,7 +39,7 @@ run = "nub run build"
 
 [tasks.typecheck]
 description = "Run TypeScript typecheck (no emit)"
-run = "nub run tsc --noEmit"
+run = "nub run typecheck"
 
 [tasks.lint]
 description = "Lint with Biome"
