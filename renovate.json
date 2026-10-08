@@ -8,7 +8,13 @@
 	"packageRules": [
 		{
 			"description": "Automerge lockfile-only updates (no CI needed)",
-			"matchUpdateTypes": ["pin", "digest", "lockFileMaintenance", "patch", "minor"],
+			"matchUpdateTypes": [
+				"pin",
+				"digest",
+				"lockFileMaintenance",
+				"patch",
+				"minor"
+			],
 			"matchDepTypes": ["dependencies", "devDependencies"],
 			"automerge": true
 		},

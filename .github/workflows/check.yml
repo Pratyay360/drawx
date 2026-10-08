@@ -38,8 +38,5 @@ jobs:
         run: |
           mise deps
           mise install
-          nub ci
-
-      - name: lint and typecheck
-        run: |
-            mise run tauri:build
+          nub install
+          mise run tauri:build
