@@ -9,10 +9,9 @@ go = "latest"
 prettier = "latest"
 shellcheck = "latest"
 sops = "latest"
-tauri-cli = "latest"
 bun = "latest"
-codeql = { version = "latest", bin_path = "codeql", platforms = { linux-x64 = { asset_pattern = "codeql-linux64.zip" }, macos-arm64 = { asset_pattern = "codeql-osx64.zip" }, macos-x64 = { asset_pattern = "codeql-osx64.zip" }, windows-x64 = { asset_pattern = "codeql-win64.zip" } } }
 nub = { version = "latest", allow_builds = ["@nubjs/nub"] }
+"cargo:tauri-cli" = "latest"
 
 [env]
 SOPS_AGE_RECIPIENTS = "age1a9p2k3u40mvdntpad4ga7akvnnqqwm6eskfr2yxkgq3u9lp7jfns2wgqty,age155th0ptdjf3gkp7pmzqcepe9kec9n3w32l87czf29fda4a2gj49ql0pg8a"
@@ -80,12 +79,10 @@ run = "nub run tauri dev"
 description = "Build Tauri app (release nubdle)"
 run = "nub run tauri:build"
 
-# Back-compat: original `build` was tauri build — keep alias
 [tasks."build:tauri"]
 description = "Alias for tauri:build"
 run = "nub run tauri:build"
 
-# ── Astryx ───────────────────────────────────────────────────────
 [tasks.astryx]
 description = "Run Astryx CLI (pass-through args)"
 run = '''#!/usr/bin/env bash
@@ -110,7 +107,6 @@ run = '''#!/usr/bin/env bash
 nub run astryx template "$@"
 '''
 
-# ── Secrets ──────────────────────────────────────────────────────
 [tasks.encrypt]
 description = "Encrypt .env with sops"
 run = "sops -e -i .env && mv .env .env.example"
@@ -119,7 +115,6 @@ run = "sops -e -i .env && mv .env .env.example"
 description = "Decrypt .env.example with sops"
 run = "mv .env.example .env && sops -d -i .env"
 
-# ── Static docs deploy ───────────────────────────────────────────
 [tasks.static]
 description = "Deploy docs via surge"
 run = "surgecli deploy docs/ drawx-docs.surge.sh"
