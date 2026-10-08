@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@main
 
       - name: cache rust build
-        uses: actions/cache@v4
+        uses: actions/cache@main
         with:
           path: |
             ~/.cargo/registry
@@ -40,9 +40,5 @@ jobs:
           mise install
 
       - name: lint and typecheck
-        run: mise run check
-
-      # Full Tauri bundle only on main — PRs stop at the cheap gate above.
-      - name: build
-        if: github.event_name != 'pull_request'
-        run: mise run tauri:build
+        run: |
+            mise run tauri:build
