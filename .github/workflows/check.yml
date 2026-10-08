@@ -10,23 +10,15 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/jdx/mise:2026.8.16
     defaults:
       run:
         shell: bash
 
     steps:
       - uses: actions/checkout@main
-
-      - name: Install bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Install stable toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          cache: true
-
-      - name: Install dependencies
+      - name: check
         run: |
-          bun install
-          bun run tauri build
+            mise deps
+            mise install

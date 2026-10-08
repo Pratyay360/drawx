@@ -1,7 +1,10 @@
 name: flatpak
 
 on:
-  workflow_dispatch:
+  check_suite:
+    workflow: ci
+    types:
+      - completed
 
 permissions:
   contents: write
