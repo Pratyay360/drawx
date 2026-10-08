@@ -22,7 +22,7 @@
 		"@astryxdesign/cli": "^0.5.4",
 		"@astryxdesign/core": "^0.5.4",
 		"@astryxdesign/theme-matcha": "^0.5.4",
-		"@astryxdesign/theme-neutral": "^0.5.4",
+		"@astryxdesign/theme-neutral": "^0.6.0",
 		"@astryxdesign/theme-stone": "^0.5.4",
 		"@astryxdesign/theme-y2k": "^0.5.4",
 		"@excalidraw/excalidraw": "^0.18.1",
