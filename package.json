@@ -53,7 +53,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.15",
-		"@oxlint/plugins": "1.81.0",
+		"@oxlint/plugins": "1.87.0",
 		"@tailwindcss/vite": "^4.3.3",
 		"@tauri-apps/cli": "^2.12.1",
 		"@types/node": "^26.6.4",
