@@ -2,9 +2,12 @@ name: Tauri PR Check
 
 on:
   pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
@@ -22,3 +25,4 @@ jobs:
         run: |
             mise deps
             mise install
+            mise run tauri:build
