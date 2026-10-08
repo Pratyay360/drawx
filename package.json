@@ -79,7 +79,7 @@
 		"@astryxdesign/cli",
 		"@astryxdesign/core"
 	],
-	"allowBuilds": {
+	"allowScripts": {
 		"@astryxdesign/cli": true,
 		"@astryxdesign/core": true
 	}
