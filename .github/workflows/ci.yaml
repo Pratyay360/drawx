@@ -1,7 +1,9 @@
 name: Tauri v2 Release Process
 on:
   workflow_dispatch:
-
+  push:
+    branches: [main]
+    tags: ['v*']
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
