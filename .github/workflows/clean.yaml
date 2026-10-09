@@ -29,7 +29,3 @@ jobs:
           repository: ${{ github.repository }}
           retain_days: ${{ inputs.retain_days || '30' }}
           keep_minimum_runs: ${{ inputs.keep_minimum_runs || '5' }}
-
-      # Tag deletion is intentionally NOT done here. Deleting refs/tags/*
-      # destroys the vX.Y.Z release tags, which makes releases unpinnable and
-      # breaks updater version resolution. Tags are removed individually.

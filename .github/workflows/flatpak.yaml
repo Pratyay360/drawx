@@ -32,8 +32,6 @@ jobs:
           bundle: drawx_x86_64.flatpak
           manifest-path: flatpak/io.github.pratyay360.drawx.yml
           branch: stable
-          # Key on the manifest rather than the sha: the sha changes every run,
-          # so a sha-keyed cache never hits and every build is fully cold.
           cache-key: drawx-flatpak-${{ runner.os }}
           cache-cleanup: always
           arch: x86_64

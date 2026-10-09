@@ -23,17 +23,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@main
-
-      - name: cache rust build
-        uses: actions/cache@main
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            src-tauri/target
-          key: tauri-pr-${{ runner.os }}-${{ hashFiles('src-tauri/Cargo.lock', 'bun.lock') }}
-          restore-keys: tauri-pr-${{ runner.os }}-
-
       - name: install system deps
         run: |
           apt-get update
@@ -55,4 +44,5 @@ jobs:
           mise deps
           mise install
           nub install
-          mise run tauri:build
+          mise run tauri -- build --config '{"bundle":{"createUpdaterArtifacts":false}}'
+          bash src-tauri/scripts/patch-appimage-wayland.sh
