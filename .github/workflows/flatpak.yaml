@@ -1,6 +1,9 @@
 name: flatpak
 
 on:
+  push:
+    tags:
+      - "[0-9]*"
   workflow_run:
     workflows: [ci]
     types: [completed]
@@ -50,6 +53,9 @@ jobs:
           path: drawx_x86_64.flatpak
 
       - name: Attach flatpak to release
+        # Only on version-tag pushes: attaches the bundle to that tag's
+        # (GoReleaser) GitHub Release. Runs after `ci` only validate the build.
+        if: github.event_name == 'push'
         uses: softprops/action-gh-release@master
         with:
           tag_name: ${{ github.ref_name }}
