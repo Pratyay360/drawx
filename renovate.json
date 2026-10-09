@@ -1,0 +1,32 @@
+{
+	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
+	"extends": ["config:recommended"],
+	"prConcurrentLimit": 5,
+	"prHourlyLimit": 2,
+	"automerge": true,
+	"platformAutomerge": true,
+	"packageRules": [
+		{
+			"description": "Automerge lockfile-only updates (no CI needed)",
+			"matchUpdateTypes": [
+				"pin",
+				"digest",
+				"lockFileMaintenance",
+				"patch",
+				"minor"
+			],
+			"matchDepTypes": ["dependencies", "devDependencies"],
+			"automerge": true
+		},
+		{
+			"description": "Group Rust crate updates so they share one branch",
+			"matchManagers": ["cargo"],
+			"groupName": "rust crates"
+		},
+		{
+			"description": "Group GitHub Actions updates into one PR",
+			"matchManagers": ["github-actions"],
+			"groupName": "github actions"
+		}
+	]
+}

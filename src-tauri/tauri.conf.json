@@ -1,0 +1,56 @@
+{
+	"$schema": "https://schema.tauri.app/config/2",
+	"productName": "drawx",
+	"version": "0.7.28",
+	"identifier": "io.github.pratyay360.drawx",
+	"build": {
+		"beforeDevCommand": "npm run dev",
+		"devUrl": "http://localhost:1420",
+		"beforeBuildCommand": "npm run build",
+		"frontendDist": "../dist"
+	},
+	"plugins": {
+		"updater": {
+			"endpoints": [
+				"https://cdn.crabnebula.app/update/pratyay/drawx/{{target}}-{{arch}}/{{current_version}}"
+			],
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE0QjMzRjIyOUQzMTBFMDkKUldRSkRqR2RJait6cEgzRkw0R3pPQ3JkcXRKZUdLUXR3SXQ1dmhYcjI1ejdzSlNOWlNHTS80N0sK"
+		}
+	},
+	"app": {
+		"windows": [
+			{
+				"title": "drawx",
+				"width": 800,
+				"height": 600
+			}
+		]
+	},
+	"bundle": {
+		"publisher": "Pratyay Mustafi",
+		"category": "Graphics and Design",
+		"shortDescription": "Offline first brainstorming and whiteboard app",
+		"createUpdaterArtifacts": true,
+		"active": true,
+		"targets": "all",
+		"windows": {
+			"wix": {
+				"upgradeCode": "c1ca73de-0489-520c-8e19-35d21478f7be"
+			}
+		},
+		"linux": {
+			"deb": {
+				"depends": ["libwebkit2gtk-4.1-0", "libayatana-appindicator3-1"]
+			}
+		},
+		"icon": [
+			"icons/32x32.png",
+			"icons/64x64.png",
+			"icons/128x128.png",
+			"icons/128x128@2x.png",
+			"icons/icon.png",
+			"icons/icon.icns",
+			"icons/icon.ico"
+		]
+	}
+}
