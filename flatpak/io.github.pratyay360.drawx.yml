@@ -32,7 +32,7 @@ modules:
       # Then add cargo-sources.json (+ generated-sources.json when available) as extra sources
       # (see the sources section below).  Regenerate both on every lockfile bump.
       build-args:
-        # - --share=network
+        - --share=network
       append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin:/run/build/drawx/bin
       env:
         CARGO_HOME: /run/build/drawx/cargo
@@ -42,8 +42,9 @@ modules:
 
 
     build-commands:
-      - npm ci
-      - npm run tauri build -- --no-bundle
+      - corepack enable && corepack prepare pnpm@12.10.1 --activate
+      - pnpm install --frozen-lockfile
+      - pnpm tauri build -- --no-bundle
       # --- Install artifacts ---
       - install -Dm755 src-tauri/target/release/drawx /app/bin/drawx
 

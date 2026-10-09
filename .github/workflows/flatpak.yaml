@@ -35,7 +35,6 @@ jobs:
           # Key on the manifest rather than the sha: the sha changes every run,
           # so a sha-keyed cache never hits and every build is fully cold.
           cache-key: drawx-flatpak-${{ runner.os }}
-          cache-cleanup: always
           arch: x86_64
           verbose: true
         env:
