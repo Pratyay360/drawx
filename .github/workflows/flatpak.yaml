@@ -1,5 +1,4 @@
-name: "flatpak"
-
+name: flatpak
 on:
   workflow_dispatch:
   push:
@@ -62,14 +61,12 @@ jobs:
           if-no-files-found: error
 
       - name: Upload flatpak to CrabNebula Cloud
-        if: github.event_name == 'push' && secrets.CN_API_KEY != ''
         uses: crabnebula-dev/cloud-release@v0
         with:
           command: release upload --file ${{ matrix.bundle }} ${{ env.CN_APPLICATION }} ${{ github.ref_name }}
           api-key: ${{ secrets.CN_API_KEY }}
 
       - name: Attach flatpak to release
-        if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
