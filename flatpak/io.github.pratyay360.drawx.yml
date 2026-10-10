@@ -1,4 +1,4 @@
-id: io.github.drawx
+id: io.github.pratyay360.drawx
 runtime: org.gnome.Platform
 runtime-version: "50"
 sdk: org.gnome.Sdk
@@ -32,7 +32,7 @@ modules:
       # Then add cargo-sources.json (+ generated-sources.json when available) as extra sources
       # (see the sources section below).  Regenerate both on every lockfile bump.
       build-args:
-        - --share=network
+        # - --share=network
       append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin:/run/build/drawx/bin
       env:
         CARGO_HOME: /run/build/drawx/cargo
@@ -47,20 +47,20 @@ modules:
       # --- Install artifacts ---
       - install -Dm755 src-tauri/target/release/drawx /app/bin/drawx
 
-      - install -Dm644 flatpak/io.github.drawx.desktop
-        /app/share/applications/io.github.drawx.desktop
+      - install -Dm644 flatpak/io.github.pratyay360.drawx.desktop
+        /app/share/applications/io.github.pratyay360.drawx.desktop
 
-      - install -Dm644 flatpak/io.github.drawx.metainfo.xml
-        /app/share/metainfo/io.github.drawx.metainfo.xml
+      - install -Dm644 flatpak/io.github.pratyay360.drawx.metainfo.xml
+        /app/share/metainfo/io.github.pratyay360.drawx.metainfo.xml
 
       - install -Dm644 src-tauri/icons/32x32.png
-        /app/share/icons/hicolor/32x32/apps/io.github.drawx.png
+        /app/share/icons/hicolor/32x32/apps/io.github.pratyay360.drawx.png
       - install -Dm644 src-tauri/icons/64x64.png
-        /app/share/icons/hicolor/64x64/apps/io.github.drawx.png
+        /app/share/icons/hicolor/64x64/apps/io.github.pratyay360.drawx.png
       - install -Dm644 src-tauri/icons/128x128.png
-        /app/share/icons/hicolor/128x128/apps/io.github.drawx.png
+        /app/share/icons/hicolor/128x128/apps/io.github.pratyay360.drawx.png
       - install -Dm644 src-tauri/icons/128x128@2x.png
-        /app/share/icons/hicolor/256x256/apps/io.github.drawx.png
+        /app/share/icons/hicolor/256x256/apps/io.github.pratyay360.drawx.png
 
     sources:
       - type: dir

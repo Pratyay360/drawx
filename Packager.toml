@@ -1,6 +1,6 @@
 name = "drawx"
 product-name = "drawx"
-identifier = "io.github.drawx"
-version = "0.7.7"
+identifier = "io.github.pratyay360.drawx"
+version = "0.7.12"
 out-dir = "./dist"
 before-packaging-command = "cargo build --release"
