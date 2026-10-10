@@ -1,0 +1,127 @@
+name: release-goreleaser
+
+on:
+  push:
+    tags:
+      - "[0-9]*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+          - os: windows-latest
+          - os: macos-latest
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@main
+        with:
+          fetch-depth: 0
+
+      - name: Install bun
+        uses: oven-sh/setup-bun@v2
+
+      - uses: actions/setup-node@main
+        with:
+          node-version: "lts/*"
+
+      - name: Install stable toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          cache: true
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            libxdo-dev \
+            patchelf \
+            file \
+            squashfs-tools
+
+      - name: Install dependencies
+        run: |
+          rm -f package-lock.json
+          bun install
+
+      - name: Build Tauri app (Linux / Windows)
+        if: matrix.os != 'macos-latest'
+        run: |
+          bun run tauri build
+          if [ "${{ matrix.os }}" = "ubuntu-22.04" ]; then
+            bash src-tauri/scripts/patch-appimage-wayland.sh
+          fi
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+      - name: Build Tauri app (macOS, both archs)
+        if: matrix.os == 'macos-latest'
+        run: |
+          rustup target add x86_64-apple-darwin
+          rustup target add aarch64-apple-darwin
+          bun run tauri build --target x86_64-apple-darwin
+          bun run tauri build --target aarch64-apple-darwin
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+      - name: Stage bundles
+        run: |
+          mkdir -p staged-bundles
+          find src-tauri/target -path '*bundle*' -type f \
+            \( -name '*.deb' -o -name '*.rpm' -o -name '*.AppImage' \
+            -o -name '*.msi' -o -name '*.exe' -o -name '*.dmg' \
+            -o -name '*.app.tar.gz' -o -name '*.AppImage.tar.gz' \
+            -o -name '*.nsis.zip' -o -name '*.sig' \) \
+            -exec cp -v {} staged-bundles/ \;
+          ls -la staged-bundles
+
+      - name: Upload bundles
+        uses: actions/upload-artifact@main
+        with:
+          name: bundles-${{ matrix.os }}
+          path: staged-bundles/
+          if-no-files-found: error
+
+  release:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+        with:
+          fetch-depth: 0
+
+      - name: Download all bundles
+        uses: actions/download-artifact@main
+        with:
+          pattern: bundles-*
+          path: dist-bundles
+          merge-multiple: true
+
+      - name: List staged artifacts
+        run: ls -laR dist-bundles
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
