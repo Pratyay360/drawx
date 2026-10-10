@@ -2,10 +2,6 @@ name: flatpak
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: [release-goreleaser, ci]
-    types:
-      - completed
   push:
     tags:
       - "[0-9.]*"
