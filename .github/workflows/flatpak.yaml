@@ -1,4 +1,4 @@
-name: flatpak
+name: "flatpak"
 
 on:
   workflow_dispatch:
