@@ -10,20 +10,19 @@ import { useTheme } from "./hooks/use-theme.ts";
 import { themeRegistry } from "./themes/index.ts";
 
 function ThemedApp() {
-	const { themeName, modePreference } = useTheme();
-	const entry = themeRegistry[themeName];
-	return (
-		<Theme theme={entry.theme} mode={entry.darkOnly ? "dark" : modePreference}>
-			<App />
-		</Theme>
-	);
+  const { themeName, modePreference } = useTheme();
+  const entry = themeRegistry[themeName];
+  return (
+    <Theme theme={entry.theme} mode={entry.darkOnly ? "dark" : modePreference}>
+      <App />
+    </Theme>
+  );
 }
 
 const rootElement = document.getElementById("root");
-if (!rootElement)
-	throw new Error("Root element #root not found — check index.html");
+if (!rootElement) throw new Error("Root element #root not found");
 ReactDOM.createRoot(rootElement).render(
-	<React.StrictMode>
-		<ThemedApp />
-	</React.StrictMode>,
+  <React.StrictMode>
+    <ThemedApp />
+  </React.StrictMode>,
 );
