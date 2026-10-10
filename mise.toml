@@ -7,7 +7,7 @@ biome = "latest"
 "go:github.com/yieldray/surgecli" = "latest"
 prettier = "latest"
 shellcheck = "latest"
-pnpm = "latest"
+tauri-cli = "latest"
 
 [env]
 SOPS_AGE_RECIPIENTS = "age1a9p2k3u40mvdntpad4ga7akvnnqqwm6eskfr2yxkgq3u9lp7jfns2wgqty, age155th0ptdjf3gkp7pmzqcepe9kec9n3w32l87czf29fda4a2gj49ql0pg8a"
@@ -16,31 +16,30 @@ _.file = { path = ".env" }
 [settings]
 auto_install = true
 
-[tasks.install]
 
 [tasks.update]
 description = "Update JS dependencies"
-run = "pnpm update"
+run = "npm update"
 
 [tasks.dev]
 description = "Start Vite dev server"
-run = "pnpm dev"
+run = "npm dev"
 
 [tasks.build]
 description = "Typecheck + build frontend (tsc + vite build)"
-run = "pnpm build"
+run = "npm build"
 
 [tasks."build:frontend"]
 description = "Alias for build (frontend only)"
-run = "pnpm build"
+run = "npm build"
 
 [tasks.preview]
 description = "Preview production build"
-run = "pnpm preview"
+run = "npm preview"
 
 [tasks.typecheck]
 description = "Run TypeScript typecheck (no emit)"
-run = "pnpm exec tsc --noEmit"
+run = "npm exec tsc --noEmit"
 
 [tasks.lint]
 description = "Lint with Biome"
@@ -70,45 +69,45 @@ depends = ["lint:fix", "format"]
 [tasks.tauri]
 description = "Run tauri CLI (pass-through args)"
 run = '''#!/usr/bin/env bash
-pnpm exec tauri "$@"
+npm exec tauri "$@"
 '''
 
 [tasks."tauri:dev"]
 description = "Run Tauri in dev mode"
-run = "pnpm exec tauri dev"
+run = "npm exec tauri dev"
 
 [tasks."tauri:build"]
 description = "Build Tauri app (release bundle)"
-run = "pnpm exec tauri build"
+run = "npm exec tauri build"
 
 # Back-compat: original `build` was tauri build — keep alias
 [tasks."build:tauri"]
 description = "Alias for tauri:build"
-run = "pnpm exec tauri build"
+run = "npm exec tauri build"
 
 # ── Astryx ───────────────────────────────────────────────────────
 [tasks.astryx]
 description = "Run Astryx CLI (pass-through args)"
 run = '''#!/usr/bin/env bash
-pnpm exec astryx "$@"
+npm exec astryx "$@"
 '''
 
 [tasks."astryx:build"]
 description = "Run astryx build (pass idea as args)"
 run = '''#!/usr/bin/env bash
-    pnpm exec astryx build "$@"
+    npm exec astryx build "$@"
 '''
 
 [tasks."astryx:component"]
 description = "Show Astryx component docs"
 run = '''#!/usr/bin/env bash
-    pnpm exec astryx component "$@"
+    npm exec astryx component "$@"
 '''
 
 [tasks."astryx:template"]
 description = "Scaffold Astryx template"
 run = '''#!/usr/bin/env bash
-    pnpm exec astryx template "$@"
+    npm exec astryx template "$@"
 '''
 
 # ── Secrets ──────────────────────────────────────────────────────
@@ -140,4 +139,4 @@ run = "rm -rf dist src-tauri/target node_modules/.vite"
 
 [tasks.deps]
 description = "Install mise tools + JS deps"
-run = ["mise install", "pnpm install"]
+run = ["mise install", "npm install"]

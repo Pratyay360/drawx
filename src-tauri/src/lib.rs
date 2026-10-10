@@ -3,6 +3,7 @@ mod config;
 mod db;
 mod ids;
 mod libraries;
+pub mod mcp;
 mod paths;
 mod time;
 mod user_library;
@@ -16,6 +17,7 @@ use paths::resolve_config_dir;
 pub use config::{DbConfig, DbInfo};
 pub use canvas::Canvas;
 pub use libraries::SavedLibrary;
+pub use mcp::{McpState, DEFAULT_MCP_PORT};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -45,6 +47,14 @@ pub fn run() {
                 conn: Mutex::new(conn),
                 db_path: Mutex::new(db_path.to_string_lossy().to_string()),
             });
+
+            let mcp_state = mcp::McpState::new(app.handle().clone());
+            let mcp_server_state = mcp_state.clone();
+            std::thread::spawn(move || {
+                mcp::start_mcp_server(mcp_server_state, mcp::DEFAULT_MCP_PORT);
+            });
+            app.manage(mcp_state);
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -65,6 +75,8 @@ pub fn run() {
             libraries::remove_saved_library,
             user_library::get_user_library,
             user_library::set_user_library,
+            mcp::sync_active_canvas,
+            mcp::get_mcp_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

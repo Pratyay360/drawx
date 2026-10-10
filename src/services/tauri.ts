@@ -107,7 +107,7 @@ export async function createCanvas(title: string): Promise<Canvas> {
 		createdAt: new Date().toISOString(),
 		updatedAt: new Date().toISOString(),
 		elements: [],
-		appState: {},
+		appState: { viewBackgroundColor: "transparent" },
 	};
 	canvases.push(newCanvas);
 	saveLocalStorageCanvases(canvases);
@@ -170,3 +170,40 @@ export async function updateCanvasTitle(
 		}
 	}
 }
+
+export type McpStatus = {
+	running: boolean;
+	port: number;
+	sse_url: string;
+	mcp_url: string;
+};
+
+export async function syncActiveCanvas(
+	id: string,
+	title: string,
+	elements: ExcalidrawElement[],
+	appState: Partial<AppState>,
+): Promise<void> {
+	if (!isTauri()) return;
+	try {
+		await invoke("sync_active_canvas", {
+			id,
+			title,
+			elements,
+			appState: sanitizeExcalidrawAppState(appState),
+		});
+	} catch (error) {
+		console.error("Failed to sync active canvas with MCP:", error);
+	}
+}
+
+export async function getMcpStatus(): Promise<McpStatus | null> {
+	if (!isTauri()) return null;
+	try {
+		return await invoke<McpStatus>("get_mcp_status");
+	} catch (error) {
+		console.error("Failed to get MCP status:", error);
+		return null;
+	}
+}
+

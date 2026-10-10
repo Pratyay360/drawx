@@ -60,7 +60,7 @@ pub fn create_canvas(state: tauri::State<'_, DbState>, title: String) -> Result<
     let id = generate_canvas_id();
 
     conn.execute(
-        "INSERT INTO canvases (id, title, description, elements, app_state, created_at, updated_at) VALUES (?1, ?2, NULL, '[]', '{}', ?3, ?3)",
+        "INSERT INTO canvases (id, title, description, elements, app_state, created_at, updated_at) VALUES (?1, ?2, NULL, '[]', '{\"viewBackgroundColor\":\"transparent\"}', ?3, ?3)",
         rusqlite::params![id, title, now],
     )
     .map_err(|e| e.to_string())?;
@@ -72,20 +72,35 @@ pub fn create_canvas(state: tauri::State<'_, DbState>, title: String) -> Result<
         created_at: now.clone(),
         updated_at: now,
         elements: Vec::new(),
-        app_state: serde_json::json!({}),
+        app_state: serde_json::json!({"viewBackgroundColor": "transparent"}),
     })
 }
 
 #[tauri::command]
-pub fn delete_canvas(state: tauri::State<'_, DbState>, id: String) -> Result<(), String> {
+pub fn delete_canvas(
+    state: tauri::State<'_, DbState>,
+    mcp_state: tauri::State<'_, crate::mcp::McpState>,
+    id: String,
+) -> Result<(), String> {
     let conn = state.conn.lock().map_err(|e| e.to_string())?;
     conn.execute("DELETE FROM canvases WHERE id = ?1", rusqlite::params![id])
         .map_err(|e| e.to_string())?;
+    if let Ok(mut active) = mcp_state.active_canvas.lock() {
+        if active.id.as_deref() == Some(&id) {
+            active.id = None;
+            active.title = None;
+            active.elements.clear();
+        }
+    }
     Ok(())
 }
 
 #[tauri::command]
-pub fn load_canvas(state: tauri::State<'_, DbState>, id: String) -> Result<Option<Canvas>, String> {
+pub fn load_canvas(
+    state: tauri::State<'_, DbState>,
+    mcp_state: tauri::State<'_, crate::mcp::McpState>,
+    id: String,
+) -> Result<Option<Canvas>, String> {
     let conn = state.conn.lock().map_err(|e| e.to_string())?;
     let result = conn.query_row(
         "SELECT id, title, description, elements, app_state, created_at, updated_at FROM canvases WHERE id = ?1",
@@ -117,7 +132,15 @@ pub fn load_canvas(state: tauri::State<'_, DbState>, id: String) -> Result<Optio
     );
 
     match result {
-        Ok(canvas) => Ok(Some(canvas)),
+        Ok(canvas) => {
+            if let Ok(mut active) = mcp_state.active_canvas.lock() {
+                active.id = Some(canvas.id.clone());
+                active.title = Some(canvas.title.clone());
+                active.elements = canvas.elements.clone();
+                active.app_state = canvas.app_state.clone();
+            }
+            Ok(Some(canvas))
+        }
         Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
         Err(e) => Err(e.to_string()),
     }
@@ -126,6 +149,7 @@ pub fn load_canvas(state: tauri::State<'_, DbState>, id: String) -> Result<Optio
 #[tauri::command]
 pub fn save_canvas(
     state: tauri::State<'_, DbState>,
+    mcp_state: tauri::State<'_, crate::mcp::McpState>,
     id: String,
     elements: Vec<serde_json::Value>,
     app_state: serde_json::Value,
@@ -141,12 +165,19 @@ pub fn save_canvas(
     )
     .map_err(|e| e.to_string())?;
 
+    if let Ok(mut active) = mcp_state.active_canvas.lock() {
+        active.id = Some(id);
+        active.elements = elements;
+        active.app_state = app_state;
+    }
+
     Ok(())
 }
 
 #[tauri::command]
 pub fn update_canvas_title(
     state: tauri::State<'_, DbState>,
+    mcp_state: tauri::State<'_, crate::mcp::McpState>,
     id: String,
     title: String,
 ) -> Result<(), String> {
@@ -158,6 +189,12 @@ pub fn update_canvas_title(
         rusqlite::params![title, now, id],
     )
     .map_err(|e| e.to_string())?;
+
+    if let Ok(mut active) = mcp_state.active_canvas.lock() {
+        if active.id.as_deref() == Some(&id) {
+            active.title = Some(title);
+        }
+    }
 
     Ok(())
 }
