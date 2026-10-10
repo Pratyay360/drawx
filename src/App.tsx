@@ -10,27 +10,27 @@ import { checkForAppUpdates } from "./updater.ts";
 
 let updateCheckStarted = false;
 function maybeCheckForUpdates() {
-  if (updateCheckStarted || !isTauri()) return;
-  updateCheckStarted = true;
-  void checkForAppUpdates();
+	if (updateCheckStarted || !isTauri()) return;
+	updateCheckStarted = true;
+	void checkForAppUpdates();
 }
 
 function App() {
-  useEffect(() => {
-    maybeCheckForUpdates();
-  }, []);
-  return (
-    <BrowserRouter>
-      <LinkProvider component={Link}>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/canvas/:id" element={<CanvasComponent />} />
-        </Routes>
-        <LibraryBrowserModal />
-        <UpdatePrompt />
-      </LinkProvider>
-    </BrowserRouter>
-  );
+	useEffect(() => {
+		maybeCheckForUpdates();
+	}, []);
+	return (
+		<BrowserRouter>
+			<LinkProvider component={Link}>
+				<Routes>
+					<Route path="/" element={<Dashboard />} />
+					<Route path="/canvas/:id" element={<CanvasComponent />} />
+				</Routes>
+				<LibraryBrowserModal />
+				<UpdatePrompt />
+			</LinkProvider>
+		</BrowserRouter>
+	);
 }
 
 export default App;

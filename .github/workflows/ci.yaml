@@ -20,7 +20,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@main
-      - name: create draft release
+
+      - name: Setup mise
+        uses: jdx/mise-action@v3
+        with:
+          version: latest
+          cache: true
+
+      - name: Create draft release
         uses: crabnebula-dev/cloud-release@main
         with:
           command: release draft ${{ env.CN_APPLICATION }} --framework tauri
@@ -41,103 +48,194 @@ jobs:
 
     steps:
       - uses: actions/checkout@main
-      - name: Install stable toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      # mise.toml is the single source of truth.
+      - name: Setup mise
+        uses: jdx/mise-action@v3
         with:
-          toolchain: stable
+          version: latest
           cache: true
 
-      - name: install Linux dependencies
+      - name: Install project tools
+        run: mise install
+
+      - name: Verify toolchain
+        run: |
+          mise --version
+          rustc --version
+          cargo --version
+          node --version
+          pnpm --version
+          biome --version
+          shellcheck --version
+
+      - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev squashfs-tools
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            squashfs-tools
 
-      - name: Setup pnpm
-        uses: pnpm/setup@v2
-        with:
-          cache: true
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: build Tauri app for Windows, Linux
+      - name: Build Tauri app for Linux/Windows
         if: matrix.os != 'macos-latest'
-        run: |
-          pnpm exec tauri build
+        run: mise run tauri:build
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
-      - name: Install x86_64-apple-darwin for mac and build Tauri binaries
+      - name: Install Apple targets
         if: matrix.os == 'macos-latest'
         run: |
           rustup target add x86_64-apple-darwin
+          rustup target add aarch64-apple-darwin
+
+      - name: Build Tauri app for macOS
+        if: matrix.os == 'macos-latest'
+        run: |
           pnpm exec tauri build --target x86_64-apple-darwin
           pnpm exec tauri build --target aarch64-apple-darwin
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
-      - name: audit and fix AppImage permissions
+      - name: Audit and fix AppImage permissions
         if: matrix.os == 'ubuntu-22.04'
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           shopt -s nullglob
+
           BUNDLE_DIR="src-tauri/target/release/bundle/appimage"
+
           for appimage in "$BUNDLE_DIR"/*.AppImage; do
             case "$appimage" in
-              *.sig|*.tar.gz|*.zsync) continue ;;
+              *.sig|*.tar.gz|*.zsync)
+                continue
+                ;;
             esac
+
             echo "Auditing $appimage ..."
+
             chmod +x "$appimage"
+
             work="$(mktemp -d)"
             trap 'rm -rf "$work"' EXIT
+
             offset="$("$appimage" --appimage-offset)"
-            dd if="$appimage" of="$work/runtime" bs="$offset" count=1 status=none
-            dd if="$appimage" of="$work/payload.squashfs" bs="$offset" skip=1 status=none
-            unsquashfs -d "$work/AppDir" "$work/payload.squashfs" > /dev/null
-            offenders="$(find "$work/AppDir" \( \( -type f ! -perm -o+r \) -o \( -type d ! -perm -o+rx \) -o \( -type f -perm /111 ! -perm -o+x \) \) -print || true)"
+
+            dd \
+              if="$appimage" \
+              of="$work/runtime" \
+              bs="$offset" \
+              count=1 \
+              status=none
+
+            dd \
+              if="$appimage" \
+              of="$work/payload.squashfs" \
+              bs="$offset" \
+              skip=1 \
+              status=none
+
+            unsquashfs \
+              -d "$work/AppDir" \
+              "$work/payload.squashfs" > /dev/null
+
+            offenders="$(
+              find "$work/AppDir" \
+                \( \
+                  \( -type f ! -perm -o+r \) \
+                  -o \
+                  \( -type d ! -perm -o+rx \) \
+                  -o \
+                  \( -type f -perm /111 ! -perm -o+x \) \
+                \) \
+                -print || true
+            )"
+
             if [ -z "$offenders" ]; then
               echo "Permissions OK, leaving $appimage untouched."
               rm -rf "$work"
               trap - EXIT
               continue
             fi
-            echo "Fixing world-readable/executable bits on:"
+
+            echo "Fixing permissions:"
             echo "$offenders"
+
             chmod -R a+rX "$work/AppDir"
-            comp="$(unsquashfs -s "$work/payload.squashfs" | sed -n 's/^Compression //p')"
-            block="$(unsquashfs -s "$work/payload.squashfs" | sed -n 's/^Block size //p')"
-            mksquashfs "$work/AppDir" "$work/payload.fixed.squashfs" -root-owned -noappend -comp "${comp:-zstd}" -b "${block:-131072}"
-            cat "$work/runtime" "$work/payload.fixed.squashfs" > "$appimage"
+
+            comp="$(
+              unsquashfs -s "$work/payload.squashfs" |
+                sed -n 's/^Compression //p'
+            )"
+
+            block="$(
+              unsquashfs -s "$work/payload.squashfs" |
+                sed -n 's/^Block size //p'
+            )"
+
+            mksquashfs \
+              "$work/AppDir" \
+              "$work/payload.fixed.squashfs" \
+              -root-owned \
+              -noappend \
+              -comp "${comp:-zstd}" \
+              -b "${block:-131072}"
+
+            cat \
+              "$work/runtime" \
+              "$work/payload.fixed.squashfs" \
+              > "$appimage"
+
             chmod +x "$appimage"
-            # The bytes changed, so the build-time updater tarball and all
-            # signatures are stale: regenerate and re-sign them.
-            tar -czf "$appimage.tar.gz" -C "$BUNDLE_DIR" "$(basename "$appimage")"
+
+            tar \
+              -czf "$appimage.tar.gz" \
+              -C "$BUNDLE_DIR" \
+              "$(basename "$appimage")"
+
             pnpm exec tauri signer sign "$appimage"
             pnpm exec tauri signer sign "$appimage.tar.gz"
-            # Re-audit the final artifact; fail loudly instead of shipping broken.
+
             "$appimage" --appimage-extract > /dev/null
-            remaining="$(find squashfs-root \( \( -type f ! -perm -o+r \) -o \( -type d ! -perm -o+rx \) -o \( -type f -perm /111 ! -perm -o+x \) \) -print || true)"
+
+            remaining="$(
+              find squashfs-root \
+                \( \
+                  \( -type f ! -perm -o+r \) \
+                  -o \
+                  \( -type d ! -perm -o+rx \) \
+                  -o \
+                  \( -type f -perm /111 ! -perm -o+x \) \
+                \) \
+                -print || true
+            )"
+
             rm -rf squashfs-root
+
             if [ -n "$remaining" ]; then
               echo "AppImage permission fix failed:"
               echo "$remaining"
               exit 1
             fi
+
             echo "Repacked and re-signed $appimage."
+
             rm -rf "$work"
             trap - EXIT
           done
 
-      - name: upload assets
+      - name: Upload assets
         uses: crabnebula-dev/cloud-release@v0
         with:
           command: release upload ${{ env.CN_APPLICATION }} --framework tauri
           api-key: ${{ secrets.CN_API_KEY }}
 
-      - name: collect bundles
+      - name: Collect bundles
         uses: actions/upload-artifact@v7
         with:
           name: bundles-${{ matrix.os }}
@@ -157,7 +255,7 @@ jobs:
     steps:
       - uses: actions/checkout@main
 
-      - name: publish release
+      - name: Publish release
         uses: crabnebula-dev/cloud-release@v0
         with:
           command: release publish ${{ env.CN_APPLICATION }} --framework tauri
@@ -173,14 +271,14 @@ jobs:
       contents: write
 
     steps:
-      - name: download bundles
+      - name: Download bundles
         uses: actions/download-artifact@main
         with:
           path: bundles
           pattern: bundles-*
           merge-multiple: true
 
-      - name: publish GitHub release
+      - name: Publish GitHub release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
