@@ -43,7 +43,7 @@ jobs:
 
       - name: Attach flatpak to release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@main
+        uses: softprops/action-gh-release@master
         with:
           tag_name: ${{ github.ref_name }}
           files: drawx_x86_64.flatpak
