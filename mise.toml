@@ -4,59 +4,58 @@ cargo-make = "latest"
 rust-analyzer = "latest"
 node = "24"
 biome = "latest"
+go = "latest"
 "go:github.com/yieldray/surgecli" = "latest"
 prettier = "latest"
 shellcheck = "latest"
+sops = "latest"
 tauri-cli = "latest"
-pnpm = "latest"
+bun = "latest"
+codeql = { version = "latest", bin_path = "codeql", platforms = { linux-x64 = { asset_pattern = "codeql-linux64.zip" }, macos-arm64 = { asset_pattern = "codeql-osx64.zip" }, macos-x64 = { asset_pattern = "codeql-osx64.zip" }, windows-x64 = { asset_pattern = "codeql-win64.zip" } } }
+nub = { version = "latest", allow_builds = ["@nubjs/nub"] }
 
 [env]
-SOPS_AGE_RECIPIENTS = "age1a9p2k3u40mvdntpad4ga7akvnnqqwm6eskfr2yxkgq3u9lp7jfns2wgqty, age155th0ptdjf3gkp7pmzqcepe9kec9n3w32l87czf29fda4a2gj49ql0pg8a"
+SOPS_AGE_RECIPIENTS = "age1a9p2k3u40mvdntpad4ga7akvnnqqwm6eskfr2yxkgq3u9lp7jfns2wgqty,age155th0ptdjf3gkp7pmzqcepe9kec9n3w32l87czf29fda4a2gj49ql0pg8a"
 _.file = { path = ".env" }
 
 [settings]
 auto_install = true
 
-
 [tasks.update]
 description = "Update JS dependencies"
-run = "npm update"
+run = ["nub install", "nub update"]
 
 [tasks.dev]
 description = "Start Vite dev server"
-run = "npm dev"
+run = "nub dev"
 
 [tasks.build]
-description = "Typecheck + build frontend (tsc + vite build)"
-run = "npm build"
+description = "Build frontend"
+run = "nub run build"
 
 [tasks."build:frontend"]
 description = "Alias for build (frontend only)"
-run = "npm build"
-
-[tasks.preview]
-description = "Preview production build"
-run = "npm preview"
+run = "nub run build"
 
 [tasks.typecheck]
 description = "Run TypeScript typecheck (no emit)"
-run = "npm exec tsc --noEmit"
+run = "nub run typecheck"
 
 [tasks.lint]
 description = "Lint with Biome"
-run = "biome lint"
+run = "biome lint ."
 
 [tasks."lint:fix"]
 description = "Lint and auto-fix with Biome"
-run = "biome lint --fix"
+run = "biome lint --fix ."
 
 [tasks.format]
 description = "Format with Biome"
-run = "biome format --write"
+run = "biome format --write ."
 
 [tasks."format:check"]
 description = "Check formatting with Biome (no write)"
-run = "biome format . --check"
+run = "biome format ."
 
 [tasks.check]
 description = "Run lint + typecheck"
@@ -64,51 +63,51 @@ depends = ["lint", "typecheck"]
 
 [tasks."check:fix"]
 description = "Run lint:fix + format"
-depends = ["lint:fix", "format"]
+run = [{ task = "lint:fix" }, { task = "format" }]
 
 # ── Tauri ────────────────────────────────────────────────────────
 [tasks.tauri]
 description = "Run tauri CLI (pass-through args)"
 run = '''#!/usr/bin/env bash
-npm exec tauri "$@"
+nub run tauri "$@"
 '''
 
 [tasks."tauri:dev"]
 description = "Run Tauri in dev mode"
-run = "npm exec tauri dev"
+run = "nub run tauri dev"
 
 [tasks."tauri:build"]
-description = "Build Tauri app (release bundle)"
-run = "npm exec tauri build"
+description = "Build Tauri app (release nubdle)"
+run = "nub run tauri:build"
 
 # Back-compat: original `build` was tauri build — keep alias
 [tasks."build:tauri"]
 description = "Alias for tauri:build"
-run = "npm exec tauri build"
+run = "nub run tauri:build"
 
 # ── Astryx ───────────────────────────────────────────────────────
 [tasks.astryx]
 description = "Run Astryx CLI (pass-through args)"
 run = '''#!/usr/bin/env bash
-npm exec astryx "$@"
+nub run astryx "$@"
 '''
 
 [tasks."astryx:build"]
-description = "Run astryx build (pass idea as args)"
+description = "Run astryx build (pass args)"
 run = '''#!/usr/bin/env bash
-    npm exec astryx build "$@"
+nub run astryx build "$@"
 '''
 
 [tasks."astryx:component"]
 description = "Show Astryx component docs"
 run = '''#!/usr/bin/env bash
-    npm exec astryx component "$@"
+nub run astryx component "$@"
 '''
 
 [tasks."astryx:template"]
 description = "Scaffold Astryx template"
 run = '''#!/usr/bin/env bash
-    npm exec astryx template "$@"
+nub run astryx template "$@"
 '''
 
 # ── Secrets ──────────────────────────────────────────────────────
@@ -140,4 +139,4 @@ run = "rm -rf dist src-tauri/target node_modules/.vite"
 
 [tasks.deps]
 description = "Install mise tools + JS deps"
-run = ["mise install", "npm install"]
+run = ["mise install", "nub install"]

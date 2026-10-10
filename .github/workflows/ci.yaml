@@ -1,6 +1,23 @@
-name: Tauri v2 Release Process
+name: ci
 on:
   workflow_dispatch:
+    inputs:
+      build_ubuntu:
+        description: "Build the Linux app"
+        required: false
+        default: true
+        type: boolean
+      build_windows:
+        description: "Build the Windows app (2x billing multiplier)"
+        required: false
+        default: false
+        type: boolean
+      build_macos:
+        description: "Build the macOS apps (10x billing multiplier)"
+        required: false
+        default: false
+        type: boolean
+
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -24,13 +41,19 @@ jobs:
   build_desktop:
     needs: draft
 
+    # macOS bills at 10x and Windows at 2x the Linux rate, so each platform is
+    # opt-in. Job-level `if` cannot read `matrix`, so the flag is carried into
+    # `include` and enforced per step; unselected platforms start no build.
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-22.04
-          - macos-latest
-          - windows-latest
+        include:
+          - os: ubuntu-22.04
+            enabled: ${{ inputs.build_ubuntu }}
+          - os: windows-latest
+            enabled: ${{ inputs.build_windows }}
+          - os: macos-latest
+            enabled: ${{ inputs.build_macos }}
 
     runs-on: ${{ matrix.os }}
     defaults:
@@ -41,20 +64,23 @@ jobs:
       - uses: actions/checkout@main
 
       - name: Install bun
+        if: matrix.enabled
         uses: oven-sh/setup-bun@v2
 
       - uses: actions/setup-node@v4
+        if: matrix.enabled
         with:
           node-version: "lts/*"
 
       - name: Install stable toolchain
+        if: matrix.enabled
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
           cache: true
 
       - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-22.04'
+        if: matrix.enabled && matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -68,12 +94,13 @@ jobs:
             squashfs-tools
 
       - name: Install dependencies
+        if: matrix.enabled
         run: |
           rm -f package-lock.json
           bun install
 
       - name: Build Tauri app for Windows and Linux
-        if: matrix.os != 'macos-latest'
+        if: matrix.enabled && matrix.os != 'macos-latest'
         run: |
           bun run tauri build
           if [ "${{ matrix.os }}" = "ubuntu-22.04" ]; then
@@ -84,7 +111,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Build Tauri app for macOS
-        if: matrix.os == 'macos-latest'
+        if: matrix.enabled && matrix.os == 'macos-latest'
         run: |
           rustup target add x86_64-apple-darwin
           rustup target add aarch64-apple-darwin
@@ -95,6 +122,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: upload assets
+        if: matrix.enabled
         uses: crabnebula-dev/cloud-release@v0
         with:
           command: release upload ${{ env.CN_APPLICATION }} --framework tauri
@@ -103,6 +131,7 @@ jobs:
 
   publish:
     needs: [build_desktop]
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_ubuntu }}
 
     runs-on: ubuntu-22.04
 
