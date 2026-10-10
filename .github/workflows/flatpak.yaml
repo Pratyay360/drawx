@@ -12,26 +12,40 @@ permissions:
   packages: write
   actions: write
 
+concurrency:
+  group: flatpak-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-flatpak:
-    name: Flatpak (x86_64)
+    name: Flatpak (${{ matrix.arch }})
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            bundle: drawx_x86_64.flatpak
+          - arch: aarch64
+            bundle: drawx_aarch64.flatpak
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
       options: --privileged
 
     steps:
-      - uses: actions/checkout@main
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6.8
+      - name: Build Flatpak
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6.8
         with:
-          bundle: drawx_x86_64.flatpak
+          bundle: ${{ matrix.bundle }}
           manifest-path: flatpak/io.github.pratyay360.drawx.yml
           branch: stable
-          cache-key: drawx-flatpak-${{ runner.os }}
-          arch: x86_64
+          cache-key: drawx-flatpak-${{ runner.os }}-${{ matrix.arch }}-${{ github.ref_name }}
+          arch: ${{ matrix.arch }}
           verbose: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -39,19 +53,19 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Upload flatpak bundle
-        uses: actions/upload-artifact@main
+        uses: actions/upload-artifact@v4
         with:
-          name: flatpak-x86_64
-          path: drawx_x86_64.flatpak
+          name: flatpak-${{ matrix.arch }}
+          path: ${{ matrix.bundle }}
+          if-no-files-found: error
 
       - name: Attach flatpak to release
         if: github.event_name == 'push'
-        uses: softprops/action-gh-release@master
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           draft: true
-          make_latest: true
-          files: drawx_x86_64.flatpak
+          files: ${{ matrix.bundle }}
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
