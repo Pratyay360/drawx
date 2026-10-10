@@ -26,7 +26,7 @@
 
 | Platform | Download |
 | --- | --- |
-| **Web** | [drawx-docs.surge.sh](https://drawx-docs.surge.sh) |
+| **Web** | [https://pratyay360.github.io/drawx/](https://pratyay360.github.io/drawx/) |
 | **Debian (x86_64)** | [debian-x86_64](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/debian-x86_64) |
 | **RPM (x86_64)** | [rpm-x86_64](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/rpm-x86_64) |
 | **Arch (x86_64)** | [arch-x86_64](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/arch-x86_64) |
