@@ -3,8 +3,6 @@ name: "flatpak"
 on:
   workflow_dispatch:
   push:
-    tags:
-      - "[0-9.]*"
 
 permissions:
   contents: write
@@ -34,7 +32,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@main
         with:
           submodules: recursive
 
@@ -53,7 +51,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Upload flatpak bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@main
         with:
           name: flatpak-${{ matrix.arch }}
           path: ${{ matrix.bundle }}
