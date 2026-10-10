@@ -41,9 +41,6 @@ jobs:
   build_desktop:
     needs: draft
 
-    # macOS bills at 10x and Windows at 2x the Linux rate, so each platform is
-    # opt-in. Job-level `if` cannot read `matrix`, so the flag is carried into
-    # `include` and enforced per step; unselected platforms start no build.
     strategy:
       fail-fast: false
       matrix:
