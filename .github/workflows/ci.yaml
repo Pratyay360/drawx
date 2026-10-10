@@ -1,6 +1,5 @@
 name: Tauri v2 Release Process
 on:
-  push:
   workflow_dispatch:
 
 concurrency:
