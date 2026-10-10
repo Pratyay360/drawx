@@ -1,0 +1,5 @@
+allowBuilds:
+  '@astryxdesign/cli': true
+  '@astryxdesign/core': true
+minimumReleaseAgeExclude:
+  - lucide-react@1.45.0

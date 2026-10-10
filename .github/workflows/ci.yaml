@@ -41,11 +41,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@main
-      - name: Install bun
-        uses: oven-sh/setup-bun@v2
-      - uses: actions/setup-node@main
-        with:
-          node-version: "lts/*"
       - name: Install stable toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
@@ -58,11 +53,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev squashfs-tools
 
+      - name: Setup pnpm
+        uses: pnpm/setup@v2
+        with:
+          cache: true
+
       - name: build Tauri app for Windows, Linux
         if: matrix.os != 'macos-latest'
         run: |
-          bun install
-          bun run tauri build
+          pnpm exec tauri build
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
@@ -71,19 +70,13 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: |
           rustup target add x86_64-apple-darwin
-          bun install
-          bun run tauri build --target x86_64-apple-darwin
-          bun run tauri build --target aarch64-apple-darwin
+          pnpm exec tauri build --target x86_64-apple-darwin
+          pnpm exec tauri build --target aarch64-apple-darwin
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: audit and fix AppImage permissions
-        # tauri-bundler/linuxdeploy can bake files without "other" read+exec
-        # bits (e.g. AppRun.wrapped at 0770). FUSE ignores those, but strict
-        # mounts (firejail --appimage, kernel squashfs) then fail with
-        # "Permission denied" on launch. Normalize, repack and re-sign so the
-        # updater signatures stay valid. Skipped when the audit is clean.
         if: matrix.os == 'ubuntu-22.04'
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -122,8 +115,8 @@ jobs:
             # The bytes changed, so the build-time updater tarball and all
             # signatures are stale: regenerate and re-sign them.
             tar -czf "$appimage.tar.gz" -C "$BUNDLE_DIR" "$(basename "$appimage")"
-            bun run tauri signer sign "$appimage"
-            bun run tauri signer sign "$appimage.tar.gz"
+            pnpm exec tauri signer sign "$appimage"
+            pnpm exec tauri signer sign "$appimage.tar.gz"
             # Re-audit the final artifact; fail loudly instead of shipping broken.
             "$appimage" --appimage-extract > /dev/null
             remaining="$(find squashfs-root \( \( -type f ! -perm -o+r \) -o \( -type d ! -perm -o+rx \) -o \( -type f -perm /111 ! -perm -o+x \) \) -print || true)"
@@ -181,7 +174,7 @@ jobs:
 
     steps:
       - name: download bundles
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@main
         with:
           path: bundles
           pattern: bundles-*
