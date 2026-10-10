@@ -8,12 +8,12 @@ on:
         default: true
         type: boolean
       build_windows:
-        description: "Build the Windows app (2x billing multiplier)"
+        description: "Build the Windows "
         required: false
         default: false
         type: boolean
       build_macos:
-        description: "Build the macOS apps (10x billing multiplier)"
+        description: "Build the macOS apps"
         required: false
         default: false
         type: boolean

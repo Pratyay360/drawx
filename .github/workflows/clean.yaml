@@ -6,7 +6,7 @@ on:
       retain_days:
         description: "Number of days to keep runs (0 to delete all)"
         required: false
-        default: "30"
+        default: "7"
         type: string
       keep_minimum_runs:
         description: "Minimum number of runs to keep per workflow"
@@ -27,7 +27,7 @@ jobs:
         with:
           token: ${{ github.token }}
           repository: ${{ github.repository }}
-          retain_days: ${{ inputs.retain_days || '30' }}
+          retain_days: ${{ inputs.retain_days || '7' }}
           keep_minimum_runs: ${{ inputs.keep_minimum_runs || '5' }}
 
       # Tag deletion is intentionally NOT done here. Deleting refs/tags/*

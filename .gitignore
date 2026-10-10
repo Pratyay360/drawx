@@ -24,3 +24,6 @@ dist-ssr
 *.sln
 *.sw?
 .commandcode/
+flatpak/.flatpak-builder/
+.flatpak-builder/
+build-dir/

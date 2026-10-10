@@ -3,9 +3,12 @@ name: flatpak
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: [release-goreleaser, ci]
+    workflows: [release-goreleaser]
     types:
       - completed
+  push:
+    tags:
+      - "[0-9.]*"
 
 permissions:
   contents: write
@@ -16,9 +19,6 @@ permissions:
 jobs:
   build-flatpak:
     name: Flatpak (x86_64)
-    # Only build packages from a successful release build — never from a failed
-    # or skipped one. Skipping failures avoids ~30min of wasted compute per run.
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-24.04
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
@@ -34,8 +34,6 @@ jobs:
           bundle: drawx_x86_64.flatpak
           manifest-path: flatpak/io.github.pratyay360.drawx.yml
           branch: stable
-          # Key on the manifest rather than the sha: the sha changes every run,
-          # so a sha-keyed cache never hits and every build is fully cold.
           cache-key: drawx-flatpak-${{ runner.os }}
           arch: x86_64
           verbose: true
@@ -44,7 +42,6 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
-
       - name: Upload flatpak bundle
         uses: actions/upload-artifact@main
         with:
@@ -52,8 +49,6 @@ jobs:
           path: drawx_x86_64.flatpak
 
       - name: Attach flatpak to release
-        # Only on version-tag pushes: attaches the bundle to that tag's
-        # (GoReleaser) GitHub Release. Runs after `ci` only validate the build.
         if: github.event_name == 'push'
         uses: softprops/action-gh-release@master
         with:

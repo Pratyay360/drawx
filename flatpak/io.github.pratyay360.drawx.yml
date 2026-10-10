@@ -48,8 +48,7 @@ modules:
       # is already on PATH via append-path above).
       - npm install -g --prefix /run/build/drawx pnpm@12.10.1
       - pnpm install --frozen-lockfile
-      - pnpm tauri build -- --no-bundle
-      # --- Install artifacts ---
+      - pnpm run tauri:build
       - install -Dm755 src-tauri/target/release/drawx /app/bin/drawx
 
       - install -Dm644 flatpak/io.github.pratyay360.drawx.desktop
@@ -70,18 +69,13 @@ modules:
     sources:
       - type: dir
         path: ../
-      # Vendored Rust crates — generated via flatpak-builder-tools/cargo.
-      # For local builds this is optional when --share=network is enabled, but it
-      # allows fully offline builds and is required for Flathub submission.
-      # Keep the file at flatpak/cargo-sources.json (copied from ../cargo-sources.json)
-      # so flatpak-builder can expand it as a list of sources.
-      - cargo-sources.json
-      # --- For Flathub submission, replace the `type: dir` source above with: ---
-      #
+      - type: file
+        path: cargo-sources.json
+
       # - type: git
       #   url: https://github.com/pratyay360/drawx.git
-      #   tag: v0.7.1
-      #   commit: <full-commit-hash>
+      #   tag: 0.9.0
+
       #
       # Then keep the vendored offline sources below (regenerate on every lockfile bump):
       # - cargo-sources.json
