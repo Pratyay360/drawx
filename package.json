@@ -1,6 +1,6 @@
 {
   "name": "drawx",
-  "version": "0.7.23",
+  "version": "0.7.26",
   "type": "module",
   "imports": {
     "#components/*": "./src/components/*.tsx",
@@ -60,7 +60,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
     "astryx": "^0.0.0",
-    "oxfmt": "^0.65.0",
+    "oxfmt": "^0.72.0",
     "oxlint": "^1.82.0",
     "typescript": "~7.0.2",
     "vite": "^8.3.0",
@@ -73,7 +73,7 @@
       "onFail": "warn"
     }
   },
-  "packageManager": "npm@11.19.0",
+  "packageManager": "npm@12.2.0",
   "trustedDependencies": [
     "@astryxdesign/cli",
     "@astryxdesign/core"
