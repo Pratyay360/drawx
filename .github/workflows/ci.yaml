@@ -67,7 +67,7 @@ jobs:
         if: matrix.enabled
         uses: oven-sh/setup-bun@v2
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@main
         if: matrix.enabled
         with:
           node-version: "lts/*"

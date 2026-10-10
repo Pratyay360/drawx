@@ -69,17 +69,17 @@
 	},
 	"devEngines": {
 		"packageManager": {
-			"name": "bun",
-			"version": "^1.4.2",
+			"name": "pnpm",
+			"version": "^12.10.1",
 			"onFail": "warn"
 		}
 	},
-	"packageManager": "bun@1.4.2+sha512.4eb497a3a1c97c811a733a5bde48d7f36236a4be3bbcad5050d98744251dcfd23368ec1af65cce5d25b0bb6975f181c4dec35f1916a954b7789cd9bedb6bd554",
+	"packageManager": "pnpm@12.10.1+sha512.ba40a37eb1a370d60fea8c4cf1d364c13bcccef518e98ad2bcee954f539d38da37458e58261a3fa55e06523450ea0ffff9f497b135be41f2c15c1642bacace6c",
 	"trustedDependencies": [
 		"@astryxdesign/cli",
 		"@astryxdesign/core"
 	],
-	"allowBuilds": {
+	"allowScripts": {
 		"@astryxdesign/cli": true,
 		"@astryxdesign/core": true
 	}
