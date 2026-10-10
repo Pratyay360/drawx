@@ -6,13 +6,11 @@
   <name>DrawX</name>
   <summary>Offline-first brainstorming and whiteboard</summary>
   <description>
-    <p>DrawX is an offline-first brainstorming and whiteboard application built with Excalidraw. Sketch diagrams, wireframes and ideas locally without requiring a network connection.</p>
+    <p>DrawX is an offline-first brainstorming and whiteboard application built with Excalidraw.</p>
     <p>Features:</p>
     <ul>
       <li>Infinite canvas powered by Excalidraw</li>
-      <li>Works fully offline — your data stays on device</li>
-      <li>File open/save via native dialogs</li>
-      <li>Light and dark themes</li>
+      <li>Works fully offline your data stays on device</li>
     </ul>
   </description>
   <launchable type="desktop-id">io.github.drawx.desktop</launchable>

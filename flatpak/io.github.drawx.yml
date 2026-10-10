@@ -1,6 +1,6 @@
 id: io.github.drawx
 runtime: org.gnome.Platform
-runtime-version: "49"
+runtime-version: "50"
 sdk: org.gnome.Sdk
 
 sdk-extensions:
@@ -11,8 +11,10 @@ command: drawx
 
 finish-args:
   - --share=ipc
+  - --share=network
   - --socket=wayland
   - --socket=fallback-x11
+  - --filesystem=home
   - --device=dri
 
 modules:
@@ -40,8 +42,8 @@ modules:
 
 
     build-commands:
-      - npm install
-      - npx tauri build --no-bundle
+      - npm ci
+      - npm run tauri build -- --no-bundle
       # --- Install artifacts ---
       - install -Dm755 src-tauri/target/release/drawx /app/bin/drawx
 
