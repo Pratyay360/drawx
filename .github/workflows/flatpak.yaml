@@ -3,7 +3,7 @@ name: flatpak
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: [release-goreleaser]
+    workflows: [release-goreleaser, ci]
     types:
       - completed
   push:
