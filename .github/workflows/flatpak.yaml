@@ -1,9 +1,10 @@
 name: flatpak
 
 on:
-  workflow_run:
-    workflows: [ci]
-    types: [completed]
+  push:
+    tags:
+      - "[0-9]*"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -35,7 +36,6 @@ jobs:
           # Key on the manifest rather than the sha: the sha changes every run,
           # so a sha-keyed cache never hits and every build is fully cold.
           cache-key: drawx-flatpak-${{ runner.os }}
-          cache-cleanup: always
           arch: x86_64
           verbose: true
         env:
@@ -51,6 +51,9 @@ jobs:
           path: drawx_x86_64.flatpak
 
       - name: Attach flatpak to release
+        # Only on version-tag pushes: attaches the bundle to that tag's
+        # (GoReleaser) GitHub Release. Runs after `ci` only validate the build.
+        if: github.event_name == 'push'
         uses: softprops/action-gh-release@master
         with:
           tag_name: ${{ github.ref_name }}

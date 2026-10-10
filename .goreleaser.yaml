@@ -2,8 +2,6 @@ version: 2
 
 project_name: drawx
 
-# Tauri (Rust + frontend) app: bundles are built in GitHub Actions
-# (see .github/workflows/release-goreleaser.yml) and only uploaded here.
 builds:
   - skip: true
 

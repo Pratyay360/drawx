@@ -32,18 +32,23 @@ modules:
       # Then add cargo-sources.json (+ generated-sources.json when available) as extra sources
       # (see the sources section below).  Regenerate both on every lockfile bump.
       build-args:
-        # - --share=network
+        - --share=network
       append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin:/run/build/drawx/bin
       env:
         CARGO_HOME: /run/build/drawx/cargo
         XDG_CACHE_HOME: /run/build/drawx/flatpak-node/cache
-        COREPACK_HOME: /run/build/drawx/flatpak-node/corepack
         npm_config_cache: /run/build/drawx/flatpak-node/npm-cache
 
 
     build-commands:
-      - npm ci
-      - npm run tauri build -- --no-bundle
+      # NOTE: do NOT use `corepack enable` here. The node24 SDK extension is
+      # mounted read-only, so `corepack enable` fails with:
+      #   EROFS: symlink '../lib/node_modules/corepack/dist/pnpm.js' -> '/usr/lib/sdk/node24/bin/pnpm'
+      # Install pnpm into the writable build dir instead (/run/build/drawx/bin
+      # is already on PATH via append-path above).
+      - npm install -g --prefix /run/build/drawx pnpm@12.10.1
+      - pnpm install --frozen-lockfile
+      - pnpm tauri build -- --no-bundle
       # --- Install artifacts ---
       - install -Dm755 src-tauri/target/release/drawx /app/bin/drawx
 
