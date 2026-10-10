@@ -1,0 +1,145 @@
+[tools]
+rust = "latest"
+cargo-make = "latest"
+rust-analyzer = "latest"
+node = "24"
+biome = "latest"
+"go:github.com/yieldray/surgecli" = "latest"
+prettier = "latest"
+bun = "latest"
+
+[env]
+SOPS_AGE_RECIPIENTS = "age1a9p2k3u40mvdntpad4ga7akvnnqqwm6eskfr2yxkgq3u9lp7jfns2wgqty, age155th0ptdjf3gkp7pmzqcepe9kec9n3w32l87czf29fda4a2gj49ql0pg8a"
+_.file = { path = ".env" }
+
+[settings]
+auto_install = true
+
+[tasks.install]
+description = "Install JS dependencies"
+run = "bun install"
+
+[tasks.update]
+description = "Update JS dependencies"
+run = "bun update"
+
+[tasks.dev]
+description = "Start Vite dev server"
+run = "bun run dev"
+
+[tasks.build]
+description = "Typecheck + build frontend (tsc + vite build)"
+run = "bun run build"
+
+[tasks."build:frontend"]
+description = "Alias for build (frontend only)"
+run = "bun run build"
+
+[tasks.preview]
+description = "Preview production build"
+run = "bun run preview"
+
+[tasks.typecheck]
+description = "Run TypeScript typecheck (no emit)"
+run = "bunx tsc --noEmit"
+
+# ── Lint / Format (Biome) ────────────────────────────────────────
+[tasks.lint]
+description = "Lint with Biome"
+run = "bun run lint"
+
+[tasks."lint:fix"]
+description = "Lint and auto-fix with Biome"
+run = "bun run lint:fix"
+
+[tasks.format]
+description = "Format with Biome"
+run = "bun run format"
+
+[tasks."format:check"]
+description = "Check formatting with Biome (no write)"
+run = "bunx biome format ."
+
+[tasks.check]
+description = "Run lint + typecheck"
+depends = ["lint", "typecheck"]
+
+[tasks."check:fix"]
+description = "Run lint:fix + format"
+depends = ["lint:fix", "format"]
+
+# ── Tauri ────────────────────────────────────────────────────────
+[tasks.tauri]
+description = "Run tauri CLI (pass-through args)"
+run = '''#!/usr/bin/env bash
+bunx tauri "$@"
+'''
+
+[tasks."tauri:dev"]
+description = "Run Tauri in dev mode"
+run = "bunx tauri dev"
+
+[tasks."tauri:build"]
+description = "Build Tauri app (release bundle)"
+run = "bunx tauri build"
+
+# Back-compat: original `build` was tauri build — keep alias
+[tasks."build:tauri"]
+description = "Alias for tauri:build"
+run = "bunx tauri build"
+
+# ── Astryx ───────────────────────────────────────────────────────
+[tasks.astryx]
+description = "Run Astryx CLI (pass-through args)"
+run = '''#!/usr/bin/env bash
+bunx astryx "$@"
+'''
+
+[tasks."astryx:build"]
+description = "Run astryx build (pass idea as args)"
+run = '''#!/usr/bin/env bash
+    bunx astryx build "$@"
+'''
+
+[tasks."astryx:component"]
+description = "Show Astryx component docs"
+run = '''#!/usr/bin/env bash
+    bunx astryx component "$@"
+'''
+
+[tasks."astryx:template"]
+description = "Scaffold Astryx template"
+run = '''#!/usr/bin/env bash
+    bunx astryx template "$@"
+'''
+
+# ── Secrets ──────────────────────────────────────────────────────
+[tasks.encrypt]
+description = "Encrypt .env with sops"
+run = "sops -e -i .env && mv .env .env.example"
+
+[tasks.decrypt]
+description = "Decrypt .env.example with sops"
+run = "mv .env.example .env && sops -d -i .env"
+
+# ── Static docs deploy ───────────────────────────────────────────
+[tasks.static]
+description = "Deploy docs via surge"
+run = "surgecli deploy docs/ drawx-docs.surge.sh"
+
+# ── CI / Housekeeping ────────────────────────────────────────────
+[tasks.ci]
+description = "CI: lint + build frontend"
+depends = ["lint", "build"]
+
+[tasks."ci:full"]
+description = "CI full: lint + tauri build"
+depends = ["lint", "tauri:build"]
+
+[tasks.clean]
+description = "Clean build artifacts"
+run = "rm -rf dist src-tauri/target node_modules/.vite"
+
+[tasks.deps]
+description = "Install mise tools + JS deps"
+run = ["mise install", "bun install"]
