@@ -14,6 +14,9 @@ concurrency:
   group: flatpak-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CN_APPLICATION: "pratyay/drawx"
+
 jobs:
   build-flatpak:
     name: Flatpak (${{ matrix.arch }})
@@ -47,6 +50,7 @@ jobs:
           verbose: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          TAURI_BUNDLE_CREATE_UPDATER_ARTIFACTS: "false"
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
@@ -56,6 +60,13 @@ jobs:
           name: flatpak-${{ matrix.arch }}
           path: ${{ matrix.bundle }}
           if-no-files-found: error
+
+      - name: Upload flatpak to CrabNebula Cloud
+        if: github.event_name == 'push' && secrets.CN_API_KEY != ''
+        uses: crabnebula-dev/cloud-release@v0
+        with:
+          command: release upload --file ${{ matrix.bundle }} ${{ env.CN_APPLICATION }} ${{ github.ref_name }}
+          api-key: ${{ secrets.CN_API_KEY }}
 
       - name: Attach flatpak to release
         if: github.event_name == 'push'
