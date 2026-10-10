@@ -4,43 +4,28 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SRC_TAURI_DIR="$REPO_ROOT/src-tauri"
-HOOK_SRC="$SRC_TAURI_DIR/appimage/apprun-wayland-compat.sh"
-
-if [ ! -f "$HOOK_SRC" ]; then
-  echo "Error: Wayland compatibility hook not found at $HOOK_SRC" >&2
-  exit 1
-fi
-
 TAURI_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/tauri"
 
-# Find generated *.AppDir directories in src-tauri/target or target
-APPDIRS=()
-while IFS= read -r -d '' dir; do
-  APPDIRS+=("$dir")
-done < <(find "$SRC_TAURI_DIR/target" "$REPO_ROOT/target" -type d -name "*.AppDir" -print0 2>/dev/null || true)
-
-if [ "${#APPDIRS[@]}" -eq 0 ]; then
-  echo "No *.AppDir found to patch. (Did you run tauri build?)"
-  exit 0
-fi
-
-# Set up temporary directory for linuxdeploy and plugins
+# Clean up temp files on exit
 TEMP_BIN=$(mktemp -d)
+TEMP_EXTRACT=""
 cleanup() {
   rm -rf "$TEMP_BIN"
+  if [ -n "$TEMP_EXTRACT" ] && [ -d "$TEMP_EXTRACT" ]; then
+    rm -rf "$TEMP_EXTRACT"
+  fi
 }
 trap cleanup EXIT
 
+# 1. Resolve linuxdeploy and appimage tools
 LINUXDEPLOY_BIN=""
 if [ -d "$TAURI_CACHE_DIR" ]; then
-  # Look for linuxdeploy AppImage in Tauri cache
   cached_linuxdeploy=$(find "$TAURI_CACHE_DIR" -maxdepth 1 -name "linuxdeploy-*.AppImage" -print -quit 2>/dev/null || true)
   if [ -n "$cached_linuxdeploy" ] && [ -f "$cached_linuxdeploy" ]; then
     ln -sf "$cached_linuxdeploy" "$TEMP_BIN/linuxdeploy"
     LINUXDEPLOY_BIN="$TEMP_BIN/linuxdeploy"
   fi
 
-  # Look for linuxdeploy-plugin-appimage in Tauri cache
   cached_plugin=$(find "$TAURI_CACHE_DIR" -maxdepth 1 -name "linuxdeploy-plugin-appimage.AppImage" -print -quit 2>/dev/null || true)
   if [ -n "$cached_plugin" ] && [ -f "$cached_plugin" ]; then
     ln -sf "$cached_plugin" "$TEMP_BIN/linuxdeploy-plugin-appimage"
@@ -54,12 +39,30 @@ fi
 export PATH="$TEMP_BIN:$PATH"
 export APPIMAGE_EXTRACT_AND_RUN=1
 
-for appdir in "${APPDIRS[@]}"; do
+# 2. Patch an AppDir in-place
+patch_appdir() {
+  local appdir="$1"
   echo "Patching AppDir: $appdir"
 
-  # 1. Copy hook into apprun-hooks/wayland-compat.sh
+  # 1. Write self-contained Wayland compatibility hook
   mkdir -p "$appdir/apprun-hooks"
-  cp "$HOOK_SRC" "$appdir/apprun-hooks/wayland-compat.sh"
+  cat << 'EOF' > "$appdir/apprun-hooks/wayland-compat.sh"
+export DESKTOPINTEGRATION=1
+
+if [ -z "${LD_PRELOAD:-}" ]; then
+  for lib in \
+    /usr/lib/libwayland-client.so \
+    /usr/lib64/libwayland-client.so \
+    /usr/lib/x86_64-linux-gnu/libwayland-client.so \
+    /usr/lib/aarch64-linux-gnu/libwayland-client.so \
+    /usr/lib/arm-linux-gnueabihf/libwayland-client.so; do
+    if [ -f "$lib" ]; then
+      export LD_PRELOAD="$lib"
+      break
+    fi
+  done
+fi
+EOF
   chmod +x "$appdir/apprun-hooks/wayland-compat.sh"
 
   # 2. Patch AppRun so it sources the new hook before executing AppRun.wrapped
@@ -87,14 +90,18 @@ exec "$HERE/AppRun.wrapped" "$@"
 EOF
     chmod +x "$appdir/AppRun"
   fi
+}
 
-  # 3. Repack the AppImage using linuxdeploy from Tauri's cache
-  bundle_dir="$(dirname "$appdir")"
-  appdir_name="$(basename "$appdir")"
-  appimage_base="${appdir_name%.AppDir}.AppImage"
-  expected_appimage="${bundle_dir}/${appimage_base}"
+# 3. Repack AppDir into AppImage
+repack_appdir() {
+  local appdir="$1"
+  local expected_appimage="$2"
+  local bundle_dir
+  bundle_dir="$(dirname "$expected_appimage")"
+  local appimage_base
+  appimage_base="$(basename "$expected_appimage")"
 
-  echo "Repacking AppImage for $appdir_name..."
+  echo "Repacking AppImage into $expected_appimage..."
   (
     cd "$bundle_dir"
     export LDAI_OUTPUT="$appimage_base"
@@ -115,6 +122,46 @@ EOF
   )
 
   echo "Successfully repacked AppImage at $expected_appimage"
-done
+}
+
+# 4. Process targets
+if [ "${1:-}" != "" ]; then
+  TARGET_PATH="$(readlink -f "$1")"
+  if [ -d "$TARGET_PATH" ]; then
+    patch_appdir "$TARGET_PATH"
+    bundle_dir="$(dirname "$TARGET_PATH")"
+    appdir_name="$(basename "$TARGET_PATH")"
+    expected_appimage="${bundle_dir}/${appdir_name%.AppDir}.AppImage"
+    repack_appdir "$TARGET_PATH" "$expected_appimage"
+  elif [ -f "$TARGET_PATH" ]; then
+    TEMP_EXTRACT=$(mktemp -d)
+    echo "Extracting AppImage: $TARGET_PATH"
+    (cd "$TEMP_EXTRACT" && "$TARGET_PATH" --appimage-extract >/dev/null)
+    EXTRACTED_APPDIR="$TEMP_EXTRACT/squashfs-root"
+    patch_appdir "$EXTRACTED_APPDIR"
+    repack_appdir "$EXTRACTED_APPDIR" "$TARGET_PATH"
+  else
+    echo "Error: Target path not found: $TARGET_PATH" >&2
+    exit 1
+  fi
+else
+  APPDIRS=()
+  while IFS= read -r -d '' dir; do
+    APPDIRS+=("$dir")
+  done < <(find "$SRC_TAURI_DIR/target" "$REPO_ROOT/target" -type d -name "*.AppDir" -print0 2>/dev/null || true)
+
+  if [ "${#APPDIRS[@]}" -eq 0 ]; then
+    echo "No *.AppDir found to patch. (Did you run tauri build?)"
+    exit 0
+  fi
+
+  for appdir in "${APPDIRS[@]}"; do
+    patch_appdir "$appdir"
+    bundle_dir="$(dirname "$appdir")"
+    appdir_name="$(basename "$appdir")"
+    expected_appimage="${bundle_dir}/${appdir_name%.AppDir}.AppImage"
+    repack_appdir "$appdir" "$expected_appimage"
+  done
+fi
 
 echo "Wayland AppImage patching complete."

@@ -1360,7 +1360,7 @@ dependencies = [
 
 [[package]]
 name = "drawx"
-version = "0.8.0"
+version = "0.9.1"
 dependencies = [
  "cargo-audit",
  "rusqlite",

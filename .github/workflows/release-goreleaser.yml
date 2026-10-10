@@ -64,7 +64,7 @@ jobs:
         run: |
           bun run tauri build
           if [ "${{ matrix.os }}" = "ubuntu-22.04" ]; then
-            bash src-tauri/scripts/patch-appimage-wayland.sh
+            source src-tauri/scripts/patch-appimage-wayland.sh
           fi
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}

@@ -1,6 +1,6 @@
 {
 	"name": "drawx",
-	"version": "0.8.0",
+	"version": "0.8.5",
 	"type": "module",
 	"imports": {
 		"#components/*": "./src/components/*.tsx",
@@ -14,7 +14,7 @@
 		"preview": "vite preview",
 		"tauri": "tauri",
 		"lint": "biome lint .",
-		"tauri:build": "tauri build && bash src-tauri/scripts/patch-appimage-wayland.sh",
+		"tauri:build": "tauri build && source src-tauri/scripts/patch-appimage-wayland.sh",
 		"lint:fix": "biome lint --fix",
 		"format": "biome format --write ."
 	},
