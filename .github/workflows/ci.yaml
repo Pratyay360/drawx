@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@main
       - name: Install pnpm
-        uses: pnpm/action-setup@main
+        uses: pnpm/action-setup@master
         with:
           version: 12
       - uses: actions/setup-node@main
