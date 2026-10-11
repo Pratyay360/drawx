@@ -23,6 +23,7 @@ release:
     - glob: ./dist-bundles/**/*.deb
     - glob: ./dist-bundles/**/*.rpm
     - glob: ./dist-bundles/**/*.AppImage
+    - glob: ./dist-bundles/**/*.AppImage.zsync
     - glob: ./dist-bundles/**/*.msi
     - glob: ./dist-bundles/**/*.exe
     - glob: ./dist-bundles/**/*.dmg

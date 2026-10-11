@@ -88,7 +88,8 @@ jobs:
             libxdo-dev \
             patchelf \
             file \
-            squashfs-tools
+            squashfs-tools \
+            zsync
 
       - name: Install dependencies
         if: matrix.enabled
