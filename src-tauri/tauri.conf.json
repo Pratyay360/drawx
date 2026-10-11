@@ -40,7 +40,15 @@
 		},
 		"linux": {
 			"deb": {
-				"depends": ["libwebkit2gtk-4.1-0", "libayatana-appindicator3-1"]
+				"depends": ["libwebkit2gtk-4.1-0", "libayatana-appindicator3-1"],
+				"files": {
+					"/usr/share/metainfo/io.github.pratyay360.drawx.metainfo.xml": "../flatpak/io.github.pratyay360.drawx.metainfo.xml"
+				}
+			},
+			"appimage": {
+				"files": {
+					"/usr/share/metainfo/io.github.pratyay360.drawx.metainfo.xml": "../flatpak/io.github.pratyay360.drawx.metainfo.xml"
+				}
 			}
 		},
 		"icon": [

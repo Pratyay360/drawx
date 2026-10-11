@@ -26,10 +26,17 @@ if [ -d "$TAURI_CACHE_DIR" ]; then
     LINUXDEPLOY_BIN="$TEMP_BIN/linuxdeploy"
   fi
 
-  cached_plugin=$(find "$TAURI_CACHE_DIR" -maxdepth 1 -name "linuxdeploy-plugin-appimage.AppImage" -print -quit 2>/dev/null || true)
-  if [ -n "$cached_plugin" ] && [ -f "$cached_plugin" ]; then
-    ln -sf "$cached_plugin" "$TEMP_BIN/linuxdeploy-plugin-appimage"
+  cached_appimagetool=$(find "$TAURI_CACHE_DIR" -maxdepth 1 -name "appimagetool-*.AppImage" -print -quit 2>/dev/null || true)
+  if [ -n "$cached_appimagetool" ] && [ -f "$cached_appimagetool" ]; then
+    ln -sf "$cached_appimagetool" "$TEMP_BIN/appimagetool"
   fi
+fi
+
+APPIMAGETOOL_BIN=""
+if command -v appimagetool >/dev/null 2>&1; then
+  APPIMAGETOOL_BIN="$(command -v appimagetool)"
+elif [ -x "$TEMP_BIN/appimagetool" ]; then
+  APPIMAGETOOL_BIN="$TEMP_BIN/appimagetool"
 fi
 
 if [ -z "$LINUXDEPLOY_BIN" ] && command -v linuxdeploy >/dev/null 2>&1; then
@@ -90,6 +97,11 @@ exec "$HERE/AppRun.wrapped" "$@"
 EOF
     chmod +x "$appdir/AppRun"
   fi
+  # 3. Ensure AppStream metainfo is present in the AppDir
+  mkdir -p "$appdir/usr/share/metainfo"
+  if [ -f "$REPO_ROOT/flatpak/io.github.pratyay360.drawx.metainfo.xml" ]; then
+    cp -f "$REPO_ROOT/flatpak/io.github.pratyay360.drawx.metainfo.xml" "$appdir/usr/share/metainfo/io.github.pratyay360.drawx.metainfo.xml"
+  fi
 }
 
 # 3. Repack AppDir into AppImage
@@ -105,19 +117,26 @@ repack_appdir() {
   (
     cd "$bundle_dir"
     export LDAI_OUTPUT="$appimage_base"
+    export LDAI_UPDATE_INFORMATION="${LDAI_UPDATE_INFORMATION:-gh-releases-zsync|pratyay360|drawx|latest|*amd64*.AppImage.zsync}"
 
     # Remove existing AppImage before repacking
     [ -f "$expected_appimage" ] && rm -f "$expected_appimage"
 
-    if [ -n "$LINUXDEPLOY_BIN" ]; then
+    if [ -n "$APPIMAGETOOL_BIN" ]; then
+      "$APPIMAGETOOL_BIN" -u "$LDAI_UPDATE_INFORMATION" "$appdir" "$expected_appimage"
+    elif [ -n "$LINUXDEPLOY_BIN" ]; then
       "$LINUXDEPLOY_BIN" --appdir "$appdir" --output appimage
-    elif command -v appimagetool >/dev/null 2>&1; then
-      appimagetool "$appdir" "$expected_appimage"
     elif [ -x "$TEMP_BIN/linuxdeploy-plugin-appimage" ]; then
       "$TEMP_BIN/linuxdeploy-plugin-appimage" --appdir "$appdir"
     else
-      echo "Error: Could not find linuxdeploy or appimagetool to repack $appdir" >&2
+      echo "Error: Could not find appimagetool or linuxdeploy to repack $appdir" >&2
       exit 1
+    fi
+
+    # Generate zsync file if zsyncmake is available
+    if command -v zsyncmake >/dev/null 2>&1; then
+      echo "Generating zsync file for $expected_appimage..."
+      zsyncmake -u "$appimage_base" -o "${expected_appimage}.zsync" "$expected_appimage"
     fi
   )
 
