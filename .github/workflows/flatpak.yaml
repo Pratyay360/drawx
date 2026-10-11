@@ -26,8 +26,7 @@ jobs:
         include:
           - arch: x86_64
             bundle: drawx_x86_64.flatpak
-          - arch: aarch64
-            bundle: drawx_aarch64.flatpak
+
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
       options: --privileged
