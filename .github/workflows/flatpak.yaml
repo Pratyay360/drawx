@@ -44,7 +44,7 @@ jobs:
           bundle: ${{ matrix.bundle }}
           manifest-path: flatpak/io.github.pratyay360.drawx.yml
           branch: stable
-          cache-key: drawx-flatpak-${{ runner.os }}-${{ matrix.arch }}-${{ github.ref_name }}
+          cache-key: flatpak-builder-${{ matrix.arch }}-${{ hashFiles('flatpak/io.github.pratyay360.drawx.yml', 'flatpak/cargo-sources.json', 'src-tauri/Cargo.lock', 'pnpm-lock.yaml') }}
           arch: ${{ matrix.arch }}
           verbose: true
         env:

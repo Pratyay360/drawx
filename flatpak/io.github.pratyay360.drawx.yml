@@ -48,7 +48,7 @@ modules:
       # is already on PATH via append-path above).
       - npm install -g --prefix /run/build/drawx pnpm@12.10.1
       - pnpm install --frozen-lockfile
-      - pnpm run tauri:build
+      - pnpm exec tauri build --no-bundle
       - install -Dm755 src-tauri/target/release/drawx /app/bin/drawx
 
       - install -Dm644 flatpak/io.github.pratyay360.drawx.desktop
@@ -69,8 +69,7 @@ modules:
     sources:
       - type: dir
         path: ../
-      - type: file
-        path: cargo-sources.json
+      - cargo-sources.json
 
       # - type: git
       #   url: https://github.com/pratyay360/drawx.git

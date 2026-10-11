@@ -24,6 +24,15 @@ jobs:
     steps:
       - uses: actions/checkout@main
 
+      - name: cache pnpm store
+        uses: actions/cache@main
+        with:
+          path: |
+            ~/.local/share/pnpm/store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
       - name: cache rust build
         uses: actions/cache@main
         with:
@@ -31,7 +40,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             src-tauri/target
-          key: tauri-pr-${{ runner.os }}-${{ hashFiles('src-tauri/Cargo.lock', 'bun.lock') }}
+          key: tauri-pr-${{ runner.os }}-${{ hashFiles('src-tauri/Cargo.lock', 'pnpm-lock.yaml') }}
           restore-keys: tauri-pr-${{ runner.os }}-
 
       - name: install system deps
