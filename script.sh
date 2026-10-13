@@ -4,7 +4,7 @@ set -euo pipefail
 
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
-pnpm version patch --immediate
+pnpm version patch
 
 cd src-tauri
 
