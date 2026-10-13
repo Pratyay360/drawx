@@ -9,12 +9,6 @@ const STORAGE_KEY = "drawx-theme";
 
 const SERVER_THEME: ThemeName = "butter";
 const SERVER_MODE: ModePreference = "light";
-
-/**
- * Resolves a mode preference against the selected theme.
- * Dark-only themes (gothic) force dark regardless of the preference, so the
- * persisted preference survives switching back to a theme with both modes.
- */
 function getEffectiveMode(
 	name: ThemeName,
 	preference: ModePreference,

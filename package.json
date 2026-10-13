@@ -1,6 +1,7 @@
 {
   "name": "drawx",
   "version": "0.9.6",
+  "packageManager": "yarn@4.18.1",
   "type": "module",
   "imports": {
     "#components/*": "./src/components/*.tsx",
@@ -13,18 +14,15 @@
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "tauri": "tauri",
-    "lint": "biome lint .",
-    "tauri:build": "tauri build && source src-tauri/scripts/patch-appimage-wayland.sh",
-    "lint:fix": "biome lint --fix",
-    "format": "biome format --write ."
+    "tauri:build": "tauri build && source src-tauri/scripts/patch-appimage-wayland.sh"
   },
   "dependencies": {
-    "@astryxdesign/cli": "^0.5.4",
-    "@astryxdesign/core": "^0.5.4",
-    "@astryxdesign/theme-matcha": "^0.5.4",
-    "@astryxdesign/theme-neutral": "^0.5.4",
-    "@astryxdesign/theme-stone": "^0.5.4",
-    "@astryxdesign/theme-y2k": "^0.5.4",
+    "@astryxdesign/cli": "^0.6.8",
+    "@astryxdesign/core": "^0.6.8",
+    "@astryxdesign/theme-matcha": "^0.6.8",
+    "@astryxdesign/theme-neutral": "^0.6.8",
+    "@astryxdesign/theme-stone": "^0.6.8",
+    "@astryxdesign/theme-y2k": "^0.6.8",
     "@excalidraw/excalidraw": "^0.18.1",
     "@fontsource-variable/inter": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
@@ -44,7 +42,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.55.0",
-    "radix-ui": "^1.7.0",
+    "radix-ui": "^1.8.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-router-dom": "^7.18.4",
@@ -53,7 +51,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
-    "@oxlint/plugins": "1.81.0",
+    "@oxlint/plugins": "1.87.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tauri-apps/cli": "^2.12.2",
     "@types/node": "^26.6.5",
@@ -67,14 +65,6 @@
     "vite": "^8.3.4",
     "zustand": "^5.0.15"
   },
-  "devEngines": {
-    "packageManager": {
-      "name": "npm",
-      "version": "^12.2.0",
-      "onFail": "warn"
-    }
-  },
-  "packageManager": "npm@12.2.0+sha512.66c2632a94e796649738b2d7894d710c2cc2e1696893823066687f6b0d8a52e5f2b54eeaeaa32ffdc513ecca1e49ff794a5c2ec3f9515d879f1b3182b291cf35",
   "trustedDependencies": [
     "@astryxdesign/cli",
     "@astryxdesign/core"
@@ -82,10 +72,6 @@
   "allowScripts": {
     "@astryxdesign/cli": true,
     "@astryxdesign/core": true
-  },
-  "overrides": {
-    "katex": "0.19.0",
-    "lodash-es": "4.18.1"
   },
   "allowBuilds": {
     "@astryxdesign/cli": true,

@@ -24,14 +24,14 @@ jobs:
     steps:
       - uses: actions/checkout@main
 
-      - name: cache pnpm store
+      - name: cache yarn store
         uses: actions/cache@main
         with:
           path: |
-            ~/.local/share/pnpm/store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+            ~/.yarn/berry/cache
+          key: yarn-store-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
           restore-keys: |
-            pnpm-store-${{ runner.os }}-
+            yarn-store-${{ runner.os }}-
 
       - name: cache rust build
         uses: actions/cache@main
@@ -40,7 +40,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             src-tauri/target
-          key: tauri-pr-${{ runner.os }}-${{ hashFiles('src-tauri/Cargo.lock', 'pnpm-lock.yaml') }}
+          key: tauri-pr-${{ runner.os }}-${{ hashFiles('src-tauri/Cargo.lock', 'yarn.lock') }}
           restore-keys: tauri-pr-${{ runner.os }}-
 
       - name: install system deps
@@ -63,9 +63,9 @@ jobs:
         run: |
           mise deps
           mise install
-          nub install
-          nub run build
-          nub run tauri build
+          yarn install --immutable
+          yarn run build
+          yarn tauri build
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}

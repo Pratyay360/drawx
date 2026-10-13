@@ -27,12 +27,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@master
-
       - uses: actions/setup-node@main
         with:
           node-version: "lts/*"
+
+      - name: Enable Corepack for Yarn
+        run: corepack enable
 
       - name: Install stable toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -56,12 +56,12 @@ jobs:
             zsync
 
       - name: Install dependencies
-        run: pnpm install
+        run: yarn install --immutable
 
       - name: Build Tauri app (Linux / Windows)
         if: matrix.os != 'macos-latest'
         run: |
-          pnpm tauri build
+          yarn tauri build
           if [ "${{ matrix.os }}" = "ubuntu-22.04" ]; then
             source src-tauri/scripts/patch-appimage-wayland.sh
           fi
@@ -74,8 +74,8 @@ jobs:
         run: |
           rustup target add x86_64-apple-darwin
           rustup target add aarch64-apple-darwin
-          pnpm tauri build --target x86_64-apple-darwin
-          pnpm tauri build --target aarch64-apple-darwin
+          yarn tauri build --target x86_64-apple-darwin
+          yarn tauri build --target aarch64-apple-darwin
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
