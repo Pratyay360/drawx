@@ -126,7 +126,9 @@ pub fn init_db(
     }
 
     let db_path = prepare_data_dir(app).join("drawx.db");
-    let conn = open_db_at(&db_path)
+    let conn = open_db_at(&db_path).unwrap_or_else(|err| {
+        panic!("could not open default database at {db_path:?}: {err}");
+    });
     crate::libraries::migrate_legacy_saved_libraries(app, &conn);
     (conn, db_path)
 }

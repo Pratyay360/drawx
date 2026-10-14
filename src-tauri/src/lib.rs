@@ -28,7 +28,7 @@ pub fn run() {
 
     let options = sentry::ClientOptions::new()
         .add_integration(sentry_plugin.clone())
-        .dsn(SENTRY_DSN.parse().ok())
+        .dsn(SENTRY_DSN)
         .maybe_release(sentry::release_name!())
         .auto_session_tracking(true);
 
