@@ -31,8 +31,7 @@ modules:
       #          or generate via pnpm and add flatpak/generated-sources.json
       # Then add cargo-sources.json (+ generated-sources.json when available) as extra sources
       # (see the sources section below).  Regenerate both on every lockfile bump.
-      build-args:
-        - --share=network
+
       append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin:/run/build/drawx/bin
       env:
         CARGO_HOME: /run/build/drawx/cargo
@@ -71,7 +70,7 @@ modules:
 
       - type: git
         url: https://github.com/pratyay360/drawx.git
-        tag: 0.9.7
+        branch: main
 
       #
       # Then keep the vendored offline sources below (regenerate on every lockfile bump):
