@@ -67,13 +67,11 @@ modules:
         /app/share/icons/hicolor/256x256/apps/io.github.pratyay360.drawx.png
 
     sources:
-      - type: dir
-        path: ../
       - cargo-sources.json
 
       - type: git
         url: https://github.com/pratyay360/drawx.git
-        tag: 0.9.6
+        tag: 0.9.7
 
       #
       # Then keep the vendored offline sources below (regenerate on every lockfile bump):
