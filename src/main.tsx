@@ -7,7 +7,10 @@ import "@excalidraw/excalidraw/index.css";
 import "./App.css";
 import { Theme } from "@astryxdesign/core";
 import { useTheme } from "./hooks/use-theme.ts";
+import { Sentry, initSentry } from "./lib/sentry.ts";
 import { themeRegistry } from "./themes/index.ts";
+
+initSentry();
 
 function ThemedApp() {
 	const { themeName, modePreference } = useTheme();
@@ -23,6 +26,8 @@ const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element #root not found");
 ReactDOM.createRoot(rootElement).render(
 	<React.StrictMode>
-		<ThemedApp />
+		<Sentry.ErrorBoundary fallback={<p>Something went wrong.</p>}>
+			<ThemedApp />
+		</Sentry.ErrorBoundary>
 	</React.StrictMode>,
 );

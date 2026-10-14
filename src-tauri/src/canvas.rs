@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::db::DbState;
-use crate::time::now_iso;
 use crate::ids::generate_canvas_id;
+use crate::time::now_iso;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Canvas {

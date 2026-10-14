@@ -1,10 +1,10 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::mpsc::{channel, Sender};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::db::DbState;
@@ -36,9 +36,6 @@ impl McpState {
     }
 }
 
-// ---------------------------------------------------------------------------
-// HTTP Server & SSE Handler
-// ---------------------------------------------------------------------------
 
 pub fn start_mcp_server(state: McpState, port: u16) {
     let addr = format!("127.0.0.1:{}", port);
@@ -92,11 +89,13 @@ fn handle_connection(mut stream: TcpStream, state: McpState) {
         None => (full_path, ""),
     };
 
-    // Read headers
     let mut headers: HashMap<String, String> = HashMap::new();
     loop {
         let mut header_line = String::new();
-        if reader.read_line(&mut header_line).is_err() || header_line == "\r\n" || header_line == "\n" {
+        if reader.read_line(&mut header_line).is_err()
+            || header_line == "\r\n"
+            || header_line == "\n"
+        {
             break;
         }
         if let Some((k, v)) = header_line.split_once(':') {
@@ -104,7 +103,6 @@ fn handle_connection(mut stream: TcpStream, state: McpState) {
         }
     }
 
-    // Parse query params
     let mut query: HashMap<String, String> = HashMap::new();
     for pair in query_string.split('&') {
         if let Some((k, v)) = pair.split_once('=') {
@@ -112,7 +110,6 @@ fn handle_connection(mut stream: TcpStream, state: McpState) {
         }
     }
 
-    // CORS preflight
     if method == "OPTIONS" {
         let response = "HTTP/1.1 204 No Content\r\n\
                         Access-Control-Allow-Origin: *\r\n\
@@ -145,7 +142,10 @@ fn handle_connection(mut stream: TcpStream, state: McpState) {
             return;
         }
 
-        let endpoint_event = format!("event: endpoint\r\ndata: /message?sessionId={}\r\n\r\n", session_id);
+        let endpoint_event = format!(
+            "event: endpoint\r\ndata: /message?sessionId={}\r\n\r\n",
+            session_id
+        );
         if stream.write_all(endpoint_event.as_bytes()).is_err() || stream.flush().is_err() {
             return;
         }
@@ -161,12 +161,15 @@ fn handle_connection(mut stream: TcpStream, state: McpState) {
             match rx.recv_timeout(Duration::from_secs(15)) {
                 Ok(msg) => {
                     let event_payload = format!("event: message\r\ndata: {}\r\n\r\n", msg);
-                    if stream.write_all(event_payload.as_bytes()).is_err() || stream.flush().is_err() {
+                    if stream.write_all(event_payload.as_bytes()).is_err()
+                        || stream.flush().is_err()
+                    {
                         break;
                     }
                 }
                 Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
-                    if stream.write_all(b": keepalive\r\n\r\n").is_err() || stream.flush().is_err() {
+                    if stream.write_all(b": keepalive\r\n\r\n").is_err() || stream.flush().is_err()
+                    {
                         break;
                     }
                 }
@@ -192,7 +195,6 @@ fn handle_connection(mut stream: TcpStream, state: McpState) {
         let _ = reader.read_exact(&mut body);
     }
 
-    // POST /message?sessionId=... (SSE client responses)
     if method == "POST" && path == "/message" {
         let req_json: serde_json::Value = match serde_json::from_slice(&body) {
             Ok(v) => v,
@@ -263,7 +265,8 @@ fn handle_connection(mut stream: TcpStream, state: McpState) {
                 "sse": "/sse",
                 "mcp": "/mcp"
             }
-        }).to_string();
+        })
+        .to_string();
 
         let resp = format!(
             "HTTP/1.1 200 OK\r\n\
@@ -307,17 +310,21 @@ fn handle_jsonrpc(state: &McpState, req: &serde_json::Value) -> Option<serde_jso
             id.map(|req_id| json_rpc_success(req_id, result))
         }
         "notifications/initialized" => None,
-        "ping" => {
-            id.map(|req_id| json_rpc_success(req_id, serde_json::json!({})))
-        }
+        "ping" => id.map(|req_id| json_rpc_success(req_id, serde_json::json!({}))),
         "tools/list" => {
             let tools = get_tool_definitions();
             id.map(|req_id| json_rpc_success(req_id, serde_json::json!({ "tools": tools })))
         }
         "tools/call" => {
             let params = req.get("params");
-            let tool_name = params.and_then(|p| p.get("name")).and_then(|n| n.as_str()).unwrap_or("");
-            let arguments = params.and_then(|p| p.get("arguments")).cloned().unwrap_or(serde_json::json!({}));
+            let tool_name = params
+                .and_then(|p| p.get("name"))
+                .and_then(|n| n.as_str())
+                .unwrap_or("");
+            let arguments = params
+                .and_then(|p| p.get("arguments"))
+                .cloned()
+                .unwrap_or(serde_json::json!({}));
             let call_result = execute_tool(state, tool_name, &arguments);
             id.map(|req_id| json_rpc_success(req_id, call_result))
         }
@@ -339,13 +346,16 @@ fn handle_jsonrpc(state: &McpState, req: &serde_json::Value) -> Option<serde_jso
             id.map(|req_id| json_rpc_success(req_id, serde_json::json!({ "resources": resources })))
         }
         "resources/read" => {
-            let uri = req.get("params").and_then(|p| p.get("uri")).and_then(|u| u.as_str()).unwrap_or("");
+            let uri = req
+                .get("params")
+                .and_then(|p| p.get("uri"))
+                .and_then(|u| u.as_str())
+                .unwrap_or("");
             let read_result = read_resource(state, uri);
             id.map(|req_id| json_rpc_success(req_id, read_result))
         }
-        _ => {
-            id.map(|req_id| json_rpc_error(req_id, -32601, &format!("Method not found: {}", method)))
-        }
+        _ => id
+            .map(|req_id| json_rpc_error(req_id, -32601, &format!("Method not found: {}", method))),
     }
 }
 
@@ -474,7 +484,9 @@ fn execute_tool(state: &McpState, name: &str, args: &serde_json::Value) -> serde
             }
 
             // 2. Emit live event to webview
-            let _ = state.app_handle.emit("drawx://mcp-add-elements", &normalized);
+            let _ = state
+                .app_handle
+                .emit("drawx://mcp-add-elements", &normalized);
 
             serde_json::json!({
                 "content": [{
@@ -562,9 +574,7 @@ fn read_resource(state: &McpState, uri: &str) -> serde_json::Value {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Diagram Summarizer & Element Normalizer
-// ---------------------------------------------------------------------------
+
 
 fn generate_canvas_summary(title: &str, elements: &[serde_json::Value]) -> String {
     if elements.is_empty() {
@@ -576,7 +586,10 @@ fn generate_canvas_summary(title: &str, elements: &[serde_json::Value]) -> Strin
     let mut arrows = Vec::new();
 
     for el in elements {
-        let is_deleted = el.get("isDeleted").and_then(|d| d.as_bool()).unwrap_or(false);
+        let is_deleted = el
+            .get("isDeleted")
+            .and_then(|d| d.as_bool())
+            .unwrap_or(false);
         if is_deleted {
             continue;
         }
@@ -590,23 +603,41 @@ fn generate_canvas_summary(title: &str, elements: &[serde_json::Value]) -> Strin
 
         if el_type == "text" {
             let text = el.get("text").and_then(|t| t.as_str()).unwrap_or("").trim();
-            texts.push(format!("- Text [id: {}]: \"{}\" at ({}, {})", id, text, x, y));
+            texts.push(format!(
+                "- Text [id: {}]: \"{}\" at ({}, {})",
+                id, text, x, y
+            ));
         } else if el_type == "arrow" || el_type == "line" {
-            let start_id = el.get("startBinding")
+            let start_id = el
+                .get("startBinding")
                 .and_then(|b| b.get("elementId"))
                 .and_then(|i| i.as_str())
                 .unwrap_or("start");
-            let end_id = el.get("endBinding")
+            let end_id = el
+                .get("endBinding")
                 .and_then(|b| b.get("elementId"))
                 .and_then(|i| i.as_str())
                 .unwrap_or("end");
             arrows.push(format!(
                 "- {} [id: {}]: connects [{}] -> [{}] (from {},{} to {},{})",
-                el_type, id, start_id, end_id, x, y, x + w, y + h
+                el_type,
+                id,
+                start_id,
+                end_id,
+                x,
+                y,
+                x + w,
+                y + h
             ));
         } else {
-            let stroke = el.get("strokeColor").and_then(|s| s.as_str()).unwrap_or("#000");
-            let bg = el.get("backgroundColor").and_then(|s| s.as_str()).unwrap_or("transparent");
+            let stroke = el
+                .get("strokeColor")
+                .and_then(|s| s.as_str())
+                .unwrap_or("#000");
+            let bg = el
+                .get("backgroundColor")
+                .and_then(|s| s.as_str())
+                .unwrap_or("transparent");
             shapes.push(format!(
                 "- {} [id: {}]: pos ({}, {}), size ({}x{}), stroke: {}, bg: {}",
                 el_type, id, x, y, w, h, stroke, bg
@@ -616,7 +647,10 @@ fn generate_canvas_summary(title: &str, elements: &[serde_json::Value]) -> Strin
 
     let mut out = String::new();
     out.push_str(&format!("# Canvas: {}\n", title));
-    out.push_str(&format!("Total elements: {}\n\n", shapes.len() + texts.len() + arrows.len()));
+    out.push_str(&format!(
+        "Total elements: {}\n\n",
+        shapes.len() + texts.len() + arrows.len()
+    ));
 
     if !shapes.is_empty() {
         out.push_str("### Shapes & Containers:\n");
@@ -661,7 +695,10 @@ fn normalize_element(el: &serde_json::Value, index_offset: usize) -> serde_json:
         + (index_offset as u128);
 
     if !obj.contains_key("id") || obj["id"].is_null() {
-        obj.insert("id".to_string(), serde_json::json!(format!("el_{:x}", nanos)));
+        obj.insert(
+            "id".to_string(),
+            serde_json::json!(format!("el_{:x}", nanos)),
+        );
     }
     if !obj.contains_key("type") {
         obj.insert("type".to_string(), serde_json::json!("rectangle"));
@@ -685,7 +722,10 @@ fn normalize_element(el: &serde_json::Value, index_offset: usize) -> serde_json:
         obj.insert("strokeColor".to_string(), serde_json::json!("#1e1e1e"));
     }
     if !obj.contains_key("backgroundColor") {
-        obj.insert("backgroundColor".to_string(), serde_json::json!("transparent"));
+        obj.insert(
+            "backgroundColor".to_string(),
+            serde_json::json!("transparent"),
+        );
     }
     if !obj.contains_key("fillStyle") {
         obj.insert("fillStyle".to_string(), serde_json::json!("solid"));
@@ -712,13 +752,19 @@ fn normalize_element(el: &serde_json::Value, index_offset: usize) -> serde_json:
         obj.insert("roundness".to_string(), serde_json::json!({"type": 3}));
     }
     if !obj.contains_key("seed") {
-        obj.insert("seed".to_string(), serde_json::json!((nanos % 1000000) as i64));
+        obj.insert(
+            "seed".to_string(),
+            serde_json::json!((nanos % 1000000) as i64),
+        );
     }
     if !obj.contains_key("version") {
         obj.insert("version".to_string(), serde_json::json!(1));
     }
     if !obj.contains_key("versionNonce") {
-        obj.insert("versionNonce".to_string(), serde_json::json!(((nanos / 7) % 10000000) as i64));
+        obj.insert(
+            "versionNonce".to_string(),
+            serde_json::json!(((nanos / 7) % 10000000) as i64),
+        );
     }
     if !obj.contains_key("isDeleted") {
         obj.insert("isDeleted".to_string(), serde_json::json!(false));
@@ -727,7 +773,10 @@ fn normalize_element(el: &serde_json::Value, index_offset: usize) -> serde_json:
         obj.insert("boundElements".to_string(), serde_json::Value::Null);
     }
     if !obj.contains_key("updated") {
-        obj.insert("updated".to_string(), serde_json::json!((nanos / 1_000_000) as i64));
+        obj.insert(
+            "updated".to_string(),
+            serde_json::json!((nanos / 1_000_000) as i64),
+        );
     }
     if !obj.contains_key("link") {
         obj.insert("link".to_string(), serde_json::Value::Null);
@@ -736,7 +785,11 @@ fn normalize_element(el: &serde_json::Value, index_offset: usize) -> serde_json:
         obj.insert("locked".to_string(), serde_json::json!(false));
     }
 
-    let el_type = obj.get("type").and_then(|t| t.as_str()).unwrap_or("").to_string();
+    let el_type = obj
+        .get("type")
+        .and_then(|t| t.as_str())
+        .unwrap_or("")
+        .to_string();
     if el_type == "text" {
         if !obj.contains_key("fontSize") {
             obj.insert("fontSize".to_string(), serde_json::json!(20));
@@ -769,7 +822,10 @@ fn normalize_element(el: &serde_json::Value, index_offset: usize) -> serde_json:
         if !obj.contains_key("points") {
             let w = obj.get("width").and_then(|w| w.as_f64()).unwrap_or(100.0);
             let h = obj.get("height").and_then(|h| h.as_f64()).unwrap_or(0.0);
-            obj.insert("points".to_string(), serde_json::json!([[0.0, 0.0], [w, h]]));
+            obj.insert(
+                "points".to_string(),
+                serde_json::json!([[0.0, 0.0], [w, h]]),
+            );
         }
         if !obj.contains_key("lastCommittedPoint") {
             obj.insert("lastCommittedPoint".to_string(), serde_json::Value::Null);
@@ -856,7 +912,8 @@ fn get_canvas_from_db(state: &McpState, id: &str) -> Option<crate::canvas::Canva
             elements,
             app_state,
         })
-    }).ok()
+    })
+    .ok()
 }
 
 fn get_tool_definitions() -> Vec<serde_json::Value> {
@@ -926,13 +983,10 @@ fn get_tool_definitions() -> Vec<serde_json::Value> {
                 "type": "object",
                 "properties": {}
             }
-        })
+        }),
     ]
 }
 
-// ---------------------------------------------------------------------------
-// Tauri Commands
-// ---------------------------------------------------------------------------
 
 #[tauri::command]
 pub fn sync_active_canvas(

@@ -13,15 +13,36 @@ use tauri::Manager;
 
 use db::{init_db, DbState};
 use paths::resolve_config_dir;
+use tauri_plugin_sentry::Sentry;
 
-pub use config::{DbConfig, DbInfo};
 pub use canvas::Canvas;
+pub use config::{DbConfig, DbInfo};
 pub use libraries::SavedLibrary;
 pub use mcp::{McpState, DEFAULT_MCP_PORT};
 
+const SENTRY_DSN: &str = "https://41990cc48e061c70a5a043e635b63eb6@o4510758181208064.ingest.de.sentry.io/4512250072268880";
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let sentry_plugin = Sentry::new();
+
+    let options = sentry::ClientOptions::new()
+        .add_integration(sentry_plugin.clone())
+        .dsn(SENTRY_DSN.parse().ok())
+        .maybe_release(sentry::release_name!())
+        .auto_session_tracking(true);
+
+    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))]
+    let options =
+        options.add_integration(sentry::integrations::minidump::MinidumpIntegration::new());
+
+    // Caution! Everything before here runs in both app and crash reporter
+    // processes. Everything after here runs in only the app process.
+    let _guard = sentry::init(options);
+    // Everything after here runs in only the app process.
+
     tauri::Builder::default()
+        .plugin(sentry_plugin)
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_fs::init())

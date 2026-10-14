@@ -1,6 +1,6 @@
-use std::sync::Mutex;
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
+use std::sync::Mutex;
 
 use crate::paths::{prepare_data_dir, resolve_config_dir};
 
@@ -103,7 +103,10 @@ pub fn clear_stale_db_config(app: &tauri::AppHandle) {
     );
 }
 
-pub fn init_db(app: &tauri::AppHandle, custom_path: Option<&str>) -> (Connection, std::path::PathBuf) {
+pub fn init_db(
+    app: &tauri::AppHandle,
+    custom_path: Option<&str>,
+) -> (Connection, std::path::PathBuf) {
     let custom_path = custom_path.map(str::trim).filter(|p| !p.is_empty());
 
     if let Some(path) = custom_path {
@@ -123,12 +126,7 @@ pub fn init_db(app: &tauri::AppHandle, custom_path: Option<&str>) -> (Connection
     }
 
     let db_path = prepare_data_dir(app).join("drawx.db");
-    let conn = open_db_at(&db_path).unwrap_or_else(|err| {
-        panic!(
-            "failed to open database in default location {:?}: {err}",
-            db_path
-        )
-    });
+    let conn = open_db_at(&db_path)
     crate::libraries::migrate_legacy_saved_libraries(app, &conn);
     (conn, db_path)
 }

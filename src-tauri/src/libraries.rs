@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
 use crate::db::DbState;
 use crate::paths::resolve_config_dir;
 use crate::time::now_iso;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SavedLibrary {

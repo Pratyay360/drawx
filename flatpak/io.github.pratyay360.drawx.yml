@@ -71,9 +71,9 @@ modules:
         path: ../
       - cargo-sources.json
 
-      # - type: git
-      #   url: https://github.com/pratyay360/drawx.git
-      #   tag: 0.9.0
+      - type: git
+        url: https://github.com/pratyay360/drawx.git
+        tag: 0.9.6
 
       #
       # Then keep the vendored offline sources below (regenerate on every lockfile bump):

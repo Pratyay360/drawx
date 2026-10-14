@@ -71,8 +71,6 @@ if [ -z "${LD_PRELOAD:-}" ]; then
 fi
 EOF
   chmod +x "$appdir/apprun-hooks/wayland-compat.sh"
-
-  # 2. Patch AppRun so it sources the new hook before executing AppRun.wrapped
   if [ -f "$appdir/AppRun.wrapped" ]; then
     if ! grep -q "wayland-compat.sh" "$appdir/AppRun"; then
       cat << 'EOF' > "$appdir/AppRun"
@@ -97,14 +95,12 @@ exec "$HERE/AppRun.wrapped" "$@"
 EOF
     chmod +x "$appdir/AppRun"
   fi
-  # 3. Ensure AppStream metainfo is present in the AppDir
   mkdir -p "$appdir/usr/share/metainfo"
   if [ -f "$REPO_ROOT/flatpak/io.github.pratyay360.drawx.metainfo.xml" ]; then
     cp -f "$REPO_ROOT/flatpak/io.github.pratyay360.drawx.metainfo.xml" "$appdir/usr/share/metainfo/io.github.pratyay360.drawx.metainfo.xml"
   fi
 }
 
-# 3. Repack AppDir into AppImage
 repack_appdir() {
   local appdir="$1"
   local expected_appimage="$2"
