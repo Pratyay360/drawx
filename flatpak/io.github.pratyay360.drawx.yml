@@ -5,7 +5,7 @@ sdk: org.gnome.Sdk
 
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
-  - org.freedesktop.Sdk.Extension.node26
+  - org.freedesktop.Sdk.Extension.node24
 
 command: drawx
 
