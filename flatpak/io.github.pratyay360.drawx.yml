@@ -22,15 +22,13 @@ modules:
     buildsystem: simple
 
     build-options:
-      # For GitHub Actions CI (flatpak-github-actions) we need network to fetch pnpm + npm deps.
-      # For Flathub offline builds, remove --share=network and rely on vendored sources instead:
-      #   Cargo: python3 flatpak-builder-tools/cargo/flatpak-cargo-generator.py \
-      #              src-tauri/Cargo.lock -o cargo-sources.json
-      #          then: cp cargo-sources.json flatpak/cargo-sources.json
-      #   pnpm:  pnpm install --frozen-lockfile; vendor node_modules manually
-      #          or generate via pnpm and add flatpak/generated-sources.json
-      # Then add cargo-sources.json (+ generated-sources.json when available) as extra sources
-      # (see the sources section below).  Regenerate both on every lockfile bump.
+      # Offline build: Node deps are vendored via flatpak/generated-sources.json
+      # (regenerate on every pnpm-lock.yaml bump with:
+      #  python3 -m flatpak_node_generator pnpm pnpm-lock.yaml \
+      #    -o flatpak/generated-sources.json
+      #  run from flatpak-builder-tools/node/).
+      # Cargo deps are vendored via flatpak/cargo-sources.json.
+      # Do NOT add network access here; Flathub builds are offline.
 
       append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin:/run/build/drawx/bin
       env:
@@ -40,13 +38,12 @@ modules:
 
 
     build-commands:
-      # NOTE: do NOT use `corepack enable` here. The node24 SDK extension is
-      # mounted read-only, so `corepack enable` fails with:
-      #   EROFS: symlink '../lib/node_modules/corepack/dist/pnpm.js' -> '/usr/lib/sdk/node24/bin/pnpm'
-      # Install pnpm into the writable build dir instead (/run/build/drawx/bin
-      # is already on PATH via append-path above).
-      - npm install -g --prefix /run/build/drawx pnpm@12.10.1
-      - pnpm install --frozen-lockfile
+      # pnpm comes from the node24 SDK extension on PATH (see append-path).
+      # Do NOT `npm install -g pnpm` or `corepack enable` here: the SDK is
+      # read-only and the build sandbox has no network (EAI_AGAIN).
+      # generated-sources.json already populated flatpak-node/pnpm-store and
+      # wrote store-dir to .npmrc, so install fully offline.
+      - pnpm install --offline --frozen-lockfile
       - pnpm exec tauri build --no-bundle
       - install -Dm755 src-tauri/target/release/drawx /app/bin/drawx
 
@@ -66,15 +63,15 @@ modules:
         /app/share/icons/hicolor/256x256/apps/io.github.pratyay360.drawx.png
 
     sources:
-      - cargo-sources.json
 
       - type: git
         url: https://github.com/pratyay360/drawx.git
         branch: main
-
       #
-      # Then keep the vendored offline sources below (regenerate on every lockfile bump):
-      # - cargo-sources.json
-      # - generated-sources.json  # when available (npm/pnpm)
+      - cargo-sources.json
+      - generated-sources.json
       #
       # Bare filenames are interpreted by flatpak-builder as lists of sources.
+      # Regenerate both on every lockfile bump:
+      #   Cargo: src-tauri/Cargo.lock -> flatpak/cargo-sources.json
+      #   Node:  pnpm-lock.yaml -> flatpak/generated-sources.json

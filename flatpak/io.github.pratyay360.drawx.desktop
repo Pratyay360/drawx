@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Drawx
-GenericName=Whiteboard
+GenericName=excalidraw
 Comment=Offline first brainstorming and whiteboard app
 Exec=drawx
 Icon=io.github.pratyay360.drawx
@@ -10,4 +10,3 @@ Categories=Graphics;Utility;
 Keywords=whiteboard;drawing;diagram;brainstorm;excalidraw;
 StartupNotify=true
 StartupWMClass=drawx
-DBusActivatable=false
