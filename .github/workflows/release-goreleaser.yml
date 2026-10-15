@@ -29,6 +29,8 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@master
+        with:
+          version: 11.28.5
 
       - uses: actions/setup-node@main
         with:
