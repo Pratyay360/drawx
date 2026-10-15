@@ -63,9 +63,8 @@ jobs:
         run: |
           mise deps
           mise install
-          nub install
-          nub run build
-          nub run tauri build
+          mise run build
+          mise run tauri build
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
