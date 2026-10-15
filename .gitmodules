@@ -3,4 +3,4 @@
 	url = https://github.com/flatpak/flatpak-builder-tools.git
 [submodule "flatpak"]
 	path = flatpak
-	url = git@github.com:Pratyay360/flathub.git
+	url = https://github.com/Pratyay360/flatpak.git
