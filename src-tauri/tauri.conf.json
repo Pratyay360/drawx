@@ -4,9 +4,9 @@
 	"version": "0.9.7",
 	"identifier": "io.github.pratyay360.drawx",
 	"build": {
-		"beforeDevCommand": "pnpm run dev",
+		"beforeDevCommand": "bun run dev",
 		"devUrl": "http://localhost:1420",
-		"beforeBuildCommand": "pnpm run build",
+		"beforeBuildCommand": "bun run build",
 		"frontendDist": "../dist"
 	},
 	"plugins": {

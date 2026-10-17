@@ -27,8 +27,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@master
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
 
       - uses: actions/setup-node@main
         with:
@@ -56,12 +56,12 @@ jobs:
             zsync
 
       - name: Install dependencies
-        run: pnpm install
+        run: bun install --frozen-lockfile
 
       - name: Build Tauri app (Linux / Windows)
         if: matrix.os != 'macos-latest'
         run: |
-          pnpm tauri build
+          bun run tauri build
           if [ "${{ matrix.os }}" = "ubuntu-22.04" ]; then
             source src-tauri/scripts/patch-appimage-wayland.sh
           fi
@@ -74,8 +74,8 @@ jobs:
         run: |
           rustup target add x86_64-apple-darwin
           rustup target add aarch64-apple-darwin
-          pnpm tauri build --target x86_64-apple-darwin
-          pnpm tauri build --target aarch64-apple-darwin
+          bun run tauri build --target x86_64-apple-darwin
+          bun run tauri build --target aarch64-apple-darwin
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}

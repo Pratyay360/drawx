@@ -9,7 +9,7 @@ sops = "latest"
 "cargo:tauri-cli" = "latest"
 goreleaser = "latest"
 sentry-cli = "latest"
-pnpm = "11.28.6"
+bun = "1.4.1"
 
 [env]
 SOPS_AGE_RECIPIENTS = "age1a9p2k3u40mvdntpad4ga7akvnnqqwm6eskfr2yxkgq3u9lp7jfns2wgqty,age155th0ptdjf3gkp7pmzqcepe9kec9n3w32l87czf29fda4a2gj49ql0pg8a"
@@ -20,23 +20,23 @@ auto_install = true
 
 [tasks.update]
 description = "Update JS dependencies"
-run = ["pnpm install", "pnpm update"]
+run = ["bun install", "bun update"]
 
 [tasks.dev]
 description = "Start Vite dev server"
-run = "pnpm dev"
+run = "bun run dev"
 
 [tasks.build]
 description = "Build frontend"
-run = "pnpm run build"
+run = "bun run build"
 
 [tasks."build:frontend"]
 description = "Alias for build (frontend only)"
-run = "pnpm run build"
+run = "bun run build"
 
 [tasks.typecheck]
 description = "Run TypeScript typecheck (no emit)"
-run = "pnpm run typecheck"
+run = "bun run typecheck"
 
 [tasks.lint]
 description = "Lint with Biome"
@@ -66,43 +66,43 @@ run = [{ task = "lint:fix" }, { task = "format" }]
 [tasks.tauri]
 description = "Run tauri CLI (pass-through args)"
 run = '''#!/usr/bin/env bash
-pnpm run tauri "$@"
+bun run tauri "$@"
 '''
 
 [tasks."tauri:dev"]
 description = "Run Tauri in dev mode"
-run = "pnpm run tauri dev"
+run = "bun run tauri dev"
 
 [tasks."tauri:build"]
 description = "Build Tauri app (release nubdle)"
-run = "pnpm run tauri:build"
+run = "bun run tauri:build"
 
 [tasks."build:tauri"]
 description = "Alias for tauri:build"
-run = "pnpm run tauri:build"
+run = "bun run tauri:build"
 
 [tasks.astryx]
 description = "Run Astryx CLI (pass-through args)"
 run = '''#!/usr/bin/env bash
-pnpm run astryx "$@"
+bun run astryx "$@"
 '''
 
 [tasks."astryx:build"]
 description = "Run astryx build (pass args)"
 run = '''#!/usr/bin/env bash
-pnpm run astryx build "$@"
+bun run astryx build "$@"
 '''
 
 [tasks."astryx:component"]
 description = "Show Astryx component docs"
 run = '''#!/usr/bin/env bash
-pnpm run astryx component "$@"
+bun run astryx component "$@"
 '''
 
 [tasks."astryx:template"]
 description = "Scaffold Astryx template"
 run = '''#!/usr/bin/env bash
-pnpm run astryx template "$@"
+bun run astryx template "$@"
 '''
 
 [tasks.encrypt]
@@ -126,10 +126,14 @@ depends = ["lint", "build"]
 description = "CI full: lint + tauri build"
 depends = ["lint", "tauri:build"]
 
+[tasks."flatpak:sources"]
+description = "Regenerate Flatpak Node sources from bun.lock"
+run = "bun run flatpak:sources"
+
 [tasks.clean]
 description = "Clean build artifacts"
 run = "rm -rf dist src-tauri/target node_modules/.vite"
 
 [tasks.deps]
 description = "Install mise tools + JS deps"
-run = ["mise install", "pnpm install"]
+run = ["mise install", "bun install"]
