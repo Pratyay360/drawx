@@ -62,6 +62,26 @@ jobs:
           command: release upload ${{ env.CN_APPLICATION }} --framework tauri
           api-key: ${{ secrets.CN_API_KEY }}
 
+      - name: Stage bundles
+        shell: bash
+        run: |
+          mkdir -p staged-bundles
+          find src-tauri/target -path '*bundle*' -type f \
+            \( -name '*.deb' -o -name '*.rpm' -o -name '*.AppImage' \
+            -o -name '*.AppImage.zsync' \
+            -o -name '*.msi' -o -name '*.exe' -o -name '*.dmg' \
+            -o -name '*.app.tar.gz' -o -name '*.AppImage.tar.gz' \
+            -o -name '*.nsis.zip' -o -name '*.sig' \) \
+            -exec cp -v {} staged-bundles/ \;
+          ls -la staged-bundles
+
+      - name: Upload bundles
+        uses: actions/upload-artifact@main
+        with:
+          name: bundles-${{ matrix.os }}
+          path: staged-bundles/
+          if-no-files-found: error
+
   publish:
     needs: [build_desktop]
 
@@ -73,5 +93,41 @@ jobs:
       - name: publish release
         uses: crabnebula-dev/cloud-release@v0
         with:
-          command: release publish ${{ env.CN_APPLICATION }}
+          command: release publish ${{ env.CN_APPLICATION }} --framework tauri
           api-key: ${{ secrets.CN_API_KEY }}
+
+  github_release:
+    needs: [build_desktop]
+
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@main
+
+      # Same version CrabNebula resolves from the framework, so both targets
+      # publish the same release on every push to main.
+      - name: Read app version
+        id: version
+        run: echo "value=$(jq -r .version src-tauri/tauri.conf.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Download all bundles
+        uses: actions/download-artifact@main
+        with:
+          pattern: bundles-*
+          path: dist-bundles
+          merge-multiple: true
+
+      - name: List staged artifacts
+        run: ls -laR dist-bundles
+
+      - name: Push to Releases
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist-bundles/*"
+          allowUpdates: true
+          commit: ${{ github.sha }}
+          tag: v${{ steps.version.outputs.value }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: "drawx v${{ steps.version.outputs.value }}"
