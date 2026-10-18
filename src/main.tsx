@@ -7,7 +7,7 @@ import "@excalidraw/excalidraw/index.css";
 import "./App.css";
 import { Theme } from "@astryxdesign/core";
 import { useTheme } from "./hooks/use-theme.ts";
-import { Sentry, initSentry } from "./lib/sentry.ts";
+import { initSentry, Sentry } from "./lib/sentry.ts";
 import { themeRegistry } from "./themes/index.ts";
 
 initSentry();

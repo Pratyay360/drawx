@@ -62,7 +62,6 @@ depends = ["lint", "typecheck"]
 description = "Run lint:fix + format"
 run = [{ task = "lint:fix" }, { task = "format" }]
 
-# ── Tauri ────────────────────────────────────────────────────────
 [tasks.tauri]
 description = "Run tauri CLI (pass-through args)"
 run = '''#!/usr/bin/env bash
@@ -117,7 +116,6 @@ run = "mv .env.example .env && sops -d -i .env"
 description = "Deploy docs via surge"
 run = "surgecli deploy docs/ drawx-docs.surge.sh"
 
-# ── CI / Housekeeping ────────────────────────────────────────────
 [tasks.ci]
 description = "CI: lint + build frontend"
 depends = ["lint", "build"]

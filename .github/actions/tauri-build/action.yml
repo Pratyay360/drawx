@@ -1,4 +1,4 @@
-name: Tauri build
+sname: Tauri build
 description: Shared Bun/Rust setup, dependency caching and Tauri release build.
 
 inputs:

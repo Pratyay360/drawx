@@ -3,9 +3,7 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - "**/*.md"
-      - "landing/**"
+
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

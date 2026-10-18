@@ -1,7 +1,9 @@
 name: flatpak
 on:
   workflow_dispatch:
-  push:
+  workflow_run:
+    workflows: ["Tauri v2 Release Process"]
+    types: [completed]
 
 permissions:
   contents: write

@@ -4,15 +4,10 @@ on:
   pull_request:
     branches:
       - main
-    paths-ignore:
-      - "**/*.md"
-      - "landing/**"
   push:
     branches:
       - main
-    paths-ignore:
-      - "**/*.md"
-      - "landing/**"
+
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
