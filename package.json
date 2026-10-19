@@ -31,7 +31,7 @@
 		"@fontsource-variable/jetbrains-mono": "^5.3.0",
 		"@hugeicons/core-free-icons": "^4.3.5",
 		"@hugeicons/react": "^1.1.10",
-		"@iconify/react": "^6.0.2",
+		"@iconify/react": "^6.0.3",
 		"@phosphor-icons/react": "^2.1.10",
 		"@sentry/react": "11.7.0",
 		"@sentry/vite-plugin": "^11.8.0",
@@ -65,7 +65,7 @@
 		"@vitejs/plugin-react": "^6.1.2",
 		"astryx": "^0.0.0",
 		"oxfmt": "^0.72.0",
-		"oxlint": "^1.88.0",
+		"oxlint": "^1.89.0",
 		"typescript": "~7.0.2",
 		"vite": "^8.3.4",
 		"zustand": "^5.0.15"

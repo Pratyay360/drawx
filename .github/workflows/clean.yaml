@@ -30,9 +30,11 @@ jobs:
           retain_days: ${{ inputs.retain_days  }}
           keep_minimum_runs: ${{ inputs.keep_minimum_runs }}
 
+      - name: checkout
+        uses: actions/checkout@main
+
       - name: clean releases
-      - uses: actions/checkout@main
-      - uses: Nats-ji/delete-old-releases@v1
+        uses: Nats-ji/delete-old-releases@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           keep-count: 2

@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write
 
+# This workflow publishes the release, so it must not read from the Actions
+# cache: a cache entry written by a less trusted workflow would end up in the
+# published artifacts.
+cache-mode: none
+
 jobs:
   build:
     strategy:
@@ -79,11 +84,17 @@ jobs:
         run: ls -laR dist-bundles
 
       - name: Push to Releases
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: "dist-bundles/*"
-          allowUpdates: true
-          commit: ${{ github.sha }}
-          tag: v1.0.${{ github.run_number }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          name: "drawx v1.0.${{ github.run_number }}"
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v1.0.${{ github.run_number }}
+        # Same behaviour as the previous release action: update the release if
+        # the tag already has one, otherwise create it at the built commit.
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist-bundles/* --clobber
+          else
+            gh release create "$TAG" dist-bundles/* \
+              --title "drawx $TAG" \
+              --target "$GITHUB_SHA"
+          fi

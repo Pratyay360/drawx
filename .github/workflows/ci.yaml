@@ -122,11 +122,17 @@ jobs:
         run: ls -laR dist-bundles
 
       - name: Push to Releases
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: "dist-bundles/*"
-          allowUpdates: true
-          commit: ${{ github.sha }}
-          tag: v${{ steps.version.outputs.value }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          name: "drawx v${{ steps.version.outputs.value }}"
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ steps.version.outputs.value }}
+        # Same behaviour as the previous release action: update the release if
+        # the tag already has one, otherwise create it at the built commit.
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist-bundles/* --clobber
+          else
+            gh release create "$TAG" dist-bundles/* \
+              --title "drawx $TAG" \
+              --target "$GITHUB_SHA"
+          fi
