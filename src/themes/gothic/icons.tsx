@@ -35,6 +35,7 @@ import {
 	MoreHorizontal,
 	Search,
 	Square,
+	Upload,
 	Wrench,
 	X,
 	XCircle,
@@ -74,4 +75,5 @@ export const gothicIconRegistry: IconRegistry = {
 	wrench: <Wrench {...iconProps} />,
 	stop: <Square {...iconProps} />,
 	microphone: <Mic {...iconProps} />,
+	upload: <Upload {...iconProps} />,
 };
