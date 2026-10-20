@@ -129,6 +129,17 @@ repack_appdir() {
     # Remove existing AppImage before repacking
     rm -f "$expected_appimage"
 
+    # appimagetool guesses the architecture from the AppDir, which no longer
+    # holds a plain AppRun after patching, so pass it explicitly.
+    if [ -z "${ARCH:-}" ]; then
+      case "$(uname -m)" in
+        x86_64 | amd64) export ARCH=x86_64 ;;
+        i386 | i686) export ARCH=i686 ;;
+        aarch64 | arm64) export ARCH=aarch64 ;;
+        armv7l | armv6l | armhf) export ARCH=armhf ;;
+      esac
+    fi
+
     if [ -n "$PLUGIN_BIN" ]; then
       # The plugin bundles appimagetool and only turns the AppDir into an
       # AppImage, so it leaves the patched AppDir untouched.
