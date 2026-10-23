@@ -10,8 +10,14 @@ export function initSentry(): void {
 	Sentry.init({
 		dsn: "https://41990cc48e061c70a5a043e635b63eb6@o4510758181208064.ingest.de.sentry.io/4512250072268880",
 		environment: "production",
+		integrations: [Sentry.browserTracingIntegration()],
 		tracesSampleRate: 1.0,
+		tracePropagationTargets: ["localhost", "*"],
+		debug: import.meta.env.DEV,
 	});
+	if (import.meta.env.DEV) {
+		(globalThis as { Sentry?: typeof Sentry }).Sentry = Sentry;
+	}
 }
 
 export { Sentry };

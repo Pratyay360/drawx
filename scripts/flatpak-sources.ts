@@ -24,6 +24,13 @@
  *    source to `type: archive` with `strip-components: 1`, so flatpak-builder
  *    extracts the tarball straight into the cache layout Bun expects.
  *
+ *    A handful of tarballs ship directory entries without the execute bit
+ *    (mode 0666). GNU tar applies the archived mode to a directory before it
+ *    writes the files inside it, so it cannot unpack those archives as a
+ *    normal user ("Cannot open: Permission denied"). They are listed in
+ *    MODE_LESS_ARCHIVES below and are left as `type: file` sources; the
+ *    Flatpak manifest's build-commands unpack them instead.
+ *
  * Usage:
  *   bun scripts/flatpak-sources.ts [lockfile] [generator flags...]
  *
@@ -47,6 +54,19 @@ const DEFAULT_LOCKFILE = "bun.lock";
 const DEFAULT_OUTPUT = "flatpak/generated-sources.json";
 const NPM_CACHE_PREFIX = "bun_cache/";
 
+/**
+ * npm tarballs whose directory entries lack the execute bit (mode 0666).
+ *
+ * flatpak-builder unpacks `type: archive` sources with GNU tar, which applies
+ * the archived directory mode before writing the files inside it, so these
+ * archives cannot be unpacked as a normal user. They stay `type: file` sources
+ * and are unpacked by the Flatpak manifest's build-commands.
+ */
+const MODE_LESS_ARCHIVES = new Set([
+	"@excalidraw/laser-pointer",
+	"@excalidraw/random-username",
+]);
+
 type FlatpakSource = Record<string, unknown>;
 
 /** Rewrite only the top-level `lockfileVersion`; the rest passes through verbatim. */
@@ -65,6 +85,12 @@ export function isNpmTarballSource(source: FlatpakSource): boolean {
 		source.dest.startsWith(NPM_CACHE_PREFIX) &&
 		source["dest-filename"] === "package.tgz"
 	);
+}
+
+/** The package name of a `bun_cache/<name>@<version>@@@1` cache directory. */
+export function packageName(dest: string): string {
+	const entry = dest.slice(NPM_CACHE_PREFIX.length).split("@@@")[0] ?? "";
+	return entry.slice(0, entry.lastIndexOf("@"));
 }
 
 /** Turn a cached npm tarball into an archive flatpak-builder extracts in place. */
@@ -131,8 +157,14 @@ async function main(): Promise<void> {
 		readFileSync(outputPath, "utf8"),
 	) as FlatpakSource[];
 	let converted = 0;
+	let kept = 0;
 	const patched = sources.map((source) => {
 		if (!isNpmTarballSource(source)) return source;
+		const name = packageName(source.dest as string);
+		if (MODE_LESS_ARCHIVES.has(name)) {
+			kept++;
+			return source;
+		}
 		converted++;
 		return toArchiveSource(source);
 	});
@@ -141,6 +173,11 @@ async function main(): Promise<void> {
 	console.log(
 		`Unpacked ${converted} npm tarballs via type: archive -> ${output}`,
 	);
+	if (kept > 0) {
+		console.log(
+			`Kept ${kept} tarball(s) unextracted (mode-less directories): ${[...MODE_LESS_ARCHIVES].join(", ")}`,
+		);
+	}
 }
 
 await main();

@@ -6,8 +6,6 @@ cd "$repo_root"
 
 if command -v bun >/dev/null 2>&1; then
   bun run tauri "$@"
-else
-  npm exec tauri "$@"
 fi
 
 bash src-tauri/scripts/patch-appimage-wayland.sh

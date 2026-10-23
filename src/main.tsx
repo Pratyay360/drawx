@@ -7,10 +7,12 @@ import "@excalidraw/excalidraw/index.css";
 import "./App.css";
 import { Theme } from "@astryxdesign/core";
 import { useTheme } from "./hooks/use-theme.ts";
-import { Sentry, initSentry } from "./lib/sentry.ts";
+import { initSentry, Sentry } from "./lib/sentry.ts";
 import { themeRegistry } from "./themes/index.ts";
+import Clarity from '@microsoft/clarity';
 
 initSentry();
+Clarity.init('z2d9zxxrbq');
 
 function ThemedApp() {
 	const { themeName, modePreference } = useTheme();

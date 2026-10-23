@@ -3,9 +3,6 @@ name: GitHub Pages
 on:
   push:
     branches: ["main"]
-    paths:
-      - "landing/**"
-      - ".github/workflows/gh-pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -16,6 +13,7 @@ permissions:
 concurrency:
   group: "pages"
   cancel-in-progress: true
+
 
 jobs:
   deploy:
@@ -28,10 +26,10 @@ jobs:
         uses: actions/checkout@main
 
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@main
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@main
         with:
           path: "./landing"
 

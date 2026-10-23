@@ -4,15 +4,10 @@ on:
   pull_request:
     branches:
       - main
-    paths-ignore:
-      - "**/*.md"
-      - "landing/**"
   push:
     branches:
       - main
-    paths-ignore:
-      - "**/*.md"
-      - "landing/**"
+
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -24,6 +19,7 @@ jobs:
     env:
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
     steps:
       - uses: actions/checkout@main

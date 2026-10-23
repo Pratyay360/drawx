@@ -36,7 +36,6 @@ impl McpState {
     }
 }
 
-
 pub fn start_mcp_server(state: McpState, port: u16) {
     let addr = format!("127.0.0.1:{}", port);
     let listener = match TcpListener::bind(&addr) {
@@ -574,8 +573,6 @@ fn read_resource(state: &McpState, uri: &str) -> serde_json::Value {
     }
 }
 
-
-
 fn generate_canvas_summary(title: &str, elements: &[serde_json::Value]) -> String {
     if elements.is_empty() {
         return format!("# Canvas: {}\n\n(Empty canvas — no elements)", title);
@@ -986,7 +983,6 @@ fn get_tool_definitions() -> Vec<serde_json::Value> {
         }),
     ]
 }
-
 
 #[tauri::command]
 pub fn sync_active_canvas(

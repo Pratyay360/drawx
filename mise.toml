@@ -4,12 +4,12 @@ cargo-make = "latest"
 rust-analyzer = "latest"
 node = "24"
 biome = "latest"
-go = "latest"
-sops = "latest"
 "cargo:tauri-cli" = "latest"
 goreleaser = "latest"
 sentry-cli = "latest"
 bun = "1.4.1"
+jactionlint = "latest"
+sops = "latest"
 
 [env]
 SOPS_AGE_RECIPIENTS = "age1a9p2k3u40mvdntpad4ga7akvnnqqwm6eskfr2yxkgq3u9lp7jfns2wgqty,age155th0ptdjf3gkp7pmzqcepe9kec9n3w32l87czf29fda4a2gj49ql0pg8a"
@@ -62,7 +62,6 @@ depends = ["lint", "typecheck"]
 description = "Run lint:fix + format"
 run = [{ task = "lint:fix" }, { task = "format" }]
 
-# ── Tauri ────────────────────────────────────────────────────────
 [tasks.tauri]
 description = "Run tauri CLI (pass-through args)"
 run = '''#!/usr/bin/env bash
@@ -117,7 +116,6 @@ run = "mv .env.example .env && sops -d -i .env"
 description = "Deploy docs via surge"
 run = "surgecli deploy docs/ drawx-docs.surge.sh"
 
-# ── CI / Housekeeping ────────────────────────────────────────────
 [tasks.ci]
 description = "CI: lint + build frontend"
 depends = ["lint", "build"]

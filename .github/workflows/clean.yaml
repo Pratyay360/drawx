@@ -27,9 +27,16 @@ jobs:
         with:
           token: ${{ github.token }}
           repository: ${{ github.repository }}
-          retain_days: ${{ inputs.retain_days || '7' }}
-          keep_minimum_runs: ${{ inputs.keep_minimum_runs || '5' }}
+          retain_days: ${{ inputs.retain_days  }}
+          keep_minimum_runs: ${{ inputs.keep_minimum_runs }}
 
-      # Tag deletion is intentionally NOT done here. Deleting refs/tags/*
-      # destroys the vX.Y.Z release tags, which makes releases unpinnable and
-      # breaks updater version resolution. Tags are removed individually.
+      - name: checkout
+        uses: actions/checkout@main
+
+      - name: clean releases
+        uses: Nats-ji/delete-old-releases@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          keep-count: 2
+          keep-old-minor-releases: false
+          keep-old-minor-releases-count: 1
