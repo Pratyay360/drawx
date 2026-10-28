@@ -1,22 +1,8 @@
-name: ci
+name: Tauri v2 Release Process
 on:
-  workflow_dispatch:
-    inputs:
-      build_ubuntu:
-        description: "Build the Linux app"
-        required: false
-        default: true
-        type: boolean
-      build_windows:
-        description: "Build the Windows "
-        required: false
-        default: false
-        type: boolean
-      build_macos:
-        description: "Build the macOS apps"
-        required: false
-        default: false
-        type: boolean
+  push:
+    branches:
+      - main
 
 
 concurrency:
@@ -25,6 +11,7 @@ concurrency:
 
 env:
   CN_APPLICATION: "pratyay/drawx"
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
 jobs:
   draft:
@@ -46,90 +33,55 @@ jobs:
       matrix:
         include:
           - os: ubuntu-22.04
-            enabled: ${{ inputs.build_ubuntu }}
-          - os: windows-latest
-            enabled: ${{ inputs.build_windows }}
+            targets: ""
           - os: macos-latest
-            enabled: ${{ inputs.build_macos }}
+            targets: "x86_64-apple-darwin aarch64-apple-darwin"
+          - os: windows-latest
+            targets: ""
 
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash
+    env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
     steps:
       - uses: actions/checkout@main
-
-      - name: Install bun
-        if: matrix.enabled
-        uses: oven-sh/setup-bun@v2
-
-      - uses: actions/setup-node@main
-        if: matrix.enabled
         with:
-          node-version: "lts/*"
+          submodules: recursive
 
-      - name: Install stable toolchain
-        if: matrix.enabled
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: ./.github/actions/tauri-build
         with:
-          toolchain: stable
-          cache: true
-
-      - name: Install Linux dependencies
-        if: matrix.enabled && matrix.os == 'ubuntu-22.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            libssl-dev \
-            libxdo-dev \
-            patchelf \
-            file \
-            squashfs-tools \
-            zsync
-
-      - name: Install dependencies
-        if: matrix.enabled
-        run: |
-          rm -f package-lock.json
-          bun install
-
-      - name: Build Tauri app for Windows and Linux
-        if: matrix.enabled && matrix.os != 'macos-latest'
-        run: |
-          bun run tauri build
-          if [ "${{ matrix.os }}" = "ubuntu-22.04" ]; then
-            bash src-tauri/scripts/patch-appimage-wayland.sh
-          fi
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-
-      - name: Build Tauri app for macOS
-        if: matrix.enabled && matrix.os == 'macos-latest'
-        run: |
-          rustup target add x86_64-apple-darwin
-          rustup target add aarch64-apple-darwin
-          bun run tauri build --target x86_64-apple-darwin
-          bun run tauri build --target aarch64-apple-darwin
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          targets: ${{ matrix.targets }}
 
       - name: upload assets
-        if: matrix.enabled
         uses: crabnebula-dev/cloud-release@v0
         with:
           command: release upload ${{ env.CN_APPLICATION }} --framework tauri
           api-key: ${{ secrets.CN_API_KEY }}
 
+      - name: Stage bundles
+        shell: bash
+        run: |
+          mkdir -p staged-bundles
+          find src-tauri/target -path '*bundle*' -type f \
+            \( -name '*.deb' -o -name '*.rpm' -o -name '*.AppImage' \
+            -o -name '*.AppImage.zsync' \
+            -o -name '*.msi' -o -name '*.exe' -o -name '*.dmg' \
+            -o -name '*.app.tar.gz' -o -name '*.AppImage.tar.gz' \
+            -o -name '*.nsis.zip' -o -name '*.sig' \) \
+            -exec cp -v {} staged-bundles/ \;
+          ls -la staged-bundles
+
+      - name: Upload bundles
+        uses: actions/upload-artifact@main
+        with:
+          name: bundles-${{ matrix.os }}
+          path: staged-bundles/
+          if-no-files-found: error
 
   publish:
     needs: [build_desktop]
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_ubuntu }}
 
     runs-on: ubuntu-22.04
 
@@ -141,3 +93,45 @@ jobs:
         with:
           command: release publish ${{ env.CN_APPLICATION }} --framework tauri
           api-key: ${{ secrets.CN_API_KEY }}
+
+  github_release:
+    needs: [build_desktop]
+
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@main
+
+      # Same version CrabNebula resolves from the framework, so both targets
+      # publish the same release on every push to main.
+      - name: Read app version
+        id: version
+        run: echo "value=$(jq -r .version src-tauri/tauri.conf.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Download all bundles
+        uses: actions/download-artifact@main
+        with:
+          pattern: bundles-*
+          path: dist-bundles
+          merge-multiple: true
+
+      - name: List staged artifacts
+        run: ls -laR dist-bundles
+
+      - name: Push to Releases
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ steps.version.outputs.value }}
+        # Same behaviour as the previous release action: update the release if
+        # the tag already has one, otherwise create it at the built commit.
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist-bundles/* --clobber
+          else
+            gh release create "$TAG" dist-bundles/* \
+              --title "drawx $TAG" \
+              --target "$GITHUB_SHA"
+          fi

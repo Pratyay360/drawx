@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write
 
+# This workflow publishes the release, so it must not read from the Actions
+# cache: a cache entry written by a less trusted workflow would end up in the
+# published artifacts.
+cache-mode: none
+
 jobs:
   build:
     strategy:
@@ -16,73 +21,32 @@ jobs:
       matrix:
         include:
           - os: ubuntu-22.04
+            targets: ""
+            patch-appimage: "true"
           - os: windows-latest
+            targets: ""
+            patch-appimage: "false"
           - os: macos-latest
+            targets: "x86_64-apple-darwin aarch64-apple-darwin"
+            patch-appimage: "false"
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash
+    env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
     steps:
       - uses: actions/checkout@main
         with:
           fetch-depth: 0
+          submodules: recursive
 
-      - name: Install bun
-        uses: oven-sh/setup-bun@v2
-
-      - uses: actions/setup-node@main
+      - uses: ./.github/actions/tauri-build
         with:
-          node-version: "lts/*"
-
-      - name: Install stable toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          cache: true
-
-      - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-22.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            libssl-dev \
-            libxdo-dev \
-            patchelf \
-            file \
-            squashfs-tools \
-            zsync
-
-      - name: Install dependencies
-        run: |
-          rm -f package-lock.json
-          bun install
-
-      - name: Build Tauri app (Linux / Windows)
-        if: matrix.os != 'macos-latest'
-        run: |
-          bun run tauri build
-          if [ "${{ matrix.os }}" = "ubuntu-22.04" ]; then
-            source src-tauri/scripts/patch-appimage-wayland.sh
-          fi
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-
-      - name: Build Tauri app (macOS, both archs)
-        if: matrix.os == 'macos-latest'
-        run: |
-          rustup target add x86_64-apple-darwin
-          rustup target add aarch64-apple-darwin
-          bun run tauri build --target x86_64-apple-darwin
-          bun run tauri build --target aarch64-apple-darwin
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          targets: ${{ matrix.targets }}
+          patch-appimage: ${{ matrix.patch-appimage }}
 
       - name: Stage bundles
+        shell: bash
         run: |
           mkdir -p staged-bundles
           find src-tauri/target -path '*bundle*' -type f \
@@ -119,11 +83,18 @@ jobs:
       - name: List staged artifacts
         run: ls -laR dist-bundles
 
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v7
-        with:
-          distribution: goreleaser
-          version: "~> v2"
-          args: release --clean
+      - name: Push to Releases
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v1.0.${{ github.run_number }}
+        # Same behaviour as the previous release action: update the release if
+        # the tag already has one, otherwise create it at the built commit.
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist-bundles/* --clobber
+          else
+            gh release create "$TAG" dist-bundles/* \
+              --title "drawx $TAG" \
+              --target "$GITHUB_SHA"
+          fi

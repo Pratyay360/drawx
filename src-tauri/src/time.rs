@@ -15,7 +15,12 @@ pub fn now_iso() -> String {
 
     format!(
         "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}.{:03}Z",
-        year, month, day, h, m, s,
+        year,
+        month,
+        day,
+        h,
+        m,
+        s,
         nanos / 1_000_000
     )
 }

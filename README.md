@@ -2,6 +2,8 @@
   <img alt="header" src="https://shieldcn.dev/header/surface.svg?title=Drawx&subtitle=An+offline+first+planning+and+sketching+tool&mode=dark" />
 </p>
 
+[![releaseszn](https://releaseszn.com/badge/drawx.svg)](https://releaseszn.com/p/drawx)[![releaseszn](https://releaseszn.com/badge/drawx.svg)](https://releaseszn.com/p/drawx)
+
 ![nC6FrCb.png](https://iili.io/nC6FrCb.png)
 
 > **Offline-first brainstorming and whiteboard app.** Infinite canvas powered by [Excalidraw](https://excalidraw.com), built with [Tauri v2](https://tauri.app), React, and SQLite.

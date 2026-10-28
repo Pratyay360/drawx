@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import { Canvas as CanvasComponent } from "./canvas/main.tsx";
 import { LibraryBrowserModal } from "./components/library-browser-modal.tsx";
+import { StarPrompt } from "./components/star-prompt.tsx";
 import { UpdatePrompt } from "./components/update-prompt.tsx";
 import { Dashboard } from "./features/dashboard/Dashboard.tsx";
 import { isTauri } from "./services/tauri.ts";
@@ -28,6 +29,7 @@ function App() {
 				</Routes>
 				<LibraryBrowserModal />
 				<UpdatePrompt />
+				<StarPrompt />
 			</LinkProvider>
 		</BrowserRouter>
 	);

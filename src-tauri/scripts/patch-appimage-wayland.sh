@@ -18,15 +18,26 @@ cleanup() {
 trap cleanup EXIT
 
 # 1. Resolve linuxdeploy and appimage tools
+#    The Tauri cache holds linuxdeploy and the AppImage plugin side by side,
+#    and the plugin's file name also matches "linuxdeploy-*.AppImage". The
+#    lookups below therefore have to stay specific: the plugin only
+#    understands --appdir and rejects linuxdeploy's own flags.
 LINUXDEPLOY_BIN=""
+PLUGIN_BIN=""
 if [ -d "$TAURI_CACHE_DIR" ]; then
-  cached_linuxdeploy=$(find "$TAURI_CACHE_DIR" -maxdepth 1 -name "linuxdeploy-*.AppImage" -print -quit 2>/dev/null || true)
+  cached_linuxdeploy=$(find "$TAURI_CACHE_DIR" -maxdepth 1 -name "linuxdeploy-*.AppImage" ! -name "linuxdeploy-plugin-*" -print -quit 2>/dev/null || true)
   if [ -n "$cached_linuxdeploy" ] && [ -f "$cached_linuxdeploy" ]; then
     ln -sf "$cached_linuxdeploy" "$TEMP_BIN/linuxdeploy"
     LINUXDEPLOY_BIN="$TEMP_BIN/linuxdeploy"
   fi
 
-  cached_appimagetool=$(find "$TAURI_CACHE_DIR" -maxdepth 1 -name "appimagetool-*.AppImage" -print -quit 2>/dev/null || true)
+  cached_plugin=$(find "$TAURI_CACHE_DIR" -maxdepth 1 -name "linuxdeploy-plugin-appimage*.AppImage" -print -quit 2>/dev/null || true)
+  if [ -n "$cached_plugin" ] && [ -f "$cached_plugin" ]; then
+    ln -sf "$cached_plugin" "$TEMP_BIN/linuxdeploy-plugin-appimage"
+    PLUGIN_BIN="$TEMP_BIN/linuxdeploy-plugin-appimage"
+  fi
+
+  cached_appimagetool=$(find "$TAURI_CACHE_DIR" -maxdepth 1 -name "appimagetool*.AppImage" -print -quit 2>/dev/null || true)
   if [ -n "$cached_appimagetool" ] && [ -f "$cached_appimagetool" ]; then
     ln -sf "$cached_appimagetool" "$TEMP_BIN/appimagetool"
   fi
@@ -71,8 +82,6 @@ if [ -z "${LD_PRELOAD:-}" ]; then
 fi
 EOF
   chmod +x "$appdir/apprun-hooks/wayland-compat.sh"
-
-  # 2. Patch AppRun so it sources the new hook before executing AppRun.wrapped
   if [ -f "$appdir/AppRun.wrapped" ]; then
     if ! grep -q "wayland-compat.sh" "$appdir/AppRun"; then
       cat << 'EOF' > "$appdir/AppRun"
@@ -97,14 +106,12 @@ exec "$HERE/AppRun.wrapped" "$@"
 EOF
     chmod +x "$appdir/AppRun"
   fi
-  # 3. Ensure AppStream metainfo is present in the AppDir
   mkdir -p "$appdir/usr/share/metainfo"
   if [ -f "$REPO_ROOT/flatpak/io.github.pratyay360.drawx.metainfo.xml" ]; then
     cp -f "$REPO_ROOT/flatpak/io.github.pratyay360.drawx.metainfo.xml" "$appdir/usr/share/metainfo/io.github.pratyay360.drawx.metainfo.xml"
   fi
 }
 
-# 3. Repack AppDir into AppImage
 repack_appdir() {
   local appdir="$1"
   local expected_appimage="$2"
@@ -120,16 +127,29 @@ repack_appdir() {
     export LDAI_UPDATE_INFORMATION="${LDAI_UPDATE_INFORMATION:-gh-releases-zsync|pratyay360|drawx|latest|*amd64*.AppImage.zsync}"
 
     # Remove existing AppImage before repacking
-    [ -f "$expected_appimage" ] && rm -f "$expected_appimage"
+    rm -f "$expected_appimage"
 
-    if [ -n "$APPIMAGETOOL_BIN" ]; then
+    # appimagetool guesses the architecture from the AppDir, which no longer
+    # holds a plain AppRun after patching, so pass it explicitly.
+    if [ -z "${ARCH:-}" ]; then
+      case "$(uname -m)" in
+        x86_64 | amd64) export ARCH=x86_64 ;;
+        i386 | i686) export ARCH=i686 ;;
+        aarch64 | arm64) export ARCH=aarch64 ;;
+        armv7l | armv6l | armhf) export ARCH=armhf ;;
+      esac
+    fi
+
+    if [ -n "$PLUGIN_BIN" ]; then
+      # The plugin bundles appimagetool and only turns the AppDir into an
+      # AppImage, so it leaves the patched AppDir untouched.
+      "$PLUGIN_BIN" --appdir "$appdir"
+    elif [ -n "$APPIMAGETOOL_BIN" ]; then
       "$APPIMAGETOOL_BIN" -u "$LDAI_UPDATE_INFORMATION" "$appdir" "$expected_appimage"
     elif [ -n "$LINUXDEPLOY_BIN" ]; then
       "$LINUXDEPLOY_BIN" --appdir "$appdir" --output appimage
-    elif [ -x "$TEMP_BIN/linuxdeploy-plugin-appimage" ]; then
-      "$TEMP_BIN/linuxdeploy-plugin-appimage" --appdir "$appdir"
     else
-      echo "Error: Could not find appimagetool or linuxdeploy to repack $appdir" >&2
+      echo "Error: Could not find the AppImage plugin, appimagetool or linuxdeploy to repack $appdir" >&2
       exit 1
     fi
 

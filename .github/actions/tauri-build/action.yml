@@ -1,0 +1,121 @@
+name: Tauri build
+description: Shared Bun/Rust setup, dependency caching and Tauri release build.
+
+inputs:
+  targets:
+    description: Space-separated rustup targets to build. Leave empty to build the host target.
+    required: false
+    default: ""
+  patch-appimage:
+    description: Apply the AppImage Wayland patch after a Linux build.
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: setup bun
+      uses: oven-sh/setup-bun@v2
+
+    - name: setup node
+      uses: actions/setup-node@main
+      with:
+        node-version: "lts/*"
+
+    - name: setup rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: stable
+        cache: false
+
+    - name: setup sccache
+      uses: mozilla-actions/sccache-action@v0.0.11
+
+    - name: cache bun cache
+      uses: actions/cache@main
+      with:
+        path: |
+          ~/.bun/install/cache
+        key: bun-cache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('bun.lock') }}
+        restore-keys: |
+          bun-cache-${{ runner.os }}-${{ runner.arch }}-
+          bun-cache-${{ runner.os }}-
+
+    - name: cache cargo registry
+      uses: actions/cache@main
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+        key: cargo-registry-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src-tauri/Cargo.lock') }}
+        restore-keys: |
+          cargo-registry-${{ runner.os }}-${{ runner.arch }}-
+          cargo-registry-${{ runner.os }}-
+
+    - name: prepare apt package cache
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        # actions/cache restores as the runner user, but the archive directory is root-owned.
+        sudo chown -R "$(id -u):$(id -g)" /var/cache/apt/archives
+
+    - name: cache apt packages
+      if: runner.os == 'Linux'
+      uses: actions/cache@main
+      with:
+        path: |
+          /var/cache/apt/archives/*.deb
+        key: apt-${{ runner.os }}-${{ hashFiles('.github/actions/tauri-build/action.yml') }}
+        restore-keys: |
+          apt-${{ runner.os }}-
+
+    - name: install linux dependencies
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          build-essential \
+          curl \
+          wget \
+          file \
+          pkg-config \
+          libgtk-3-dev \
+          libwebkit2gtk-4.1-dev \
+          libayatana-appindicator3-dev \
+          librsvg2-dev \
+          libssl-dev \
+          libxdo-dev \
+          patchelf \
+          squashfs-tools \
+          zsync
+
+    - name: add rust targets
+      if: inputs.targets != ''
+      shell: bash
+      run: |
+        for target in ${{ inputs.targets }}; do
+          rustup target add "$target"
+        done
+
+    - name: install js dependencies
+      shell: bash
+      run: bun ci
+
+    - name: build tauri app
+      shell: bash
+      env:
+        RUSTC_WRAPPER: sccache
+        SCCACHE_GHA_ENABLED: "true"
+      run: |
+        set -euo pipefail
+        if [ -n "${{ inputs.targets }}" ]; then
+          for target in ${{ inputs.targets }}; do
+            bun run tauri build --target "$target"
+          done
+        else
+          bun run tauri build
+        fi
+        if [ "${{ inputs.patch-appimage }}" = "true" ] && [ "${{ runner.os }}" = "Linux" ]; then
+          source src-tauri/scripts/patch-appimage-wayland.sh
+        fi

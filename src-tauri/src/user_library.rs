@@ -2,7 +2,9 @@ use crate::db::DbState;
 use crate::time::now_iso;
 
 #[tauri::command]
-pub fn get_user_library(state: tauri::State<'_, DbState>) -> Result<Vec<serde_json::Value>, String> {
+pub fn get_user_library(
+    state: tauri::State<'_, DbState>,
+) -> Result<Vec<serde_json::Value>, String> {
     let conn = state.conn.lock().map_err(|e| e.to_string())?;
     let result = conn.query_row("SELECT items FROM user_library WHERE id = 1", [], |row| {
         row.get::<_, String>(0)

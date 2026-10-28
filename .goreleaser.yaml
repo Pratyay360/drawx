@@ -20,14 +20,14 @@ release:
   make_latest: true
   mode: keep-existing
   extra_files:
-    - glob: ./dist-bundles/**/*.deb
-    - glob: ./dist-bundles/**/*.rpm
-    - glob: ./dist-bundles/**/*.AppImage
-    - glob: ./dist-bundles/**/*.AppImage.zsync
-    - glob: ./dist-bundles/**/*.msi
-    - glob: ./dist-bundles/**/*.exe
-    - glob: ./dist-bundles/**/*.dmg
-    - glob: ./dist-bundles/**/*.app.tar.gz
-    - glob: ./dist-bundles/**/*.AppImage.tar.gz
-    - glob: ./dist-bundles/**/*.nsis.zip
-    - glob: ./dist-bundles/**/*.sig
+    - glob: ./dist-bundles/*.deb
+    - glob: ./dist-bundles/*.rpm
+    - glob: ./dist-bundles/*.AppImage
+    - glob: ./dist-bundles/*.AppImage.zsync
+    - glob: ./dist-bundles/*.msi
+    - glob: ./dist-bundles/*.exe
+    - glob: ./dist-bundles/*.dmg
+    - glob: ./dist-bundles/*.app.tar.gz
+    - glob: ./dist-bundles/*.AppImage.tar.gz
+    - glob: ./dist-bundles/*.nsis.zip
+    - glob: ./dist-bundles/*.sig

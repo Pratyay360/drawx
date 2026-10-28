@@ -16,7 +16,10 @@ pub struct DbInfo {
 }
 
 #[tauri::command]
-pub fn get_db_info(app: tauri::AppHandle, state: tauri::State<'_, DbState>) -> Result<DbInfo, String> {
+pub fn get_db_info(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, DbState>,
+) -> Result<DbInfo, String> {
     let config_path = resolve_config_dir(&app).join("db_config.json");
     let local_path = if config_path.exists() {
         let content = std::fs::read_to_string(&config_path).unwrap_or_default();

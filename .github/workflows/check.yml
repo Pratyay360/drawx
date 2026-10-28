@@ -8,6 +8,7 @@ on:
     branches:
       - main
 
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
@@ -15,57 +16,16 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-22.04
-    container:
-      image: ghcr.io/jdx/mise:2026.8.16
-    defaults:
-      run:
-        shell: bash
+    env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
     steps:
       - uses: actions/checkout@main
-
-      - name: cache pnpm store
-        uses: actions/cache@main
         with:
-          path: |
-            ~/.local/share/pnpm/store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
+          submodules: recursive
 
-      - name: cache rust build
-        uses: actions/cache@main
+      - uses: ./.github/actions/tauri-build
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            src-tauri/target
-          key: tauri-pr-${{ runner.os }}-${{ hashFiles('src-tauri/Cargo.lock', 'pnpm-lock.yaml') }}
-          restore-keys: tauri-pr-${{ runner.os }}-
-
-      - name: install system deps
-        run: |
-          apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-            build-essential \
-            curl \
-            wget \
-            file \
-            pkg-config \
-            libgtk-3-dev \
-            libwebkit2gtk-4.1-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            libssl-dev \
-            libxdo-dev
-
-      - name: install
-        run: |
-          mise deps
-          mise install
-          nub install
-          nub run build
-          nub run tauri build
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          patch-appimage: "true"
