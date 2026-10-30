@@ -8,7 +8,7 @@ biome = "latest"
 goreleaser = "latest"
 sentry-cli = "latest"
 bun = "1.4.1"
-jactionlint = "latest"
+jactionlint = { version = "latest", workflow = "release.yaml" }
 sops = "latest"
 
 [env]
