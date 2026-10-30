@@ -1,0 +1,61 @@
+name: Build MSIX
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  msix:
+    name: MSI -> MSIX
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.1"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: Install JS dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build MSI
+        run: bun run tauri build --bundles msi
+
+      # MSIX_PUBLISHER (secret): Partner Center publisher, e.g. CN=67A9BB80-54AE-4F78-9A81-B2731D7D156C
+      # MSIX_PACKAGE_NAME (variable, optional): reserved package identity name, only
+      #   needed when it differs from the tauri identifier (io.github.pratyay360.drawx).
+      - name: Convert MSI to MSIX
+        shell: pwsh
+        env:
+          MSIX_PUBLISHER: ${{ secrets.MSIX_PUBLISHER }}
+          MSIX_PACKAGE_NAME: ${{ vars.MSIX_PACKAGE_NAME }}
+        run: |
+          $extra = @{}
+          if ($env:MSIX_PACKAGE_NAME) { $extra['PackageName'] = $env:MSIX_PACKAGE_NAME }
+          ./scripts/msi-to-msix.ps1 `
+            -MsiPath "src-tauri/target/release/bundle/msi" `
+            -OutDir "msix-out" `
+            @extra
+
+      - name: Upload MSIX
+        uses: actions/upload-artifact@v7
+        with:
+          name: drawx-msix
+          path: msix-out/*.msix
+          if-no-files-found: error

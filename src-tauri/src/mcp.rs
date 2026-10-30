@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{channel, Sender};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -24,6 +25,8 @@ pub struct McpState {
     pub active_canvas: Arc<Mutex<ActiveCanvasState>>,
     pub sessions: Arc<Mutex<HashMap<String, Sender<String>>>>,
     pub app_handle: AppHandle,
+    pub running: Arc<AtomicBool>,
+    pub shutdown: Arc<AtomicBool>,
 }
 
 impl McpState {
@@ -32,6 +35,8 @@ impl McpState {
             active_canvas: Arc::new(Mutex::new(ActiveCanvasState::default())),
             sessions: Arc::new(Mutex::new(HashMap::new())),
             app_handle,
+            running: Arc::new(AtomicBool::new(false)),
+            shutdown: Arc::new(AtomicBool::new(false)),
         }
     }
 }
@@ -39,29 +44,47 @@ impl McpState {
 pub fn start_mcp_server(state: McpState, port: u16) {
     let addr = format!("127.0.0.1:{}", port);
     let listener = match TcpListener::bind(&addr) {
-        Ok(l) => {
-            eprintln!("[drawx-mcp] Listening on http://{}", addr);
-            l
-        }
+        Ok(l) => l,
         Err(e) => {
             eprintln!("[drawx-mcp] Could not bind to {}: {}", addr, e);
             return;
         }
     };
 
-    for stream in listener.incoming() {
-        match stream {
-            Ok(stream) => {
+    if let Err(e) = listener.set_nonblocking(true) {
+        eprintln!("[drawx-mcp] Could not set non-blocking listener: {}", e);
+        return;
+    }
+
+    state.shutdown.store(false, Ordering::SeqCst);
+    state.running.store(true, Ordering::SeqCst);
+    eprintln!("[drawx-mcp] Listening on http://{}", addr);
+
+    while !state.shutdown.load(Ordering::SeqCst) {
+        match listener.accept() {
+            Ok((stream, _)) => {
                 let state_clone = state.clone();
                 std::thread::spawn(move || {
                     handle_connection(stream, state_clone);
                 });
             }
+            Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                // No pending connections; back off briefly before polling again.
+                std::thread::sleep(Duration::from_millis(50));
+            }
             Err(e) => {
                 eprintln!("[drawx-mcp] Connection error: {}", e);
+                std::thread::sleep(Duration::from_millis(50));
             }
         }
     }
+
+    // Drop session senders so any open SSE connections exit promptly.
+    if let Ok(mut sessions) = state.sessions.lock() {
+        sessions.clear();
+    }
+    state.running.store(false, Ordering::SeqCst);
+    eprintln!("[drawx-mcp] Server stopped");
 }
 
 fn handle_connection(mut stream: TcpStream, state: McpState) {
@@ -1002,11 +1025,44 @@ pub fn sync_active_canvas(
 }
 
 #[tauri::command]
-pub fn get_mcp_status() -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({
-        "running": true,
+pub fn get_mcp_status(state: tauri::State<'_, McpState>) -> Result<serde_json::Value, String> {
+    Ok(build_mcp_status(&state))
+}
+
+#[tauri::command]
+pub fn set_mcp_enabled(
+    state: tauri::State<'_, McpState>,
+    enabled: bool,
+) -> Result<serde_json::Value, String> {
+    if enabled {
+        if !state.running.load(Ordering::SeqCst) {
+            let state_clone = state.inner().clone();
+            std::thread::spawn(move || {
+                start_mcp_server(state_clone, DEFAULT_MCP_PORT);
+            });
+        }
+    } else {
+        state.shutdown.store(true, Ordering::SeqCst);
+    }
+
+    // Give the server thread a moment to reach the requested state so the
+    // returned status is accurate rather than racing the spawn/shutdown.
+    let deadline = std::time::Instant::now() + Duration::from_millis(500);
+    while std::time::Instant::now() < deadline {
+        if state.running.load(Ordering::SeqCst) == enabled {
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(20));
+    }
+
+    Ok(build_mcp_status(&state))
+}
+
+fn build_mcp_status(state: &McpState) -> serde_json::Value {
+    serde_json::json!({
+        "running": state.running.load(Ordering::SeqCst),
         "port": DEFAULT_MCP_PORT,
         "sse_url": format!("http://127.0.0.1:{}/sse", DEFAULT_MCP_PORT),
         "mcp_url": format!("http://127.0.0.1:{}/mcp", DEFAULT_MCP_PORT)
-    }))
+    })
 }

@@ -68,6 +68,12 @@ jobs:
   release:
     needs: [build]
     runs-on: ubuntu-latest
+    # Least privilege: this job writes the GitHub Release (contents) and mints
+    # an OIDC token for keyless cosign signing (id-token). The build jobs do
+    # not need id-token, so it is scoped here rather than workflow-wide.
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@main
         with:
@@ -82,6 +88,54 @@ jobs:
 
       - name: List staged artifacts
         run: ls -laR dist-bundles
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      # Keyless (Sigstore) signing: cosign mints a short-lived certificate from
+      # this workflow's OIDC token, so there is no long-lived private key to
+      # store. Each artifact gets a self-contained `.cosign.bundle` that we
+      # attach to the release. `.sig` files are Tauri updater signatures (not
+      # standalone artifacts), so we do not re-sign those.
+      - name: Sign release artifacts (keyless / OIDC)
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          signed=0
+          for f in dist-bundles/*; do
+            case "$f" in
+              *.sig) continue ;;
+            esac
+            echo "Signing $f"
+            cosign sign-blob \
+              --yes \
+              --bundle "$f.cosign.bundle" \
+              "$f"
+            signed=$((signed + 1))
+          done
+          echo "Signed $signed artifact(s)"
+          ls -la dist-bundles
+
+      # Smoke test: verify one artifact end-to-end against the OIDC identity so
+      # a broken signing setup fails here instead of shipping unverifiable
+      # bundles. The certificate identity is this workflow file at the ref that
+      # triggered the run.
+      - name: Verify a signed artifact (smoke test)
+        shell: bash
+        env:
+          CERT_IDENTITY: https://github.com/${{ github.repository }}/.github/workflows/release-goreleaser.yml@${{ github.ref }}
+          CERT_OIDC_ISSUER: https://token.actions.githubusercontent.com
+        run: |
+          set -euo pipefail
+          target="$(ls dist-bundles/*.cosign.bundle | head -n 1)"
+          artifact="${target%.cosign.bundle}"
+          echo "Verifying $artifact"
+          cosign verify-blob \
+            --bundle "$target" \
+            --certificate-identity "$CERT_IDENTITY" \
+            --certificate-oidc-issuer "$CERT_OIDC_ISSUER" \
+            "$artifact"
 
       - name: Push to Releases
         shell: bash

@@ -206,3 +206,15 @@ export async function getMcpStatus(): Promise<McpStatus | null> {
 		return null;
 	}
 }
+
+export async function setMcpEnabled(
+	enabled: boolean,
+): Promise<McpStatus | null> {
+	if (!isTauri()) return null;
+	try {
+		return await invoke<McpStatus>("set_mcp_enabled", { enabled });
+	} catch (error) {
+		console.error("Failed to set MCP enabled:", error);
+		return null;
+	}
+}

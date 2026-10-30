@@ -98,6 +98,7 @@ pub fn run() {
             user_library::set_user_library,
             mcp::sync_active_canvas,
             mcp::get_mcp_status,
+            mcp::set_mcp_enabled,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
