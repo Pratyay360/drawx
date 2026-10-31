@@ -43,6 +43,35 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
+      - name: Install MSIX Packaging Tool
+        shell: pwsh
+        run: |
+          if (Get-AppxPackage -Name 'Microsoft.MsixPackagingTool' -ErrorAction SilentlyContinue) {
+            Write-Host 'MSIX Packaging Tool already installed.'
+            exit 0
+          }
+          $work = Join-Path $env:RUNNER_TEMP 'msix-packaging-tool'
+          New-Item -ItemType Directory -Path $work -Force | Out-Null
+          $bundle = Join-Path $work 'MSIXPackagingTool.msixbundle'
+          $license = Join-Path $work 'MSIXPackagingTool.License.xml'
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/e/2/e/e2e923b2-7a3a-4730-969d-ab37001fbb5e/MSIXPackagingtoolv1.2024.405.0.msixbundle' -OutFile $bundle
+          Invoke-WebRequest -Uri 'https://download.microsoft.com/download/e/2/e/e2e923b2-7a3a-4730-969d-ab37001fbb5e/MSIXPackagingtoolv1.2024.405.0.License.xml' -OutFile $license
+          $capability = Get-WindowsCapability -Online -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -like 'Msix*PackagingTool*Driver*' } |
+            Select-Object -First 1
+          if ($capability -and $capability.State -ne 'Installed') {
+            try {
+              Add-WindowsCapability -Online -Name $capability.Name | Out-Null
+            }
+            catch {
+              Write-Warning "Could not install the MSIX Packaging Tool driver capability: $($_.Exception.Message)"
+            }
+          }
+          Add-AppxPackage -Path $bundle -LicensePath $license | Out-Null
+          if (-not (Get-AppxPackage -Name 'Microsoft.MsixPackagingTool' -ErrorAction SilentlyContinue)) {
+            throw 'MSIX Packaging Tool installation did not register the app package.'
+          }
+
       # MSIX_PUBLISHER (secret): Partner Center publisher, e.g. CN=67A9BB80-54AE-4F78-9A81-B2731D7D156C
       # MSIX_PACKAGE_NAME (variable, optional): reserved package identity name, only
       #   needed when it differs from the tauri identifier (io.github.pratyay360.drawx).

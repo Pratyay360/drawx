@@ -129,6 +129,28 @@ function Find-MsixPackagingTool {
         }
     }
 
+    # Installed as a Microsoft Store / AppX package ("MSIX Packaging Tool").
+    # Its executable lives under C:\\Program Files\\WindowsApps and is not on PATH,
+    # so discover it through the package registration instead.
+    if (Get-Command Get-AppxPackage -ErrorAction SilentlyContinue) {
+        foreach ($packageName in @('Microsoft.MsixPackagingTool', 'Microsoft.MsixPackagingToolCLI')) {
+            $app = Get-AppxPackage -Name $packageName -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($app -and $app.InstallLocation) {
+                foreach ($exeName in @('MsixPackagingTool.exe', 'MsixPackagingToolCLI.exe')) {
+                    $candidate = Join-Path $app.InstallLocation $exeName
+                    if (Test-Path $candidate) {
+                        return $candidate
+                    }
+                }
+                $found = Get-ChildItem -Path $app.InstallLocation -Filter 'MsixPackagingTool*.exe' -ErrorAction SilentlyContinue |
+                    Select-Object -First 1
+                if ($found) {
+                    return $found.FullName
+                }
+            }
+        }
+    }
+
     # Installed as a Visual Studio individual component ("MSIX Packaging Tool").
     $searchRoots = @()
     $programFilesX86 = ${env:ProgramFiles(x86)}
@@ -155,6 +177,18 @@ function Find-MsixPackagingTool {
             Select-Object -First 1
         if ($found) {
             return $found.FullName
+        }
+    }
+
+    # Store apps are deployed under %ProgramFiles%\\WindowsApps and are not on PATH.
+    foreach ($windowsApps in @((Join-Path $env:ProgramFiles 'WindowsApps'),
+                              (Join-Path ${env:ProgramFiles(x86)} 'WindowsApps'))) {
+        if ($windowsApps -and (Test-Path $windowsApps)) {
+            $found = Get-ChildItem -Path $windowsApps -Filter 'MsixPackagingTool*.exe' -Recurse -ErrorAction SilentlyContinue |
+                Select-Object -First 1
+            if ($found) {
+                return $found.FullName
+            }
         }
     }
 
