@@ -40,7 +40,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
-      # Windows PowerShell 5.1: pwsh's Appx module wrapper lacks Add-AppxPackage -LicensePath.
+      # The runner image's Appx module has no Add-AppxPackage -LicensePath, so provision
+      # with DISM (which accepts the license) and register the staged package for this user.
       - name: Install MSIX Packaging Tool
         shell: powershell
         run: |
@@ -65,7 +66,24 @@ jobs:
               Write-Warning "Could not install the MSIX Packaging Tool driver capability: $($_.Exception.Message)"
             }
           }
-          Add-AppxPackage -Path $bundle -LicensePath $license | Out-Null
+          Add-AppxProvisionedPackage -Online -PackagePath $bundle -LicensePath $license -ErrorAction Stop | Out-Null
+          $app = Get-AppxPackage -Name 'Microsoft.MsixPackagingTool' -ErrorAction SilentlyContinue
+          if (-not $app) {
+            if ((Get-Command Get-AppxPackage).Parameters.ContainsKey('AllUsers')) {
+              $app = Get-AppxPackage -AllUsers -Name 'Microsoft.MsixPackagingTool' -ErrorAction SilentlyContinue
+            }
+            if (-not $app) {
+              $staged = Get-ChildItem -Path (Join-Path $env:ProgramFiles 'WindowsApps') -Directory -Filter 'Microsoft.MsixPackagingTool*' -ErrorAction SilentlyContinue |
+                Select-Object -First 1
+              if ($staged) {
+                $app = [pscustomobject]@{ InstallLocation = $staged.FullName }
+              }
+            }
+            if (-not $app -or -not $app.InstallLocation) {
+              throw 'MSIX Packaging Tool provisioning did not stage the package.'
+            }
+            Add-AppxPackage -Register (Join-Path $app.InstallLocation 'AppxManifest.xml') -DisableDevelopmentMode -ErrorAction Stop | Out-Null
+          }
           if (-not (Get-AppxPackage -Name 'Microsoft.MsixPackagingTool' -ErrorAction SilentlyContinue)) {
             throw 'MSIX Packaging Tool installation did not register the app package.'
           }
