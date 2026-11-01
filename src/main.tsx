@@ -6,10 +6,10 @@ import App from "./App.tsx";
 import "@excalidraw/excalidraw/index.css";
 import "./App.css";
 import { Theme } from "@astryxdesign/core";
+import Clarity from "@microsoft/clarity";
 import { useTheme } from "./hooks/use-theme.ts";
 import { initSentry, Sentry } from "./lib/sentry.ts";
 import { themeRegistry } from "./themes/index.ts";
-import Clarity from "@microsoft/clarity";
 
 initSentry();
 Clarity.init("z2d9zxxrbq");

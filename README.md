@@ -25,15 +25,15 @@
 
 ## 📦 Downloads
 
-| Platform | Download |
-| --- | --- |
-| **Web** | [https://pratyay360.github.io/drawx/](https://pratyay360.github.io/drawx/) |
-| **Debian (x86_64)** | [debian-x86_64](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/debian-x86_64) |
-| **RPM (x86_64)** | [rpm-x86_64](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/rpm-x86_64) |
-| **Arch (x86_64)** | [arch-x86_64](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/arch-x86_64) |
-| **macOS (x86_64/arm64)** | [macos-x86_64](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/macos-x86_64) |
-| **Windows (NSIS)** | [nsis-x86_64](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/nsis-x86_64) |
-| **Windows (MSI)** | [windows-x86_64](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/windows-x86_64) |
+| Platform                 | Download                                                                                           |
+| ------------------------ | -------------------------------------------------------------------------------------------------- |
+| **Web**                  | [https://pratyay360.github.io/drawx/](https://pratyay360.github.io/drawx/)                         |
+| **Debian (x86_64)**      | [debian-x86_64](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/debian-x86_64)   |
+| **RPM (x86_64)**         | [rpm-x86_64](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/rpm-x86_64)         |
+| **Arch (x86_64)**        | [arch-x86_64](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/arch-x86_64)       |
+| **macOS (x86_64/arm64)** | [macos-x86_64](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/macos-x86_64)     |
+| **Windows (NSIS)**       | [nsis-x86_64](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/nsis-x86_64)       |
+| **Windows (MSI)**        | [windows-x86_64](https://cdn.crabnebula.app/download/pratyay/drawx/latest/platform/windows-x86_64) |
 
 > **Tip**: On Linux, you can also download the [Flatpak](https://github.com/pratyay360/drawx/releases).
 

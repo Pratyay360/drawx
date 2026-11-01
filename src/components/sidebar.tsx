@@ -18,7 +18,6 @@ import {
 	Library,
 	Loader2,
 	PenTool,
-	Plug,
 	Plus,
 	Trash2,
 } from "lucide-react";

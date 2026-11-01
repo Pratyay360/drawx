@@ -19,7 +19,6 @@ env:
   CN_APPLICATION: "pratyay/drawx"
   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
-
 jobs:
   build-flatpak:
     name: Flatpak (${{ matrix.arch }})
