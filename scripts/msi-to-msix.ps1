@@ -455,6 +455,54 @@ try {
         throw "Conversion reported success but '$packagePath' was not created. Check the tool output above."
     }
 
+    # --- Bump TargetDeviceFamily MinVersion -------------------------------
+    # Microsoft Store rejects MSIX packages whose TargetDeviceFamily MinVersion
+    # is <= 10.0.17134.0. The MSIX Packaging Tool may emit a lower MinVersion,
+    # so repack the package with a compliant MinVersion using makeappx.
+    $makeAppx = $null
+    $sdkRoot = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\bin'
+    $sdkCandidates = @(
+        Get-ChildItem -LiteralPath $sdkRoot -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match '^\d+\.\d+\.\d+\.\d+$' } |
+            Sort-Object { [version]$_.Name } -Descending |
+            ForEach-Object { Join-Path $_.FullName 'x64\makeappx.exe' } |
+            Where-Object { Test-Path -LiteralPath $_ }
+    )
+    if ($sdkCandidates.Count) { $makeAppx = $sdkCandidates[0] }
+
+    if ($makeAppx) {
+        $unpackDir = Join-Path $env:TEMP ("drawx-msix-" + [Guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $unpackDir -Force | Out-Null
+        try {
+            & $makeAppx unpack /p $packagePath /d $unpackDir /o | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "makeappx unpack failed with exit code $LASTEXITCODE." }
+
+            $manifestPath = Join-Path $unpackDir 'AppxManifest.xml'
+            [xml]$manifest = Get-Content -LiteralPath $manifestPath -Raw
+            $ns = [Xml.XmlNamespaceManager]::new($manifest.NameTable)
+            $ns.AddNamespace('f', 'http://schemas.microsoft.com/appx/manifest/foundation/windows10')
+            $nodes = $manifest.SelectNodes('/f:Package/f:Dependencies/f:TargetDeviceFamily', $ns)
+            foreach ($tdf in $nodes) {
+                if ([version]$tdf.MinVersion -le [version]'10.0.17134.0') {
+                    $tdf.MinVersion = '10.0.17763.0'
+                }
+            }
+            $manifest.Save($manifestPath)
+
+            Remove-Item -Path $packagePath -Force
+            & $makeAppx pack /d $unpackDir /p $packagePath /o | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "makeappx pack failed with exit code $LASTEXITCODE." }
+        }
+        finally {
+            if (Test-Path -LiteralPath $unpackDir) {
+                Remove-Item -LiteralPath $unpackDir -Recurse -Force
+            }
+        }
+    }
+    else {
+        Write-Warning "makeappx.exe not found; MinVersion was not adjusted. Store upload may fail."
+    }
+
     $created = Get-Item $packagePath
     Write-Host ("Created: {0} ({1:N0} KB)" -f $created.FullName, ($created.Length / 1KB))
 }
