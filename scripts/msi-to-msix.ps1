@@ -222,7 +222,7 @@ function Get-MsiDefaultInstallLocation {
             Name   = $record.StringData(3)
         }
     }
-    $view.Close()
+    $view.Close() | Out-Null
 
     $rootId = $null
     $current = $null
@@ -266,26 +266,30 @@ function Read-MsiInfo {
         InstallLocation = $null
     }
 
-    try {
-        $installer = New-Object -ComObject WindowsInstaller.Installer
-        $database = $installer.OpenDatabase($Path, 0)
-        $view = $database.OpenView('SELECT `Value` FROM `Property` WHERE `Property` = ''ProductCode''')
-        $view.Execute() | Out-Null
-        $record = $view.Fetch()
-        if ($record) {
-            $info.ProductCode = $record.StringData(1)
+    # COM calls can emit stray pipeline output (e.g. View.Close()); capture the
+    # reads so this function returns exactly one object.
+    $null = & {
+        try {
+            $installer = New-Object -ComObject WindowsInstaller.Installer
+            $database = $installer.OpenDatabase($Path, 0)
+            $view = $database.OpenView('SELECT `Value` FROM `Property` WHERE `Property` = ''ProductCode''')
+            $view.Execute() | Out-Null
+            $record = $view.Fetch()
+            if ($record) {
+                $info.ProductCode = $record.StringData(1)
+            }
+            $view.Close() | Out-Null
         }
-        $view.Close()
-    }
-    catch {
-        Write-Warning "Could not read the ProductCode from the MSI: $($_.Exception.Message)"
-    }
+        catch {
+            Write-Warning "Could not read the ProductCode from the MSI: $($_.Exception.Message)"
+        }
 
-    try {
-        $info.InstallLocation = Get-MsiDefaultInstallLocation -Path $Path
-    }
-    catch {
-        Write-Warning "Could not resolve the install folder from the MSI: $($_.Exception.Message)"
+        try {
+            $info.InstallLocation = Get-MsiDefaultInstallLocation -Path $Path
+        }
+        catch {
+            Write-Warning "Could not resolve the install folder from the MSI: $($_.Exception.Message)"
+        }
     }
 
     return $info
