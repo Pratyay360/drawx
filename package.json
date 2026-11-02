@@ -1,6 +1,6 @@
 {
 	"name": "drawx",
-	"version": "0.9.10",
+	"version": "0.9.11",
 	"type": "module",
 	"imports": {
 		"#components/*": "./src/components/*.tsx",
