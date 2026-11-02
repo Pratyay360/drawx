@@ -4,7 +4,10 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  id-token: write
+  packages: write
+  actions: write
 
 jobs:
   msix:
@@ -88,9 +91,6 @@ jobs:
             throw 'MSIX Packaging Tool installation did not register the app package.'
           }
 
-      # MSIX_PUBLISHER (secret): Partner Center publisher, e.g. CN=67A9BB80-54AE-4F78-9A81-B2731D7D156C
-      # MSIX_PACKAGE_NAME (variable, optional): reserved package identity name, only
-      #   needed when it differs from the tauri identifier (io.github.pratyay360.drawx).
       - name: Convert MSI to MSIX
         shell: pwsh
         env:
@@ -115,3 +115,36 @@ jobs:
           name: drawx-msix
           path: msix-out/*.msix
           if-no-files-found: error
+
+
+      - name: Resolve release tag
+        id: release
+        shell: pwsh
+        run: |
+          $version = (Get-Content -Raw src-tauri/tauri.conf.json | ConvertFrom-Json).version
+          "tag=v$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Attach MSIX to release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $msixFiles = Get-ChildItem -Path msix-out -Filter '*.msix' -File
+          if (-not $msixFiles) {
+            throw 'No .msix files found in msix-out.'
+          }
+
+          # Ensure the release for this version exists.
+          $release = gh release view $env:TAG --json id,tagName 2>$null
+          if ($LASTEXITCODE -ne 0 -or -not $release) {
+            gh release create $env:TAG msix-out/*.msix --title "drawx $env:TAG" --target $env:GITHUB_SHA
+            exit $LASTEXITCODE
+          }
+
+          foreach ($file in $msixFiles) {
+            # Replace any existing asset with the same name.
+            gh release upload $env:TAG $file.FullName --clobber
+            if ($LASTEXITCODE -ne 0) { throw "Failed to upload $($file.Name)" }
+          }
