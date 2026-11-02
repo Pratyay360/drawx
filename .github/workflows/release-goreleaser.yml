@@ -20,13 +20,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04
+          - os: blacksmith-4vcpu-ubuntu-2204
             targets: ""
             patch-appimage: "true"
-          - os: windows-latest
+          - os: blacksmith-4vcpu-windows-2025
             targets: ""
             patch-appimage: "false"
-          - os: macos-latest
+          - os: blacksmith-6vcpu-macos-15
             targets: "x86_64-apple-darwin aarch64-apple-darwin"
             patch-appimage: "false"
     runs-on: ${{ matrix.os }}
@@ -67,12 +67,12 @@ jobs:
 
   release:
     needs: [build]
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@main
+      - uses: useblacksmith/checkout@v1
         with:
           fetch-depth: 0
 

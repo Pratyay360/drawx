@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   clean-runs:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Delete Workflow Runs
         uses: Mattraks/delete-workflow-runs@v2
@@ -31,7 +31,7 @@ jobs:
           keep_minimum_runs: ${{ inputs.keep_minimum_runs }}
 
       - name: checkout
-        uses: actions/checkout@main
+        uses: useblacksmith/checkout@v1
 
       - name: clean releases
         uses: Nats-ji/delete-old-releases@v1
