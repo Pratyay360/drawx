@@ -20,7 +20,7 @@
 	"app": {
 		"windows": [
 			{
-				"title": "drawx",
+				"title": "Drawx Draw",
 				"width": 800,
 				"height": 600
 			}

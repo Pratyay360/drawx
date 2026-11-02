@@ -97,7 +97,7 @@ jobs:
         env:
           MSIX_PUBLISHER: 'CN=67A9BB80-54AE-4F78-9A81-B2731D7D156C'
           MSIX_PACKAGE_NAME: 'PratyayMustafi.drawxdraw'
-          MSIX_PACKAGE_DISPLAY_NAME: 'Drawx'
+          MSIX_PACKAGE_DISPLAY_NAME: 'Drawx Draw'
           GITHUB_TOKEN: ${{ github.token }}
           TAURI_BUNDLE_CREATE_UPDATER_ARTIFACTS: "false"
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
