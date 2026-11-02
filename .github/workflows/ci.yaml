@@ -102,8 +102,6 @@ jobs:
     steps:
       - uses: actions/checkout@main
 
-      # Same version CrabNebula resolves from the framework, so both targets
-      # publish the same release on every push to main.
       - name: Read app version
         id: version
         run: echo "value=$(jq -r .version src-tauri/tauri.conf.json)" >> "$GITHUB_OUTPUT"
@@ -121,10 +119,8 @@ jobs:
       - name: Push to Releases
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           TAG: v${{ steps.version.outputs.value }}
-        # Same behaviour as the previous release action: update the release if
-        # the tag already has one, otherwise create it at the built commit.
         run: |
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" dist-bundles/* --clobber

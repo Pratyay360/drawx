@@ -68,9 +68,6 @@ jobs:
   release:
     needs: [build]
     runs-on: ubuntu-latest
-    # Least privilege: this job writes the GitHub Release (contents) and mints
-    # an OIDC token for keyless cosign signing (id-token). The build jobs do
-    # not need id-token, so it is scoped here rather than workflow-wide.
     permissions:
       contents: write
       id-token: write
@@ -92,11 +89,7 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
 
-      # Keyless (Sigstore) signing: cosign mints a short-lived certificate from
-      # this workflow's OIDC token, so there is no long-lived private key to
-      # store. Each artifact gets a self-contained `.cosign.bundle` that we
-      # attach to the release. `.sig` files are Tauri updater signatures (not
-      # standalone artifacts), so we do not re-sign those.
+
       - name: Sign release artifacts (keyless / OIDC)
         shell: bash
         run: |
@@ -140,7 +133,7 @@ jobs:
       - name: Push to Releases
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           TAG: v1.0.${{ github.run_number }}
         # Same behaviour as the previous release action: update the release if
         # the tag already has one, otherwise create it at the built commit.

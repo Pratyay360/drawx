@@ -58,7 +58,7 @@ param(
 
     [string] $PackageName = ($env:MSIX_PACKAGE_NAME),
 
-    [string] $PackageDisplayName = '',
+    [string] $PackageDisplayName = ($env:MSIX_PACKAGE_DISPLAY_NAME),
 
     [string] $PublisherName = ($env:MSIX_PUBLISHER),
 

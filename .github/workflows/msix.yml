@@ -91,11 +91,13 @@ jobs:
             throw 'MSIX Packaging Tool installation did not register the app package.'
           }
 
+
       - name: Convert MSI to MSIX
         shell: pwsh
         env:
-          MSIX_PUBLISHER: ${{ secrets.MSIX_PUBLISHER }}
-          MSIX_PACKAGE_NAME: ${{ vars.MSIX_PACKAGE_NAME }}
+          MSIX_PUBLISHER: 'CN=67A9BB80-54AE-4F78-9A81-B2731D7D156C'
+          MSIX_PACKAGE_NAME: 'PratyayMustafi.drawxdraw'
+          MSIX_PACKAGE_DISPLAY_NAME: 'Drawx'
           GITHUB_TOKEN: ${{ github.token }}
           TAURI_BUNDLE_CREATE_UPDATER_ARTIFACTS: "false"
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -104,6 +106,7 @@ jobs:
         run: |
           $extra = @{}
           if ($env:MSIX_PACKAGE_NAME) { $extra['PackageName'] = $env:MSIX_PACKAGE_NAME }
+          if ($env:MSIX_PACKAGE_DISPLAY_NAME) { $extra['PackageDisplayName'] = $env:MSIX_PACKAGE_DISPLAY_NAME }
           ./scripts/msi-to-msix.ps1 `
             -MsiPath "src-tauri/target/release/bundle/msi" `
             -OutDir "msix-out" `
