@@ -3,6 +3,7 @@
 </p>
 
 [![releaseszn](https://releaseszn.com/badge/drawx.svg)](https://releaseszn.com/p/drawx)
+
 ![nC6FrCb.png](https://iili.io/nC6FrCb.png)
 
 > **Offline-first brainstorming and whiteboard app.** Infinite canvas powered by [Excalidraw](https://excalidraw.com), built with [Tauri v2](https://tauri.app), React, and SQLite.
@@ -37,14 +38,12 @@
 
 > **Tip**: On Linux, you can also download the [Flatpak](https://github.com/pratyay360/drawx/releases).
 
-<p align="center">
-  <a href="https://github.com/pratyay360/drawx/graphs/contributors"><img alt="contributors" src="https://shieldcn.dev/contributors/pratyay360/drawx.svg?mode=dark" /></a>
-</p>
+
+[![Get it on FlatPark](https://flatpark.org/badges/get-it-on-flatpark.svg)](https://flatpark.org/apps/io.github.pratyay360.drawx)
 
 <p align="center">
   <img alt="chart" src="https://shieldcn.dev/chart/github/stars/pratyay360/drawx.svg?bg=transparent" />
 </p>
-
 
 ## Contributors
 
