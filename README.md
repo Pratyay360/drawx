@@ -41,6 +41,11 @@
 
 [![Get it on FlatPark](https://flatpark.org/badges/get-it-on-flatpark.svg)](https://flatpark.org/apps/io.github.pratyay360.drawx)
 
+<a href="https://apps.microsoft.com/store/detail/9MT3RCXNDBT4?cid=DevShareMCLPCS">
+  <img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200" alt="Get it from Microsoft Store"/>
+</a>
+
+
 <p align="center">
   <img alt="chart" src="https://shieldcn.dev/chart/github/stars/pratyay360/drawx.svg?bg=transparent" />
 </p>
