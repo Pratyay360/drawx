@@ -1,3 +1,4 @@
+import { Badge } from "@astryxdesign/core/Badge";
 import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
 import { DialogHeader } from "@astryxdesign/core/Dialog";
@@ -112,9 +113,10 @@ export function McpSettings({ onClose }: McpSettingsProps) {
 
 						{isOn && display.mcp_url ? (
 							<VStack gap={2}>
-								<Text type="label" weight="medium">
-									Connect URL
-								</Text>
+								<HStack justify="between" align="center">
+									<Text type="label" weight="medium">Connect URL</Text>
+									<Badge label={`Port ${display.port}`} variant="neutral" />
+								</HStack>
 								<HStack justify="between" align="center" gap={2}>
 									<Text type="code" maxLines={2}>
 										{display.mcp_url}
