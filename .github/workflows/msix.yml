@@ -113,7 +113,7 @@ jobs:
             @extra
 
       - name: Upload MSIX
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@main
         with:
           name: drawx-msix
           path: msix-out/*.msix

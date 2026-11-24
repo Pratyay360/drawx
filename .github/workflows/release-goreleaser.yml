@@ -9,9 +9,6 @@ on:
 permissions:
   contents: write
 
-# This workflow publishes the release, so it must not read from the Actions
-# cache: a cache entry written by a less trusted workflow would end up in the
-# published artifacts.
 cache-mode: none
 
 jobs:
